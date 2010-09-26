@@ -1,0 +1,4 @@
+*.class
+*~
+step.wizard
+*.log
