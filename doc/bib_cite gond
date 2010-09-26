@@ -1,0 +1,5 @@
+Amikor a diploma.tex-re ráhívtam a fordítást, rinyált az irodalomjegyzés hivatkozásért, hogy nem találja.
+
+Megoldás:
+
+genbib.sh-ban a parancsok futtatása, majd a Winefish-ben 2x fordítani F1-vel.

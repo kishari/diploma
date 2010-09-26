@@ -1,0 +1,90 @@
+
+
+\section{Tervezés}
+
+\subsection{Bevezető}
+
+Jelen rendszerterv a leírt rendszer részletes megvalósítását
+tartalmazza, a tervezés egyes fázisait külön tárgyalja, a felmerülő
+problémákra minél pontosabb és részletesebb megoldásokat keresve.
+
+\subsection{A megvalósítási lehetőségek}
+
+\subsection{Funkcionális terv}
+
+
+A következő fejezetekben az egyes elemek funkciójának részletes tárgyalása
+következik.
+
+\subsubsection{A kliens pc}
+\label{sec:kliens_pc}
+
+
+\subsubsection{Alkalmazás szerver}
+
+
+\subsubsection{Adatbázis szerver}
+\label{sec:adatbszerver}
+
+A küldő felhasználótól az alkalmazás szerveren keresztül érkező
+multimédia üzenetek tárolását valósítja meg.
+
+Tárolásra kerülnek a felhasználótól érkező üzenet adatai. Ezek közé tartozik
+a feladó azonosítója (SIP URI), a címzettek azonosítói (SIP URI), valamint maga a multimédia üzenet.
+
+\subsubsection{Fejlesztő környezet}
+
+Mind a kliens, mind szerver oldal implementálása Java nyelven történik. A kliens oldal megvalósítása az Ericsson cég által nyújtott Service Development Studio 4.0 fejlesztő eszköz segítségével történik. Az eszköz képest az IMS rendszer fő funkcionális elemeit emulálni.
+
+
+\subsection{Tesztelési terv}
+\label{sec:tesztelesi_terv}
+
+A rendszer tervezésének fontos részét képezi a funkcionális tesztelés. Leegyszerűsíti a megvalósítást ill. segít elkerülni olyan hibákat, melyekre az imp\-le\-men\-tá\-lás során talán nem derülne fény. A rendszer étékelésének alapjául szolgál.
+
+Teszteket érdemes modulonként végezni, ami után - feltételezve, hogy az egyes mo\-du\-lok működése megfelelő - a teljes rendszer tesztelése következhet. %Ehhez meg kell határozni, hogy melyik bemeneti adatra mi az elvárt viselkedés. Unit tesztek.
+Az egyes modulok és feladatainak részletes leírása \aref{sec:interfesz_terv}.~fejezetben található. Az alábbiakban ezen modulok tesztelésének rövid leírása, majd a globális tesztelés következik.
+
+\subsubsection{Modulok tesztelése}
+
+A kliens és szerver közötti hálózaton történő kommunikációt megvalósító üzenetek előállításának ill. a beérkező üzenetek elemzésének tesztelése szintén elengedhetetlen a helyes működéshez.
+
+\subsubsection{Globális tesztelés}
+
+\subsection{Üzemeltetési terv}
+\label{sec:uzemeltetesi_terv}
+
+\subsection{Interfész terv}
+\label{sec:interfesz_terv}
+
+Két fő komponensre különül el a rendszer fejlesztése: kliens-
+ill. szerveroldali részre.
+
+\subsubsection{Kliens}
+\label{sec:kliensinterfesz}
+
+\subsubsection{Szerver}
+\label{sec:szerverinterfesz}
+
+\subsection{Adatbázis terv}
+
+A következő fejezetek a kommunikációs üzenetek szerkezetét valamint a használt adatbázis felépítését tárgyalják.
+
+
+\subsubsection{Kommunikációs üzenetek}
+\label{sec:kommuzenetek}
+
+\subsubsection{Az adatbázis}
+\label{sec:adatb}
+
+\subsection{Megvalósítási terv}
+\label{sec:megvalositas}
+
+\subsubsection{A kliens megvalósítása}
+
+\subsubsection{A szerver megvalósítása}
+\label{sec:szervermegvalositas}
+
+
+\subsection{Összefoglalás}
+
