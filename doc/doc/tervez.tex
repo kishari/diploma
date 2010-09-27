@@ -12,7 +12,25 @@ problémákra minél pontosabb és részletesebb megoldásokat keresve.
 
 Ebben a részben megvizsgálom, hogy az IMS használata esetén milyen lehetőségek vannak a csoportos üzenetküldés megvalósítására. A megoldások tárgyalása során kitérek azok előnyeire, a hátrányaira, illetve a felmerülő problémákra.
 
-Első megoldásként kézenfekvőnek tűnhet, hogy a SIP protokoll által nyújtott MESSAGE típusú üzenetek törzsében küldjük el a multimédia üzenetet a címzetteknek. Ennek a megoldásnak az az előnye, hogy nem kell másik protokollt használni az üzenetek átviteléért, hanem a SIP protokoll nyújtotta funkciókat alkalmazzuk. A megoldás előnye viszont eltörpül a hátrányok mellett. Először is a MESSAGE típusú üzenetnek nem adható meg egynél több címzett, így minden címzettnek különálló MESSAGE üzenetben kellene elküldeni ugyanazt a tartalmat. Ez a megszorítás redundanciához vezet, mivel a feladónak ugyanazt az üzenetet minden címzettnek külön el kell küldenie, ami a válaszidőt is jelentősen megnövelné. Másrészről, ha egy multimédia tartalom nem fér bele a MESSAGE üzenet törzsébe\footnote{Mekkora ez a limit? Utánanézni!!!}, akkor ezt a tartalmat a küldő oldalon kisebb darabokra kellene tördelni, a darabokat külön üzenetekben elküldeni, majd a vevő oldalon a kisebb darabokból a teljes üzenetet rekonstruálni. A probléma ezzel az, hogy a SIP MESSAGE üzenettípus nem támogatja, hogy a vevő képes legyen az eredeti üzenetet előállítani az üzenet darabokból. Ennek az az oka, hogy a MESSAGE üzenettípus nem támogatja a tartalom több darabban való átvitelét. A vevő oldalon az egyes üzenetrészeket nem tudjuk összerendelni egymással, így nem tudjuk eldönteni, hogy a beérkező MESSAGE üzenetek közül melyik hordozza ugyanazon tartalom egy darabját, és melyik nem. További probléma, hogy az üzenetek nem sorszámozottak, így azt eredeti küldési sorrendet sem tudnánk visszaállítani.
+\subsubsection{SIP MESSAGE üzenetek használata}
+
+Első megoldásként kézenfekvőnek tűnhet, hogy a SIP protokoll által nyújtott MESSAGE típusú üzenet törzsében küldjük el a multimédia üzenetet a címzetteknek. Ennek a megoldásnak az az előnye, hogy nem kell másik protokollt használni az üzenetek átviteléért, hanem a SIP protokoll nyújtotta funkciókat alkalmazzuk. A megoldás előnye viszont eltörpül a hátrányok mellett. Először is a MESSAGE típusú üzenetnek nem adható meg egynél több címzett, így minden címzettnek különálló MESSAGE üzenetben kellene elküldeni ugyanazt a tartalmat. Ez a megszorítás redundanciához vezet, mivel a feladónak ugyanazt az üzenetet minden címzettnek külön el kell küldenie, ami a válaszidőt is jelentősen megnövelné. Erre a problémára megoldást jelentene, ha az üzenetet egy alkalmazás szerveren keresztül küldenénk, és a szerver továbbítaná azt a címzetteknek. Így a küldő csak egyszer küldené el az üzenetet. Ahhoz, hogy ez a megvalósítás működhessen, a felhasználókból csoportokat kellene létrehozni, és a MESSAGE üzenetet a címzettek URI-ja (Uniform Resource Identifier) helyett a csoport URI-jával címeznénk. Amikor az alkalmazás szerver megkapná ez az üzenetet, a csoport azonosító alapján megkeresné azokat a felhasználókat, akik tagjai a csoportnak, és mindegyik csoporttagnak egyesével elküldené az üzenet másolatát. 
+További problémát jelent, ha küldött multimédia mérete meghaladja a MESSAGE üzenet törzsébe maximálisan megadható 1300 oktetet\footnote{RFC 3428 - Session Initiation Protocol Extension for Instant Messaging}. Ilyenkor a tartalmat a küldő oldalon kisebb darabokra kellene tördelni, a darabokat külön üzenetekben elküldeni, majd a vevő oldalon a kisebb részekből a teljes üzenetet rekonstruálni. A probléma gyökere, hogy a MESSAGE üzenettípus nem támogatja, hogy a vevő képes legyen az eredeti üzenetet előállítani az üzenet részletekből. A MESSAGE üzenet fejlécében nincs lehetőség olyan paramétert megadni, amiből a vevő el tudja dönteni, hogy a beérkező MESSAGE üzenetek közül melyik hordozza ugyanazon tartalom egy-egy darabját, és melyik nem. További gond, hogy az üzenetek nem sorszámozottak, így azt eredeti küldési sorrendet sem tudnánk visszaállítani. Ezek a problémák abból fakadnak, hogy a MESSAGE üzenet használatát elsősorban rövid szöveges üzenetek továbbítására találták ki, és nem nagy multimédia tartalmakhoz. 
+A megoldás hátrányainak sorát bővíti az is, hogy nem támogatott a késleltetett üzenetküldést sem. Utóbbi problémát -- hasonlóan az elsőhöz -- orvosolhatnánk az alkalmazás szerver használatával, amely eltárolná azokat az üzeneteket, amelyek a nem elérhető címzetteknek mennek, és akkor kézbesítené azt, amikor a címzett elérhetővé válik.(IDE MÉG RFC3428-ból PÁR DOLOG)
+(Leírni még, hogy a vevők válasza többször jönne, stb...)
+
+\subsubsection{Több címzettel rendelkező üzenetek használata}
+Az az eset, amikor az üzenet fejlécében benne van minden címzett. Jelenleg CSCF nem támogatja, forkolni lehet az üzenetet attól függően, hogy merre kell továbbítani azt, stb... Leírni rendesen!
+
+\subsubsection{Üzenet továbbítása RTP protokoll segítségével}
+Ide kell MRF, AS stb... Leírni!
+
+\subsubsection{Üzenet továbbítása MSRP protokollal}
+Ezt csinálom én.
+
+
+
+
 
 
 
