@@ -1,4 +1,4 @@
-package messaging.sip;
+package hu.messaging.sip;
 
 import java.io.IOException;
 
@@ -10,8 +10,7 @@ import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
-import messaging.util.*;
-import messaging.msrp.*;
+import hu.messaging.util.*;
 
 import org.apache.log4j.Logger;
 
@@ -32,7 +31,6 @@ public class MessagingSipServlet extends SipServlet {
 	 */
 	private SipFactory sipFactory;
 
-	private ConnectionManager manager = null;
 	/**
 	 * @inheritDoc
 	 */
@@ -41,9 +39,6 @@ public class MessagingSipServlet extends SipServlet {
 		ServletContext context = config.getServletContext();
 		sipFactory = (SipFactory) context.getAttribute(SipServlet.SIP_FACTORY);
 		
-		manager = new ConnectionManager(null);
-		//manager.run();
-		//MessagingUtil.init(getInitParameter("vms-sip-uri"));
 		System.out.println("MessagingSipServlet inited!");
 	}
 
@@ -115,8 +110,8 @@ public class MessagingSipServlet extends SipServlet {
 		
 		if (req.isInitial()) {
 			SipServletResponse resp = req.createResponse(200);
-			String address = "192.168.1.104";
-			String port = "1234";
+			String address = MessagingUtil.getLocalIPAddress();
+			String port = "9092";
 			String content = "v=0\n" +
 							 "o=weblogic 2890844526 2890844527 IN IP4 " + address + "\n" +
 							 "s=-\n" +							 
@@ -134,7 +129,6 @@ public class MessagingSipServlet extends SipServlet {
 			req.createResponse(403).send();
 			//log.debug("INVITE is not initial! Sending 403:" + req.getFrom());
 		}
-		manager.start();
 		
 	}
 }
