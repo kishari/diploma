@@ -4,13 +4,11 @@
 
 \subsection{Bevezető}
 
-Jelen rendszerterv a leírt rendszer részletes megvalósítását
-tartalmazza, a tervezés egyes fázisait külön tárgyalja, a felmerülő
-problémákra minél pontosabb és részletesebb megoldásokat keresve.
+Ebben a részben elsőként leírom, illetve összehasonlítom a multimédia üzenetküldő rendszer megvalósítási lehetőségeit, majd az általam kiválasztott módszer funkcionális egységeit, azok szerepét és egymással való kapcsolatát részleteiben tárgyalom.
 
 \subsection{A megvalósítási lehetőségek}
 
-Ebben a részben megvizsgálom, hogy az IMS használata esetén milyen lehetőségek vannak a csoportos üzenetküldés megvalósítására. A megoldások tárgyalása során kitérek azok előnyeire, a hátrányaira, illetve a felmerülő problémákra.
+Nézzük meg, hogy az IMS használata esetén milyen lehetőségek vannak a csoportos üzenetküldés megvalósítására. A megoldási lehetőségek ismertetése során kitérek azok előnyeire, a hátrányaira, illetve a felmerülő problémákra.
 
 \subsubsection{SIP MESSAGE üzenetek használata}
 \label{sec:sip_message}
@@ -48,21 +46,19 @@ A rendszer a kliens-szerver architektúra szerint épül fel....
 \label{fig:model}
 \end{figure}
 
-A következő fejezetekben az egyes elemek funkciójának részletes tárgyalása
-következik.
+A következő fejezetekben az egyes elemek funkciójának részletes tárgyalása következik.
 
 \subsubsection{Kliens}
 \label{sec:kliens_pc}
 
 
 \subsubsection{Alkalmazás szerver}
-
+A küldő felhasználó minden esetben az alkalmazás szerverrel építi fel a kapcsolatot, és annak küldi el a multimédia üzenetet. Egy felhasználó soha nem küldi közvetlenül egy másik.
 
 \subsubsection{Adatbázis szerver}
 \label{sec:adatbszerver}
 
-A küldő felhasználótól az alkalmazás szerveren keresztül érkező
-multimédia üzenetek tárolását valósítja meg.
+A küldő felhasználótól az alkalmazás szerveren keresztül érkező üzenetek átmeneti tárolását valósítja meg. Abban az esetben, ha a címzett felhasználó 
 
 Tárolásra kerülnek a felhasználótól érkező üzenet adatai. Ezek közé tartozik
 a feladó azonosítója (SIP URI), a címzettek azonosítói (SIP URI), valamint maga a multimédia üzenet.
@@ -75,11 +71,6 @@ a feladó azonosítója (SIP URI), a címzettek azonosítói (SIP URI), valamint
 
 \subsubsection{HSS}
 \label{sec:hss}
-
-\subsubsection{Fejlesztő környezet - implementáció elejére tenni}
-
-Mind a kliens, mind szerver oldal implementálása Java nyelven történik. A kliens oldal megvalósítása az Ericsson cég által nyújtott Service Development Studio 4.1 fej\-lesz\-tő eszköz segítségével történik. Az eszköz képest az IMS rendszer fő funkcionális elemeit emulálni.
-
 
 \subsection{Tesztelési terv ez nem ide, majd a végére}
 \label{sec:tesztelesi_terv}
