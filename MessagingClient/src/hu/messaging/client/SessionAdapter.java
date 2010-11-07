@@ -4,15 +4,9 @@ import java.awt.TextArea;
 import java.io.UnsupportedEncodingException;
 
 import com.ericsson.icp.ISessionListener;
-import com.ericsson.icp.util.ErrorReason;
-import com.ericsson.icp.util.IMSContentContainer;
-import com.ericsson.icp.util.ISessionDescription;
 import com.ericsson.icp.util.*;
-import hu.messaging.client.msrp.*;
 
-public class SessionAdapter extends BaseAdapter implements ISessionListener
-{
-	private TransactionManager manager = null;
+public class SessionAdapter extends BaseAdapter implements ISessionListener {
 	
     public SessionAdapter(TextArea logArea) {
     	super(logArea);
@@ -27,34 +21,25 @@ public class SessionAdapter extends BaseAdapter implements ISessionListener
         	log(aSdpBody.format());
             for (int i = 0; i < mCount; i++) {
             	IMediaDescription md = aSdpBody.getMediaDescription(i);
-            	//log(md.format());
             }
-            
-            manager = new TransactionManager();
-            //manager.connect();
-            //manager.sendData("Szevasz!");
         }
         catch(Exception e) {}
 
     }
 
-    public void processSessionEnded()
-    {
+    public void processSessionEnded() {
         log("processSessionEnded");
     }
 
-    public void processSessionCancelled()
-    {
+    public void processSessionCancelled() {
         log("processSessionCancelled");
     }
 
-    public void processSessionStartFailed(ErrorReason aReasonCode, long retryAfter)
-    {
+    public void processSessionStartFailed(ErrorReason aReasonCode, long retryAfter){
         log("processSessionStartFailed");
     }
 
-    public void processSessionUpdateSuccessful(ISessionDescription aSdpBody)
-    {
+    public void processSessionUpdateSuccessful(ISessionDescription aSdpBody){
         log("processSessionUpdateSuccessful");
     }
 

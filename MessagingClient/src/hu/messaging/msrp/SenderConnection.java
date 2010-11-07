@@ -1,0 +1,162 @@
+package hu.messaging.msrp;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
+import java.util.Iterator;
+
+public class SenderConnection implements Runnable {
+
+	private InetAddress remoteAddress = null;
+	private int remotePort = -1; //-1 = undefined
+	private boolean started = false;
+	private boolean running = false;
+	
+	private Connections parent;
+	private SocketChannel senderChannel = null;
+	private Selector selector = null;
+		
+	public SenderConnection(InetAddress remoteAddress, int remotePort, Connections parent) throws IOException {
+		this.remoteAddress = remoteAddress;
+		this.remotePort = remotePort;
+		this.parent = parent;
+		System.out.println("SenderConnection konstruktor!");
+		System.out.println("remoteAddr: " + remoteAddress.getHostAddress());
+		System.out.println("port: " + remotePort);
+		this.selector = initSelector();
+	}
+	
+	public void send(String data) throws IOException {
+		byte[] d = data.getBytes();
+		System.out.println("Sending bytes: " + data.getBytes().length);
+		ByteBuffer b = ByteBuffer.allocate(data.getBytes().length);
+		b.clear();
+		b = ByteBuffer.wrap(d);
+    	senderChannel.write(b);
+	}
+	
+	public void run() {
+		try {
+			senderChannel = this.initiateConnection();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		setStarted(true);
+		
+		while (isRunning()) {
+			try {
+				// Wait for an event one of the registered channels
+				this.selector.select();
+
+				// Iterate over the set of keys for which events are available
+				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
+				while (selectedKeys.hasNext()) {
+					SelectionKey key = (SelectionKey) selectedKeys.next();
+					selectedKeys.remove();
+
+					if (!key.isValid()) {
+						continue;
+					}
+					// Check what event is available and deal with it
+					if (key.isConnectable()) {
+						this.finishConnection(key);
+					} else if (key.isReadable()) {
+						//itt kellene olvasni
+					} else if (key.isWritable()) {
+						//itt meg írni
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
+		try {
+			this.senderChannel.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private SocketChannel initiateConnection() throws IOException {
+		System.out.println("senderconnection initiateConnection");
+		// Create a non-blocking socket channel
+		SocketChannel socketChannel = SocketChannel.open();
+		socketChannel.configureBlocking(false);
+	
+		InetSocketAddress addr = new InetSocketAddress(this.remoteAddress, this.remotePort);
+		System.out.println("sender initiateConnection: " + addr.getAddress().getHostAddress() + " : " + addr.getPort());
+		socketChannel.connect(new InetSocketAddress(this.remoteAddress, this.remotePort));
+		
+		socketChannel.register(this.selector, SelectionKey.OP_CONNECT);
+		
+		return socketChannel;
+	}
+	
+	private void finishConnection(SelectionKey key) throws IOException {
+		System.out.println("sender finishconnection");
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+	
+		try {
+			socketChannel.finishConnect();
+		} catch (IOException e) {
+			e.printStackTrace();
+			key.cancel();
+			return;
+		}		
+		key.interestOps(SelectionKey.OP_READ);	
+	}
+	
+	private Selector initSelector() throws IOException {
+		return SelectorProvider.provider().openSelector();
+	}
+	
+	public void start() {
+		System.out.println("SenderConnection start! send data to: " + this.remoteAddress.getHostAddress() + ":" + this.remotePort);
+		setRunning(true);
+		new Thread(this).start();
+	}
+
+	public void stop() {
+		setRunning(false);
+	}
+	
+	public void setStarted(boolean started) {
+		this.started = started;
+	}
+
+	public boolean isStarted() {
+		return started;
+	}
+	
+	public synchronized boolean isRunning() {
+		return running;
+	}
+	
+	public synchronized void setRunning(boolean running) {
+		this.running = running;
+	}
+
+	public InetAddress getRemoteAddress() {
+		return remoteAddress;
+	}
+
+	public void setRemoteAddress(InetAddress remoteAddress) {
+		this.remoteAddress = remoteAddress;
+	}
+
+	public int getRemotePort() {
+		return remotePort;
+	}
+
+	public void setRemotePort(int remotePort) {
+		this.remotePort = remotePort;
+	}
+
+}

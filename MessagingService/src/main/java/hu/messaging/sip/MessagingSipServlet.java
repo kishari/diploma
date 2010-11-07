@@ -1,7 +1,7 @@
 package hu.messaging.sip;
 
 import java.io.IOException;
-
+import java.net.InetAddress;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -10,6 +10,7 @@ import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
+import hu.messaging.service.*;
 import hu.messaging.util.*;
 
 import org.apache.log4j.Logger;
@@ -47,6 +48,7 @@ public class MessagingSipServlet extends SipServlet {
 	 */
 	protected void doBye(SipServletRequest req) throws ServletException, IOException {
 		//TODO: Implement this method
+		System.out.println("Server doBye");
 		req.createResponse(200).send();
 	}
 
@@ -110,8 +112,28 @@ public class MessagingSipServlet extends SipServlet {
 		
 		if (req.isInitial()) {
 			SipServletResponse resp = req.createResponse(200);
-			String address = MessagingUtil.getLocalIPAddress();
-			String port = "9092";
+			
+			if (!MessagingService.isReceiverConnection()) {				
+				MessagingService.createReceiverConnection(InetAddress.getLocalHost()); 
+				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+			} 
+			else if (!MessagingService.isRunningReceiverConnection()) {
+					MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+			}
+			
+			ParsedSDP sdp = new SDPUtil().parseSessionDescription(req.getContent().toString());
+			
+			boolean isConnectionToRemoteHost = false; //Meg kell vizsgálni, hogy a távoli géphez van-e már élõ senderConnection
+			if (!isConnectionToRemoteHost) {
+				MessagingService.createSenderSession(sdp.getHost(), sdp.getPort());
+				MessagingService.getMsrpStack().getConnections().findSenderConnection(sdp.getHost(), sdp.getPort()).start();
+			}
+			
+			InetAddress localReceiverAddress = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
+			int localReceiverPort = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort();
+			String address = localReceiverAddress.getHostAddress();
+			String port = Integer.toString(localReceiverPort);
+			
 			String content = "v=0\n" +
 							 "o=weblogic 2890844526 2890844527 IN IP4 " + address + "\n" +
 							 "s=-\n" +							 
@@ -119,15 +141,12 @@ public class MessagingSipServlet extends SipServlet {
 							 "t=0 0\n" +
 							 "m=message " + port + " TCP/MRSP *\n" +
 							 "a=accept-types:text/plain\n" +
-							 "a=path:msrp://" + address + ":" + port + "/kjhd37s2s20w2a;tcp";
+							 "a=path:MSRP://" + address + ":" + port + "/serversessionid;tcp";
 			resp.setContent(content, "application/sdp");
-			resp.send();
-			//log.debug("INVITE is initial! Sending 200 OK:" + req.getFrom());
-			//System.out.println("INVITE is initial! Sending 200 OK:" + req.getFrom());
+			resp.send();			
 		}
 		else {
 			req.createResponse(403).send();
-			//log.debug("INVITE is not initial! Sending 403:" + req.getFrom());
 		}
 		
 	}
