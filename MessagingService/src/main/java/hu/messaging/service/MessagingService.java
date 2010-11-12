@@ -9,13 +9,17 @@ public class MessagingService {
 	
 	private static MSRPStack msrpStack = new MSRPStack();
 	
-	public static void createSenderSession(InetAddress host, int port) {
+	public static void createSenderConnection(InetAddress host, int port, String sipUri) {
 		try {
-			getMsrpStack().createSenderConnection(host, port);	
+			getMsrpStack().createSenderConnection(host, port, sipUri);	
 		}
 		catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void disposeSenderConnection(String sipUri) {
+		getMsrpStack().getConnections().deleteSenderConnection(sipUri);
 	}
 	
 	public static void createReceiverConnection(InetAddress host) {

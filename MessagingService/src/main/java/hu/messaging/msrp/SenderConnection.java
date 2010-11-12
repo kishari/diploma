@@ -3,18 +3,16 @@ package hu.messaging.msrp;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
-import java.util.Random;
 
 public class SenderConnection implements Runnable {
 
+	private String sipUri = null;
 	private InetAddress remoteAddress = null;
 	private int remotePort = -1; //-1 = undefined
 	private boolean started = false;
@@ -24,22 +22,22 @@ public class SenderConnection implements Runnable {
 	private SocketChannel senderChannel = null;
 	private Selector selector = null;
 		
-	public SenderConnection(InetAddress remoteAddress, int remotePort, Connections parent) throws IOException {
+	public SenderConnection(InetAddress remoteAddress, int remotePort, Connections parent, String sipUri) throws IOException {
 		this.remoteAddress = remoteAddress;
 		this.remotePort = remotePort;
 		this.parent = parent;
+		this.sipUri = sipUri;
 		//System.out.println("SenderConnection konstruktor!");
 		//System.out.println("remoteAddr: " + remoteAddress.getHostAddress());
 		//System.out.println("port: " + remotePort);
 		this.selector = initSelector();
 	}
 	
-	public void send(String data) throws IOException {
-		byte[] d = data.getBytes();
-		System.out.println("Sending bytes: " + data.getBytes().length);
-		ByteBuffer b = ByteBuffer.allocate(data.getBytes().length);
+	public void send(byte[] data) throws IOException {
+		System.out.println("Sending bytes: " + data.length);
+		ByteBuffer b = ByteBuffer.allocate(data.length);
 		b.clear();
-		b = ByteBuffer.wrap(d);
+		b = ByteBuffer.wrap(data);
     	senderChannel.write(b);
 	}
 	
@@ -56,6 +54,7 @@ public class SenderConnection implements Runnable {
 			try {
 				// Wait for an event one of the registered channels
 				this.selector.select();
+				System.out.println("run");
 
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
@@ -79,12 +78,15 @@ public class SenderConnection implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		
+		System.out.println("senderConnection stopped: " + this.sipUri);
 		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
 		try {
 			this.senderChannel.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println("senderConnection closed: " + this.sipUri);		
 	}
 	
 	private SocketChannel initiateConnection() throws IOException {
@@ -121,13 +123,30 @@ public class SenderConnection implements Runnable {
 	}
 	
 	public void start() {
-		System.out.println("SenderConnection start! send data to: " + this.remoteAddress.getHostAddress() + ":" + this.remotePort);
+		System.out.println("SenderConnection start! (" + this.remoteAddress.getHostAddress() + ":" + this.remotePort + ")");
 		setRunning(true);
-		new Thread(this).start();
+		//new Thread(this).start();
+		try {
+			senderChannel = this.initiateConnection();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		setStarted(true);
 	}
 
 	public void stop() {
+		System.out.println("senderConnection stop");
 		setRunning(false);
+
+		System.out.println("senderConnection stopped: " + this.sipUri);
+		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
+		try {
+			this.senderChannel.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("senderConnection closed: " + this.sipUri);
 	}
 	
 	public void setStarted(boolean started) {
@@ -138,11 +157,13 @@ public class SenderConnection implements Runnable {
 		return started;
 	}
 	
-	public synchronized boolean isRunning() {
+	public boolean isRunning() {
+		//System.out.println("isRunning():" + running);
 		return running;
 	}
 	
-	public synchronized void setRunning(boolean running) {
+	public void setRunning(boolean running) {
+		//System.out.println("setRunning(" + running + ")");
 		this.running = running;
 	}
 
@@ -160,6 +181,14 @@ public class SenderConnection implements Runnable {
 
 	public void setRemotePort(int remotePort) {
 		this.remotePort = remotePort;
+	}
+
+	public String getSipUri() {
+		return sipUri;
+	}
+
+	public void setSipUri(String sipUri) {
+		this.sipUri = sipUri;
 	}
 
 }

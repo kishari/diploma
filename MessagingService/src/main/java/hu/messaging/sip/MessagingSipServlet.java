@@ -2,6 +2,9 @@ package hu.messaging.sip;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -18,6 +21,15 @@ import org.apache.log4j.Logger;
 
 public class MessagingSipServlet extends SipServlet {
 
+	private static Pattern sipUriPattern =  Pattern.compile("sip:([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
+															"[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");
+	
+	private String getCleanSipUri(String incomingUri) {
+		Matcher m = sipUriPattern.matcher(incomingUri);
+		m.find();
+		return m.group(1);
+	}
+	
 	protected void doErrorResponse(SipServletResponse resp)
 			throws ServletException, IOException {
 		// TODO Auto-generated method stub
@@ -50,6 +62,7 @@ public class MessagingSipServlet extends SipServlet {
 		//TODO: Implement this method
 		System.out.println("Server doBye");
 		req.createResponse(200).send();
+		MessagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
 	}
 
 	/**
@@ -105,6 +118,7 @@ public class MessagingSipServlet extends SipServlet {
 		
 		System.out.println("doInvite!");
 		System.out.println("Invite from: " + req.getFrom() );
+		System.out.println("Invite from (regex): " + getCleanSipUri(req.getFrom().toString()) );
 		System.out.println("session callId: " + req.getCallId());
 		
 		System.out.println("content Type: " + req.getContentType());
@@ -125,8 +139,9 @@ public class MessagingSipServlet extends SipServlet {
 			
 			boolean isConnectionToRemoteHost = false; //Meg kell vizsgálni, hogy a távoli géphez van-e már élõ senderConnection
 			if (!isConnectionToRemoteHost) {
-				MessagingService.createSenderSession(sdp.getHost(), sdp.getPort());
-				MessagingService.getMsrpStack().getConnections().findSenderConnection(sdp.getHost(), sdp.getPort()).start();
+				MessagingService.createSenderConnection(sdp.getHost(), sdp.getPort(), getCleanSipUri(req.getFrom().toString()));
+				//MessagingService.getMsrpStack().getConnections().findSenderConnection(sdp.getHost(), sdp.getPort()).start();
+				MessagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
 			}
 			
 			InetAddress localReceiverAddress = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();

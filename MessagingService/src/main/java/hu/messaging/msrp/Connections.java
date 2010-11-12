@@ -18,14 +18,13 @@ public class Connections implements Observer {
 		this.msrpStack = msrpStack;
 	}
 	
-	public void send(String data, InetAddress remoteAddress, int remotePort) throws IOException {
-	   	SenderConnection sender = findSenderConnection(remoteAddress, remotePort);
+	public void send(byte[] data, String sipUri) throws IOException {
+	   	SenderConnection sender = findSenderConnection(sipUri);
 	   	if (sender != null) {
 	   		sender.send(data);
 	   	}
 	   	else {
-	   		System.out.println("SenderConnection is not find to address:port = " +
-	   						   remoteAddress.getHostAddress() + " : " + remotePort);
+	   		System.out.println("SenderConnection is not find to sipUri = " + sipUri);
 	   	}
 	}
 
@@ -43,8 +42,8 @@ public class Connections implements Observer {
 		this.setReceiverConnection(new ReceiverConnection(localhost, this));
 	}
 	
-	public SenderConnection createSenderConnection(InetAddress addr, int port) throws IOException {
-		SenderConnection c = new SenderConnection(addr, port, this);
+	public SenderConnection createSenderConnection(InetAddress addr, int port, String sipUri) throws IOException {
+		SenderConnection c = new SenderConnection(addr, port, this, sipUri);
 		this.senderConnections.add(c);
 		return c;
 	}
@@ -52,7 +51,19 @@ public class Connections implements Observer {
 	public boolean deleteSenderConnection(InetAddress addr, int port) throws IOException {
 		SenderConnection c = findSenderConnection(addr, port);
 		if (c != null) {
+			c.stop();
 			this.senderConnections.remove(c);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean deleteSenderConnection(String sipUri) {
+		SenderConnection c = findSenderConnection(sipUri);
+		if (c != null) {
+			c.stop();
+			this.senderConnections.remove(c);
+			System.out.println("Connections deleteSenderConnection finished");
 			return true;
 		}
 		return false;
@@ -63,6 +74,17 @@ public class Connections implements Observer {
 		for (SenderConnection c : senderConnections) {
 			System.out.println(c.getRemoteAddress().getHostAddress() + ":" + c.getRemotePort());
 			if (c.getRemoteAddress().getHostAddress().equals(addr.getHostAddress()) && c.getRemotePort() == port) {
+				return c;
+			}
+		}
+		return null;
+	}
+	
+	public SenderConnection findSenderConnection(String sipUri) {
+		System.out.println("findSenderConn to sipUri: " + sipUri);
+		for (SenderConnection c : senderConnections) {
+			System.out.println(c.getSipUri());
+			if (sipUri.equals(c.getSipUri())) {
 				return c;
 			}
 		}
