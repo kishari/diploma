@@ -4,11 +4,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Observable;
-import java.util.Observer;
-import java.nio.channels.SocketChannel;
 
-public class Connections implements Observer {
+public class Connections {
 
 	private MSRPStack msrpStack;
 	private ReceiverConnection receiverConnection = null;
@@ -18,26 +15,25 @@ public class Connections implements Observer {
 		this.msrpStack = msrpStack;
 	}
 	
+	public void listSenderConnections() {
+		System.out.println("Listing sender connections");
+		for (SenderConnection s : senderConnections ) {
+			System.out.println(s.getSipUri());
+		}
+	}
+	
 	public void send(byte[] data, String sipUri) throws IOException {
 	   	SenderConnection sender = findSenderConnection(sipUri);
+	   	listSenderConnections();
 	   	if (sender != null) {
 	   		sender.send(data);
+	   		listSenderConnections();
 	   	}
 	   	else {
 	   		System.out.println("SenderConnection is not find to sipUri = " + sipUri);
 	   	}
 	}
 
-	public void update(Observable o, Object arg) {
-		SocketChannel s = (SocketChannel) arg;
-		System.out.println("Connections update: " + o.toString());
-		//System.out.println("SenderConnection accept with host:port = " 
-		//					+ s.socket().getInetAddress().getHostName() + ":" + s.socket().getPort());
-		System.out.println("SenderConnection accept with host:port = " 
-				+ s.socket().getInetAddress().getHostAddress() + ":" + s.socket().getLocalPort());
-		msrpStack.update(s);
-	}
-	
 	public void createReceiverConnection(InetAddress localhost) throws IOException {
 		this.setReceiverConnection(new ReceiverConnection(localhost, this));
 	}
@@ -50,6 +46,7 @@ public class Connections implements Observer {
 	
 	public boolean deleteSenderConnection(InetAddress addr, int port) throws IOException {
 		SenderConnection c = findSenderConnection(addr, port);
+		System.out.println("deleteSender");
 		if (c != null) {
 			this.senderConnections.remove(c);
 			return true;
@@ -69,6 +66,7 @@ public class Connections implements Observer {
 	}
 	
 	public SenderConnection findSenderConnection(String sipUri) {
+		listSenderConnections();
 		System.out.println("findSenderConn to sipUri: " + sipUri);
 		for (SenderConnection c : senderConnections) {
 			System.out.println(c.getSipUri());

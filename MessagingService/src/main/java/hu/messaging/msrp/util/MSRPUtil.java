@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 
 public class MSRPUtil {
 	private static Pattern methodPattern =  Pattern.compile("(^MSRP) ([\\p{Alnum}]{8,20}) ([\\p{Upper}]{1,20})\r\n(.*)", Pattern.DOTALL);
-	private static Pattern toPathPattern =  Pattern.compile("(To-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
-	private static Pattern fromPathPattern =  Pattern.compile("(From-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
+	private static Pattern toPathPattern =  Pattern.compile("(To-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
+	private static Pattern fromPathPattern =  Pattern.compile("(From-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
 	private static Pattern messageIdPattern =  Pattern.compile("(Message-ID:) ([\\p{Alnum}]{10,50})\r\n");
 	private static Pattern byteRangePattern =  Pattern.compile("(Byte-Range:) ([\\p{Digit}]{1,})-([\\p{Digit}]{1,})" +
 															   "/([\\p{Digit}]{1,})\r\n");

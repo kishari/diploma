@@ -155,7 +155,10 @@ public class ReceiverConnection implements Runnable {
 		    for (String m : messages) {
 		    	MSRPMessage msg = MSRPUtil.createMessage(m);
 		    	try {
-					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath()).putMessageIntoMessageQueue(msg);
+		    		System.out.println("receiver find session: ");
+		    		System.out.println(msg.getToPath().toString());
+		    		System.out.println(msg.getFromPath().toString());
+					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoMessageQueue(msg);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

@@ -45,6 +45,7 @@ public class MSRPStack {
 			System.out.println(s);
 		}
 		if ( getActiveSessions().containsKey( sessionId ) ) {
+			System.out.println("MSRPRstack findSession: van találat");
 			return getActiveSessions().get(sessionId);
 		}
 		return null;

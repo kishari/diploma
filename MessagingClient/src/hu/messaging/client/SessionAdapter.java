@@ -1,7 +1,7 @@
 package hu.messaging.client;
 
 import hu.messaging.service.MessagingService;
-
+import hu.messaging.util.*;
 import java.awt.TextArea;
 import java.io.UnsupportedEncodingException;
 
@@ -20,14 +20,16 @@ public class SessionAdapter extends BaseAdapter implements ISessionListener {
 
         try {
         	int mCount = aSdpBody.getMediaDescriptionCount();
+        	log(Integer.toString(mCount));
         	log(aSdpBody.format());
             for (int i = 0; i < mCount; i++) {
-            	IMediaDescription md = aSdpBody.getMediaDescription(i);
-            	int pathIdx = md.findAttribute("path", 0);
-            	int acceptTypesIdx = md.findAttribute("accept-types", 0);
-            	log(Integer.toString(pathIdx));
-            	log(Integer.toString(acceptTypesIdx));
-            	//MessagingService.createSenderConnection(host, port, "sip:weblogic103@192.168.1.103");
+            	SDPUtil sdpUtil = new SDPUtil();
+            	ParsedSDP remoteSdp = sdpUtil.parseSessionDescription(aSdpBody.format());
+            	log(remoteSdp.getHost().getHostAddress());
+            	log(Integer.toString(remoteSdp.getPort()));
+            	MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), "sip:weblogic103@192.168.1.103");
+            	MessagingService.getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103").start();
+            	MessagingService.getMsrpStack().getConnections().listSenderConnections();
             }
         }
         catch(Exception e) {}

@@ -19,7 +19,7 @@ import com.ericsson.icp.util.*;
 
 public class Client {
 	
-	private MSRPStack msrpStack = new MSRPStack();
+	//private MSRPStack msrpStack = new MSRPStack();
 	
 	private IPlatform platform = null;
 	private IProfile profile = null;
@@ -53,8 +53,9 @@ public class Client {
 		}
 	}
 
-	public void disposeICP() {		
+	public void dispose() {		
 		try {
+			MessagingService.getMsrpStack().disposeResources();
 			session.release();
 			service.release();
 			profile.release();
@@ -75,7 +76,7 @@ public class Client {
     	   
     	   m.add("text/plain");
     	   String path = new String();
-    	   path = "MSRP://" + address + ":" + port + "/" + sessionId + ";tcp";
+    	   path = "msrp://" + address + ":" + port + "/" + sessionId + ";tcp";
   
     	   String codes = "*";
     	   codes = codes.trim();
@@ -110,16 +111,16 @@ public class Client {
 	public void sendInvite() {        
 		try {
 		
-			if (!getMsrpStack().getConnections().isReceiverConnection()) {
-				getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
-				getMsrpStack().getConnections().getReceiverConnection().start();
+			if (!MessagingService.getMsrpStack().getConnections().isReceiverConnection()) {
+				MessagingService.getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
+				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
-			else if (!getMsrpStack().getConnections().isRunningReceiverConnection()) {
-				getMsrpStack().getConnections().getReceiverConnection().start();
+			else if (!MessagingService.getMsrpStack().getConnections().isRunningReceiverConnection()) {
+				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
 			
-			ISessionDescription sdp = createLocalSDP(getMsrpStack().getConnections().getReceiverConnection().getHostAddress(),
-													 getMsrpStack().getConnections().getReceiverConnection().getPort(),
+			ISessionDescription sdp = createLocalSDP(MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress(),
+													 MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort(),
 													 "clientsessionid");
 
 			logArea.append("send INVITE to: " + "sip:weblogic103@192.168.1.103" + "\n");
@@ -132,8 +133,28 @@ public class Client {
 	public void sendBye() {
 		try {
 			session.end();
+			MessagingService.getMsrpStack().getConnections().listSenderConnections();
 		}
 		catch(Exception e) { }
+		
+	}
+	
+	public void sendTestData() {
+		MSRPMessage m = new MSRPMessage();
+		SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103");
+		if (s == null) {
+			System.out.println("Fuck You!!!!!!!!!!!!!!!");
+			return;
+		}
+		m.createTestMessage(
+				s.getRemoteAddress(), s.getRemotePort(),
+				MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress(),
+				MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort());
+
+		try {
+			s.send(m.toString().getBytes());	
+		} catch(IOException ex) {}
+		
 		
 	}
 	
@@ -158,12 +179,10 @@ public class Client {
 	*/
 	}
 
-	public MSRPStack getMsrpStack() {
-		return msrpStack;
-	}
-	
+	/*
 	public void closeConnections() {
+		getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103").stop();
 		getMsrpStack().getConnections().getReceiverConnection().stop();		
 	}
-
+	 */
 }

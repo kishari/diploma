@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Random;
 
-public class ReceiverConnection extends Observable implements Runnable {
+public class ReceiverConnection implements Runnable {
 
 	private int sumOfReadedByte = 0;
 	private int countOfRead = 0;
@@ -43,7 +43,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 		this.selector = initSelector();
 		buff = ByteBuffer.allocate(1000000);
 		buff.clear();
-		this.addObserver(parent);
 	}
 
 	private synchronized int getUnboundPort() throws IOException {
@@ -106,7 +105,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private void accept(SelectionKey key) throws IOException {
 		  System.out.println("receiver accept!");
-		  this.setChanged();
 		    // For an accept to be pending the channel must be a server socket channel.
 		    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
@@ -117,7 +115,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 		    // Register the new SocketChannel with our Selector, indicating
 		    // we'd like to be notified when there's data waiting to be read
 		    socketChannel.register(this.selector, SelectionKey.OP_READ);
-		    this.notifyObservers(socketChannel);
 	}
 	
 	private void read(SelectionKey key) throws IOException {
@@ -288,7 +285,9 @@ public class ReceiverConnection extends Observable implements Runnable {
 	public void start() {
 		if (!isRunning()) {
 			System.out.println("ReceiverConnection start! listen on: " + this.hostAddress.getHostAddress() + ":" + this.port);
-			new Thread(this).start();
+			Thread t = new Thread(this);
+			//t.setDaemon(true);
+			t.start();
 		}
 	}
 	
@@ -301,6 +300,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	}
 
 	public synchronized void setRunning(boolean running) {
+		System.out.println("setrunning " + running);
 		this.running = running;
 	}
 

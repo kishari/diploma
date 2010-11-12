@@ -23,6 +23,7 @@ public class Session {
 	}
 	
 	public void putMessageIntoMessageQueue(MSRPMessage message) throws InterruptedException {
+		System.out.println("Session.putMessage");
 		this.messageQueue.put(message);
 	}
 	

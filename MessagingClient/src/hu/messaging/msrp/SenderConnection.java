@@ -80,7 +80,7 @@ public class SenderConnection implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
+		System.out.println("hehehehe");
 		try {
 			this.senderChannel.close();
 		} catch (IOException e) {
@@ -104,7 +104,7 @@ public class SenderConnection implements Runnable {
 	}
 	
 	private void finishConnection(SelectionKey key) throws IOException {
-		System.out.println("sender finishconnection");
+		//System.out.println("sender finishconnection");
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 	
 		try {
@@ -115,6 +115,7 @@ public class SenderConnection implements Runnable {
 			return;
 		}		
 		key.interestOps(SelectionKey.OP_READ);	
+		//System.out.println(this.sipUri);
 	}
 	
 	private Selector initSelector() throws IOException {
@@ -128,7 +129,9 @@ public class SenderConnection implements Runnable {
 	}
 
 	public void stop() {
+		System.out.println("senderConnection.stop");
 		setRunning(false);
+		this.selector.wakeup();
 	}
 	
 	public void setStarted(boolean started) {
@@ -139,11 +142,11 @@ public class SenderConnection implements Runnable {
 		return started;
 	}
 	
-	public synchronized boolean isRunning() {
+	public boolean isRunning() {
 		return running;
 	}
 	
-	public synchronized void setRunning(boolean running) {
+	public void setRunning(boolean running) {
 		this.running = running;
 	}
 

@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -17,10 +18,10 @@ public class MSRPMessage {
 	private byte[] content = null;
 	private String transactionId;
 	private char endToken;
-	public void createTestMessage() {
+	public void createTestMessage(InetAddress senderAddr, int senderPort, InetAddress recvAddr, int recvPort) {
 		try {
-			createToPath("localhost", 9082, "sessionId2");
-			createFromPath("localhost", 9080, "sessionId1");
+			createToPath(senderAddr.getHostAddress(), senderPort, "serversessionid");
+			createFromPath(recvAddr.getHostAddress(), recvPort, "clientsessionid");
 			this.method = Constants.methodSEND;
 			this.content = new String("én vagyok a teszt tartalom").getBytes();
 			this.firstByte = 1;

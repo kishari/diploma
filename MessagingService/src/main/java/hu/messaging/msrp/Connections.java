@@ -54,7 +54,7 @@ public class Connections {
 			this.senderConnections.remove(c);
 			System.out.println("Connections deleteSenderConnection finished");
 			for (SenderConnection s : this.senderConnections) {
-				System.out.println("Hahahaha, van még senderConnection a listában");
+				System.out.println("Van meg senderConnection a listaban");
 			}
 			return true;
 		}

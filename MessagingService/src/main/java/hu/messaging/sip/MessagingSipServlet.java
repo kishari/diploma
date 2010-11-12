@@ -154,9 +154,9 @@ public class MessagingSipServlet extends SipServlet {
 							 "s=-\n" +							 
 							 "c=IN IP4 " + address + "\n" +
 							 "t=0 0\n" +
-							 "m=message " + port + " TCP/MRSP *\n" +
+							 "m=message " + port + " TCP/MSRP *\n" +
 							 "a=accept-types:text/plain\n" +
-							 "a=path:MSRP://" + address + ":" + port + "/serversessionid;tcp";
+							 "a=path:msrp://" + address + ":" + port + "/serversessionid;tcp";
 			resp.setContent(content, "application/sdp");
 			
 			ParsedSDP localSdp = new SDPUtil().parseSessionDescription(content);

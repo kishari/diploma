@@ -2,14 +2,19 @@ package hu.messaging.util;
 
 import java.net.URI;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ParsedSDP {
 
-	InetAddress host;
-	int port;
-	String sessionId;
-	URI remotePath;
+	private InetAddress host;
+	private int port;
+	private Map<String, String> attributes = new HashMap<String, String>();
 	
+	public void addAttribute(String key, String value) {
+		attributes.put(key, value);
+	}
 	
 	public InetAddress getHost() {
 		return host;
@@ -23,17 +28,13 @@ public class ParsedSDP {
 	public void setPort(int port) {
 		this.port = port;
 	}
-	public String getSessionId() {
-		return sessionId;
-	}
-	public void setSessionId(String sessionId) {
-		this.sessionId = sessionId;
-	}
-	public URI getRemotePath() {
-		return remotePath;
-	}
-	public void setRemotePath(URI remotePath) {
-		this.remotePath = remotePath;
-	}
-	
+	public URI getPath() {		
+		URI path = null;
+		try {
+			path = new URI(attributes.get("path"));
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return path;
+	}	
 }
