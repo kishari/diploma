@@ -2,6 +2,7 @@ package hu.messaging.msrp;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
 
 public class MSRPStack {
@@ -13,8 +14,8 @@ public class MSRPStack {
 		getConnections().createReceiverConnection(host);
 	}
 	
-	public SenderConnection createSenderConnection(InetAddress host, int port) throws IOException {
-		return getConnections().createSenderConnection(host, port);		
+	public SenderConnection createSenderConnection(InetAddress host, int port, String sipUri) throws IOException {
+		return getConnections().createSenderConnection(host, port, sipUri);		
 	}
 	
 	public void update(SocketChannel channel) {
@@ -25,6 +26,10 @@ public class MSRPStack {
 		else {
 			System.out.println("MSRPStack update error: SenderConnection is null!");
 		}
+	}
+	
+	public void sendMessage(byte[] message, String sipUri) {	
+		getConnections().findSenderConnection(sipUri);
 	}
 	
 	public Connections getConnections() {

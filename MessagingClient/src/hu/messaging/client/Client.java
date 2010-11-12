@@ -1,10 +1,12 @@
 package hu.messaging.client;
 
 import java.awt.TextArea;
+import java.io.IOException;
 import java.net.InetAddress;
 
 import java.util.*;
 import hu.messaging.msrp.*;
+import hu.messaging.service.MessagingService;
 
 import com.ericsson.icp.ICPFactory;
 import com.ericsson.icp.IPlatform;
@@ -135,8 +137,16 @@ public class Client {
 		
 	}
 	
-	public void sendMessage() {
-		String msg = new String("MSG FROM CLIENT");
+	public void sendData(byte[] data, String sipUri) {
+		try {
+			MessagingService.sendData(data, sipUri);
+		}
+		catch(IOException e) { }
+	
+	}
+	
+	public void sendMessage(String message) {
+	/*	String msg = new String("MSG FROM CLIENT");
 		
 		logArea.append("send MESSAGE to alice: " + msg + "\n");
 		
@@ -145,6 +155,7 @@ public class Client {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	*/
 	}
 
 	public MSRPStack getMsrpStack() {

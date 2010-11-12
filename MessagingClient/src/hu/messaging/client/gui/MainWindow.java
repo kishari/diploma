@@ -1,6 +1,7 @@
 package hu.messaging.client.gui;
 
 import hu.messaging.client.*;
+import hu.messaging.msrp.MSRPMessage;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -37,10 +38,10 @@ public class MainWindow implements Runnable {
 	           }
 	       }
 	    
-	    mainFrame.setVisible(false);
-	    mainFrame.dispose();
+	    //mainFrame.setVisible(false);
 	    client.sendBye();
 	    client.disposeICP();
+	    mainFrame.dispose();
 	}
 	
 	private Frame createGui() {
@@ -53,7 +54,9 @@ public class MainWindow implements Runnable {
        
        messageButton.addActionListener(new ActionListener()   {
            public void actionPerformed(ActionEvent e) {
-       			//sendMessage();
+        	   MSRPMessage m = new MSRPMessage();
+        	   m.createTestMessage();
+       			client.sendData(m.toString().getBytes(), "sip:weblogic103@192.168.1.103");
            }
        });
        
