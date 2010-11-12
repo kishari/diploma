@@ -8,33 +8,35 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class SenderConnection implements Runnable {
 
+	private MSRPStack msrpStack;
+	private List<String> sessionIds = new ArrayList<String>();
 	private String sipUri = null;
 	private InetAddress remoteAddress = null;
 	private int remotePort = -1; //-1 = undefined
-	private boolean started = false;
 	private boolean running = false;
+	private boolean connected = false;
 	
-	private Connections parent;
 	private SocketChannel senderChannel = null;
 	private Selector selector = null;
 		
-	public SenderConnection(InetAddress remoteAddress, int remotePort, Connections parent, String sipUri) throws IOException {
+	public SenderConnection(InetAddress remoteAddress, int remotePort, 
+							String sipUri, MSRPStack msrpStack) throws IOException {
+		
+		this.msrpStack = msrpStack;
 		this.remoteAddress = remoteAddress;
 		this.remotePort = remotePort;
-		this.parent = parent;
 		this.sipUri = sipUri;
-		//System.out.println("SenderConnection konstruktor!");
-		//System.out.println("remoteAddr: " + remoteAddress.getHostAddress());
-		//System.out.println("port: " + remotePort);
 		this.selector = initSelector();
 	}
 	
 	public void send(byte[] data) throws IOException {
-		System.out.println("Sending bytes: " + data.length);
+		//System.out.println("Sending bytes: " + data.length);
 		ByteBuffer b = ByteBuffer.allocate(data.length);
 		b.clear();
 		b = ByteBuffer.wrap(data);
@@ -48,13 +50,12 @@ public class SenderConnection implements Runnable {
 			e.printStackTrace();
 		}
 		
-		setStarted(true);
-		
 		while (isRunning()) {
 			try {
 				// Wait for an event one of the registered channels
 				this.selector.select();
-				System.out.println("run");
+				System.out.println("senderConnection run");
+				
 
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
@@ -79,14 +80,52 @@ public class SenderConnection implements Runnable {
 			}
 		}
 		
-		System.out.println("senderConnection stopped: " + this.sipUri);
+		System.out.println("senderConnection stopped: " + this.sipUri);	
+	}
+	
+	public void start() {
+		//System.out.println("SenderConnection start! (" + this.remoteAddress.getHostAddress() + ":" + this.remotePort + ")");
+		System.out.println("SenderConnection start! (" + this.sipUri + ")");
+		try {
+			senderChannel = this.initiateConnection();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		setRunning(true);
+	}
+
+	public void stop() {
+		setRunning(false);
+		System.out.println("senderConnection stop: " + this.sipUri);
 		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
 		try {
 			this.senderChannel.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("senderConnection closed: " + this.sipUri);		
+		
+		for (String sessionId : this.sessionIds) {
+			System.out.println("Torlom a sessionoket");
+			getMsrpStack().removeSession(sessionId);
+		}
+		
+		setConnected(false);
+		System.out.println("senderConnection closed: " + this.sipUri);
+	}
+	
+	public void addSessionId(String sessionId) {
+		this.sessionIds.add(sessionId);
+	}
+	
+	public void removeSessionId(String sessionId) {
+		int i = 0;
+		for (String id : sessionIds) {
+			if (sessionId.equals(id)) {
+				this.sessionIds.remove(i);
+				break;
+			}
+			i++;
+		}				
 	}
 	
 	private SocketChannel initiateConnection() throws IOException {
@@ -105,9 +144,7 @@ public class SenderConnection implements Runnable {
 	}
 	
 	private void finishConnection(SelectionKey key) throws IOException {
-		System.out.println("sender finishconnection");
 		SocketChannel socketChannel = (SocketChannel) key.channel();
-	
 		try {
 			socketChannel.finishConnect();
 		} catch (IOException e) {
@@ -116,54 +153,22 @@ public class SenderConnection implements Runnable {
 			return;
 		}		
 		key.interestOps(SelectionKey.OP_READ);	
+		setConnected(true);
 	}
 	
 	private Selector initSelector() throws IOException {
 		return SelectorProvider.provider().openSelector();
 	}
 	
-	public void start() {
-		System.out.println("SenderConnection start! (" + this.remoteAddress.getHostAddress() + ":" + this.remotePort + ")");
-		setRunning(true);
-		//new Thread(this).start();
-		try {
-			senderChannel = this.initiateConnection();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		setStarted(true);
-	}
-
-	public void stop() {
-		System.out.println("senderConnection stop");
-		setRunning(false);
-
-		System.out.println("senderConnection stopped: " + this.sipUri);
-		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
-		try {
-			this.senderChannel.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println("senderConnection closed: " + this.sipUri);
-	}
-	
-	public void setStarted(boolean started) {
-		this.started = started;
-	}
-
-	public boolean isStarted() {
-		return started;
+	public MSRPStack getMsrpStack() {
+		return msrpStack;
 	}
 	
 	public boolean isRunning() {
-		//System.out.println("isRunning():" + running);
 		return running;
 	}
 	
 	public void setRunning(boolean running) {
-		//System.out.println("setRunning(" + running + ")");
 		this.running = running;
 	}
 
@@ -189,6 +194,14 @@ public class SenderConnection implements Runnable {
 
 	public void setSipUri(String sipUri) {
 		this.sipUri = sipUri;
+	}
+
+	public void setConnected(boolean connected) {
+		this.connected = connected;
+	}
+
+	public boolean isConnected() {
+		return connected;
 	}
 
 }

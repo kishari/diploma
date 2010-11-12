@@ -4,6 +4,7 @@ import hu.messaging.msrp.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
 
 public class MessagingService {
 	
@@ -39,6 +40,12 @@ public class MessagingService {
 		return getMsrpStack().getConnections().isReceiverConnection();
 	}
 
+	public static void createNewSession(URI localURI, URI remoteURI, String sipUri) {
+		getMsrpStack().putNewSession(new Session(localURI, remoteURI));
+		SenderConnection s = getMsrpStack().getConnections().findSenderConnection(sipUri);
+		s.addSessionId(localURI.toString()+remoteURI.toString());
+	}
+	
 	public static MSRPStack getMsrpStack() {
 		return msrpStack;
 	}

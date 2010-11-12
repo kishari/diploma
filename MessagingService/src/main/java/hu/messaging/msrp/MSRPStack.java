@@ -2,14 +2,14 @@ package hu.messaging.msrp;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MSRPStack {
 
 	private Connections connections = new Connections(this);
-	private List<Session> sessions = new ArrayList<Session>();
+	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
 	
 
 	public void createReceiverConnection(InetAddress host) throws IOException {
@@ -17,36 +17,50 @@ public class MSRPStack {
 	}
 	
 	public SenderConnection createSenderConnection(InetAddress host, int port, String sipUri) throws IOException {
-		return getConnections().createSenderConnection(host, port, sipUri);		
-	}
-	
-	public void update(SocketChannel channel) {
-		SenderConnection s = getConnections().findSenderConnection(channel.socket().getInetAddress(), channel.socket().getLocalPort());
-		if (s != null) {
-			System.out.println("MSRPStack update: " + s.getRemoteAddress().getHostAddress() + " : " + s.getRemotePort());			
-		}
-		else {
-			System.out.println("MSRPStack update error: SenderConnection is null!");
-		}
+		return getConnections().createSenderConnection(host, port, sipUri, this);		
 	}
 	
 	public void sendMessage(byte[] message, String sipUri) {	
 		getConnections().findSenderConnection(sipUri);
 	}
 	
+	public synchronized void putNewSession(Session session) {
+		if ( findSession( session ) != null ) {
+			return;
+		}
+		System.out.println("MSRPStack putNewSession");
+		getActiveSessions().put(session.getId(), session);
+	}
+	
+	public Session findSession(Session session) {
+		if ( getActiveSessions().containsKey( session.getId() ) ) {
+			return getActiveSessions().get(session.getId());
+		}
+		return null;
+	}
+	
+	public Session findSession(String sessionId) {
+		System.out.println("MSRPRstack findSession: " + sessionId);
+		for (String s : getActiveSessions().keySet()) {
+			System.out.println(s);
+		}
+		if ( getActiveSessions().containsKey( sessionId ) ) {
+			return getActiveSessions().get(sessionId);
+		}
+		return null;
+	}
+	
+	public void removeSession(String sessionId) {
+		System.out.println("MSRPStack removeSession: " + sessionId);
+		Session s = getActiveSessions().remove(sessionId);
+		System.out.println(s.getId());
+	}
+	
 	public Connections getConnections() {
 		return connections;
 	}
 
-	public void setConnections(Connections connections) {
-		this.connections = connections;
-	}
-
-	public void setSessions(List<Session> sessions) {
-		this.sessions = sessions;
-	}
-
-	public List<Session> getSessions() {
-		return sessions;
+	public Map<String, Session> getActiveSessions() {
+		return activeSessions;
 	}
 }

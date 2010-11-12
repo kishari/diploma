@@ -15,10 +15,9 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Observable;
 import java.util.Random;
 
-public class ReceiverConnection extends Observable implements Runnable {
+public class ReceiverConnection implements Runnable {
 
 	private int sumOfReadedByte = 0;
 	private int countOfRead = 0;
@@ -29,7 +28,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private ByteBuffer buff = null;
 	
-	private Connections parent;
+	private MSRPStack msrpStack = null;
 	
 	private InetAddress hostAddress;
 	private int port = 0;
@@ -37,38 +36,14 @@ public class ReceiverConnection extends Observable implements Runnable {
 	private ServerSocketChannel serverSocketChannel = null;
 	private Selector selector = null;
 	
-	public ReceiverConnection(InetAddress localHostAddress, Connections parent) throws IOException {
+	public ReceiverConnection(InetAddress localHostAddress, MSRPStack msrpStack) throws IOException {
 		this.hostAddress = localHostAddress;
-		this.parent = parent;
+		this.msrpStack = msrpStack;
 		this.selector = initSelector();
 		buff = ByteBuffer.allocate(1000000);
 		buff.clear();
-		this.addObserver(parent);
 	}
 
-	private synchronized int getUnboundPort() throws IOException {
-		ServerSocketChannel channel = ServerSocketChannel.open();
-		ServerSocket s = channel.socket();
-		int randomPort = 0;
-		Random random = new Random();
-		randomPort = random.nextInt(65535 - 1024) + 1024;
-		InetSocketAddress addr = new InetSocketAddress(hostAddress, randomPort);
-		while( !s.isBound() ) {			
-			try {
-				s.bind(addr);
-			}
-			catch(IOException e) {
-				randomPort = random.nextInt(65535 - 1024) + 1024;
-				addr = new InetSocketAddress(hostAddress, randomPort);
-			}			
-		}
-		try {
-			s.close();
-		}
-		catch(IOException e) { }
-		//System.out.println("getUnBoundPort: " + randomPort);
-		return randomPort;
-	}
 	public void run() {
 		setRunning(true);
 		
@@ -104,9 +79,32 @@ public class ReceiverConnection extends Observable implements Runnable {
 		}
 	}
 	
+	private synchronized int getUnboundPort() throws IOException {
+		ServerSocketChannel channel = ServerSocketChannel.open();
+		ServerSocket s = channel.socket();
+		int randomPort = 0;
+		Random random = new Random();
+		randomPort = random.nextInt(65535 - 1024) + 1024;
+		InetSocketAddress addr = new InetSocketAddress(hostAddress, randomPort);
+		while( !s.isBound() ) {			
+			try {
+				s.bind(addr);
+			}
+			catch(IOException e) {
+				randomPort = random.nextInt(65535 - 1024) + 1024;
+				addr = new InetSocketAddress(hostAddress, randomPort);
+			}			
+		}
+		try {
+			s.close();
+		}
+		catch(IOException e) { }
+		
+		return randomPort;
+	}
+	
 	private void accept(SelectionKey key) throws IOException {
 		  System.out.println("receiver accept!");
-		  this.setChanged();
 		    // For an accept to be pending the channel must be a server socket channel.
 		    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
@@ -117,7 +115,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 		    // Register the new SocketChannel with our Selector, indicating
 		    // we'd like to be notified when there's data waiting to be read
 		    socketChannel.register(this.selector, SelectionKey.OP_READ);
-		    this.notifyObservers(socketChannel);
 	}
 	
 	private void read(SelectionKey key) throws IOException {
@@ -133,7 +130,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 		      numRead = socketChannel.read(buff);
 		      sumOfReadedByte += numRead;
 		      countOfRead++;
-		      //System.out.println("number of readed byte: " + numRead);
 		    } catch (IOException e) {
 		      // The remote forcibly closed the connection, cancel
 		      // the selection key and close the channel.
@@ -149,23 +145,20 @@ public class ReceiverConnection extends Observable implements Runnable {
 		      key.cancel();
 		      return;
 		    }
-		    //System.out.println(readBuffer.position());
-		    //this.readBuffer.rewind();
 		    
 		    byte[] data = new byte[numRead];
-		   // System.out.println(readBuffer.position());
 		    
 		    buff.rewind();
-		    //System.out.println(b.toString());
 		    buff.get(data, 0, numRead);
-		    //System.out.println(b.toString());
 		    
 		    List<String> messages = preParse(data);
-		    int i = 0;
 		    for (String m : messages) {
-		    	i++;
-		    	//System.out.println("Preparser után az adat " + i + ":\n" + m + " x");
-		    	MSRPUtil.createMessage(m);
+		    	MSRPMessage msg = MSRPUtil.createMessage(m);
+		    	try {
+					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath()).putMessageIntoMessageQueue(msg);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 		    }
 	    
 	}
@@ -318,6 +311,10 @@ public class ReceiverConnection extends Observable implements Runnable {
 
 	public void setPort(int port) {
 		this.port = port;
+	}
+
+	public MSRPStack getMsrpStack() {
+		return msrpStack;
 	}
 
 }

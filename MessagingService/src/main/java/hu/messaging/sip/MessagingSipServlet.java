@@ -135,11 +135,11 @@ public class MessagingSipServlet extends SipServlet {
 					MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
 			
-			ParsedSDP sdp = new SDPUtil().parseSessionDescription(req.getContent().toString());
+			ParsedSDP remoteSdp = new SDPUtil().parseSessionDescription(req.getContent().toString());
 			
 			boolean isConnectionToRemoteHost = false; //Meg kell vizsgálni, hogy a távoli géphez van-e már élõ senderConnection
 			if (!isConnectionToRemoteHost) {
-				MessagingService.createSenderConnection(sdp.getHost(), sdp.getPort(), getCleanSipUri(req.getFrom().toString()));
+				MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
 				//MessagingService.getMsrpStack().getConnections().findSenderConnection(sdp.getHost(), sdp.getPort()).start();
 				MessagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
 			}
@@ -158,6 +158,10 @@ public class MessagingSipServlet extends SipServlet {
 							 "a=accept-types:text/plain\n" +
 							 "a=path:MSRP://" + address + ":" + port + "/serversessionid;tcp";
 			resp.setContent(content, "application/sdp");
+			
+			ParsedSDP localSdp = new SDPUtil().parseSessionDescription(content);
+			
+			MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
 			resp.send();			
 		}
 		else {

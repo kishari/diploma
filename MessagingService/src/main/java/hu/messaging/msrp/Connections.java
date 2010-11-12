@@ -4,16 +4,14 @@ import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Observable;
-import java.util.Observer;
-import java.nio.channels.SocketChannel;
 
-public class Connections implements Observer {
+public class Connections {
 
 	private MSRPStack msrpStack;
 	private ReceiverConnection receiverConnection = null;
 	private List<SenderConnection> senderConnections = new ArrayList<SenderConnection>();
 		
+	
 	public Connections(MSRPStack msrpStack) {
 		this.msrpStack = msrpStack;
 	}
@@ -28,22 +26,13 @@ public class Connections implements Observer {
 	   	}
 	}
 
-	public void update(Observable o, Object arg) {
-		SocketChannel s = (SocketChannel) arg;
-		System.out.println("Connections update: " + o.toString());
-		//System.out.println("SenderConnection accept with host:port = " 
-		//					+ s.socket().getInetAddress().getHostName() + ":" + s.socket().getPort());
-		System.out.println("SenderConnection accept with host:port = " 
-				+ s.socket().getInetAddress().getHostAddress() + ":" + s.socket().getLocalPort());
-		msrpStack.update(s);
-	}
-	
 	public void createReceiverConnection(InetAddress localhost) throws IOException {
-		this.setReceiverConnection(new ReceiverConnection(localhost, this));
+		this.setReceiverConnection(new ReceiverConnection(localhost, msrpStack));
 	}
 	
-	public SenderConnection createSenderConnection(InetAddress addr, int port, String sipUri) throws IOException {
-		SenderConnection c = new SenderConnection(addr, port, this, sipUri);
+	public SenderConnection createSenderConnection(InetAddress addr, int port, 
+												   String sipUri, MSRPStack msrpStack) throws IOException {	
+		SenderConnection c = new SenderConnection(addr, port, sipUri, msrpStack);
 		this.senderConnections.add(c);
 		return c;
 	}
@@ -64,6 +53,9 @@ public class Connections implements Observer {
 			c.stop();
 			this.senderConnections.remove(c);
 			System.out.println("Connections deleteSenderConnection finished");
+			for (SenderConnection s : this.senderConnections) {
+				System.out.println("Hahahaha, van még senderConnection a listában");
+			}
 			return true;
 		}
 		return false;
@@ -100,10 +92,7 @@ public class Connections implements Observer {
 	}
 	
 	public boolean isReceiverConnection() {
-		if ( getReceiverConnection() != null ) {
-			return true;
-		}			
-		return false;
+		return (getReceiverConnection() != null);
 	}
 	
 	public boolean isRunningReceiverConnection() {
@@ -111,5 +100,9 @@ public class Connections implements Observer {
 			return getReceiverConnection().isRunning();
 		}			
 		return false;
+	}
+	
+	public MSRPStack getMsrpStack() {
+		return msrpStack;
 	}
 }
