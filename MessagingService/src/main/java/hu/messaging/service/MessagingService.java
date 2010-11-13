@@ -41,8 +41,13 @@ public class MessagingService {
 	}
 
 	public static void createNewSession(URI localURI, URI remoteURI, String sipUri) {
-		getMsrpStack().putNewSession(new Session(localURI, remoteURI));
 		SenderConnection s = getMsrpStack().getConnections().findSenderConnection(sipUri);
+		System.out.println("MessagingService createNewSession");
+		
+		if (s == null)
+			System.out.println("nem találtunk a sessionhoz sendert");
+		
+		getMsrpStack().putNewSession(new Session(localURI, remoteURI, s));
 		s.addSessionId(localURI.toString()+remoteURI.toString());
 	}
 	

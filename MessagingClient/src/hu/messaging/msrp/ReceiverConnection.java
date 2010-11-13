@@ -118,7 +118,7 @@ public class ReceiverConnection implements Runnable {
 	}
 	
 	private void read(SelectionKey key) throws IOException {
-		//System.out.println("receiver read from channel!");
+		System.out.println("receiver read from channel!");
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
 		    
 		    // Clear out our read buffer so it's ready for new data

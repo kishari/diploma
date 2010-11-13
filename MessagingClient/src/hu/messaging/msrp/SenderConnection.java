@@ -86,6 +86,7 @@ public class SenderConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println("senderChannel close után");
 	}
 	
 	private SocketChannel initiateConnection() throws IOException {
@@ -114,7 +115,7 @@ public class SenderConnection implements Runnable {
 			key.cancel();
 			return;
 		}		
-		key.interestOps(SelectionKey.OP_READ);	
+		//key.interestOps(SelectionKey.OP_READ);	
 		//System.out.println(this.sipUri);
 	}
 	

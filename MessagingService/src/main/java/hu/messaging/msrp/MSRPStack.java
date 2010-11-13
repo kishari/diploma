@@ -29,6 +29,7 @@ public class MSRPStack {
 			return;
 		}
 		System.out.println("MSRPStack putNewSession");
+		System.out.println(session.getSenderConnection().getSipUri());
 		getActiveSessions().put(session.getId(), session);
 	}
 	

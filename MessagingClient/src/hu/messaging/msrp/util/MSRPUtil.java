@@ -18,8 +18,10 @@ public class MSRPUtil {
 	private static Pattern contentPattern =  Pattern.compile("(Content-Type:) ([\\p{Alpha}]{1,}/[\\p{Alpha}]{1,})\r\n\r\n" +
 															 "(.*)\r\n");
 	private static Pattern endLinePattern =  Pattern.compile("\r\n([-]{7})([\\p{Alnum}]{8,20})([+$#]{1})");
-	
+
+	private static int counter = 0;
 	public static MSRPMessage createMessage(String msg) {
+		counter++;
 		MSRPMessage m = new MSRPMessage();
 		
 		System.out.println("MESSAGEUTIL inc msg: \n" + msg);
@@ -85,7 +87,8 @@ public class MSRPUtil {
 				}
 				m.setEndToken(matcher.group(3).charAt(0));
 			}
-			System.out.println("message after create: \n"  + m.toString());			
+			//System.out.println("message after create: \n"  + m.toString());
+			System.out.println("Bejovo uzenetek szama: " + counter);
 		}
 		
 		return m;

@@ -62,6 +62,7 @@ public class MessagingSipServlet extends SipServlet {
 		//TODO: Implement this method
 		System.out.println("Server doBye");
 		req.createResponse(200).send();
+		System.out.println(getCleanSipUri(req.getFrom().toString()));
 		MessagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
 	}
 
