@@ -53,8 +53,7 @@ public class MainWindow implements Runnable {
        
        messageButton.addActionListener(new ActionListener()   {
            public void actionPerformed(ActionEvent e) {
-        	  
-        	   client.sendTestData();
+        		  	client.sendTestData();
         	  
         	   //client.sendData(m.toString().getBytes(), "sip:weblogic103@192.168.1.103");
            }

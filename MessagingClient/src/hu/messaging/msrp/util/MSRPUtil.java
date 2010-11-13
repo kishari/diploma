@@ -4,6 +4,7 @@ import hu.messaging.msrp.Constants;
 import hu.messaging.msrp.MSRPMessage;
 
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,10 +22,12 @@ public class MSRPUtil {
 
 	private static int counter = 0;
 	public static MSRPMessage createMessage(String msg) {
+		long startTime = new Date().getTime();
+		System.out.println("createMessage started: " + startTime);
 		counter++;
 		MSRPMessage m = new MSRPMessage();
 		
-		System.out.println("MESSAGEUTIL inc msg: \n" + msg);
+		//System.out.println("MESSAGEUTIL inc msg: \n" + msg);
 		
 		Matcher matcher = methodPattern.matcher(msg);
 		
@@ -88,6 +91,10 @@ public class MSRPUtil {
 				m.setEndToken(matcher.group(3).charAt(0));
 			}
 			//System.out.println("message after create: \n"  + m.toString());
+			System.out.println(m.getMessageId());
+			long endTime = new Date().getTime();
+			System.out.println("createMessage ended: " + endTime);
+			System.out.println("duration: " + (endTime - startTime) );
 			System.out.println("Bejovo uzenetek szama: " + counter);
 		}
 		

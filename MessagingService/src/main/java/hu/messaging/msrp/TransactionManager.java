@@ -8,28 +8,29 @@ public class TransactionManager implements Runnable {
 	private BlockingQueue<MSRPMessage> messageQueue;
 	//private BlockingQueue<MSRPMessage> outputQueue;
 	private SenderConnection senderConnection;
+	private int counter = 0;
 	
 	public void run() {
 		while(true) {
 			try {
 				MSRPMessage m = messageQueue.take();
-				System.out.println("TransactionManager kivett egy üzenetet a session messagequeue-ból:");
+				System.out.println("TransactionManager kivett egy üzenetet a session messagequeue-bol:");
 				System.out.println(m.toString());
 				System.out.println();
 				//outputQueue.put(processMessage(m));
 				
 				//Tesztelés végett visszaküldjük ugyanazt az üzenetet a usernak, amikor kaptunk
-				System.out.println(processMessage(m).toString());
+				//System.out.println(processMessage(m).toString());
 				if (senderConnection != null) {
 					System.out.println("TransactionManager sendig message to " + senderConnection.getSipUri() + " " +
 										senderConnection.getRemoteAddress()+ ":" + senderConnection.getRemotePort());
-					for (int i = 0; i < 3; i++) {
+					//for (int i = 0; i < 3; i++) {
 						senderConnection.send(processMessage(m).toString().getBytes());
-						Thread.sleep(200);
-					}
-					for (int i = 0; i < 3; i++) {
-						senderConnection.send(processMessage(m).toString().getBytes());
-					}
+					//	Thread.sleep(200);
+					//}
+					//for (int i = 0; i < 3; i++) {
+					//	senderConnection.send(processMessage(m).toString().getBytes());
+					//}
 
 				}
 				else {
@@ -50,17 +51,15 @@ public class TransactionManager implements Runnable {
 		this.senderConnection = senderConnection;
 	}
 	
+	//private synchronized MSRPMessage processMessage(MSRPMessage m) {
 	private MSRPMessage processMessage(MSRPMessage m) {
-		System.out.println("TransactionManager.processMessage");
+		counter++;
+		System.out.println("TransactionManager.processMessage: " + counter);
 		//Itt majd szépen feldolgozzuk
-		MSRPMessage retMessage = new MSRPMessage();
-		retMessage.setContent(m.getContent());
-		retMessage.setContentType(m.getContentType());
-		retMessage.setEndToken(m.getEndToken());
-		retMessage.setFromPath(m.getToPath());
-		retMessage.setToPath(m.getFromPath());
 		
 		//return retMessage;
+		m.setMessageId(m.getMessageId() + counter);
+		System.out.println("modositott messageId: " + m.getMessageId());
 		return m;
 	}
 

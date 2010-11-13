@@ -13,6 +13,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
@@ -104,7 +105,7 @@ public class ReceiverConnection implements Runnable {
 	}
 	
 	private void accept(SelectionKey key) throws IOException {
-		  System.out.println("receiver accept!");
+		  System.out.println("receiver accept! -----------------------------------------------");
 		    // For an accept to be pending the channel must be a server socket channel.
 		    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
@@ -118,7 +119,7 @@ public class ReceiverConnection implements Runnable {
 	}
 	
 	private void read(SelectionKey key) throws IOException {
-		System.out.println("receiver read from channel!");
+		System.out.println("receiver read from channel! -----------------------------------------------");
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
 		    
 		    // Clear out our read buffer so it's ready for new data
@@ -184,6 +185,8 @@ public class ReceiverConnection implements Runnable {
 	
 	private List<String> preParse(byte[] data) {
 		List<String> messages = new ArrayList<String>();
+		long startTime = new Date().getTime();
+		System.out.println("preparse started: " + startTime);
 		int successProcessedByteCount = 0;
 		String m = new String(data);
 		if (!"".equals(saveBuffer)) {
@@ -267,6 +270,7 @@ public class ReceiverConnection implements Runnable {
 							messageCounter++;
 							successProcessedByteCount += byteCounter;
 							byteCounter = 0;
+							System.out.println("csomag vege talalat: " + new Date().getTime());
 						}
 			    }			
 		}
@@ -279,6 +283,9 @@ public class ReceiverConnection implements Runnable {
 			saveBuffer = new String(save);
 			//System.out.println("Maradék adat: " + saveBuffer);
 		}
+		long endTime = new Date().getTime();
+		System.out.println("preparse end: " + endTime);
+		System.out.println("duration: " + (endTime - startTime) );
 		return messages;
 	}
 	
@@ -293,6 +300,7 @@ public class ReceiverConnection implements Runnable {
 	
 	public void stop() {
 		setRunning(false);
+		this.selector.wakeup();
 	}
 
 	public synchronized boolean isRunning() {

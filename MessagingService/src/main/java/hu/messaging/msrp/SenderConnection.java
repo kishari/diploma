@@ -78,8 +78,8 @@ public class SenderConnection implements Runnable {
 				synchronized (this.pendingChanges) {
 					Iterator<ChangeRequest> changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
-						System.out.println(this.pendingChanges.size());
-						System.out.println("Iteralunk a pendingChanges listan...");
+						//System.out.println(this.pendingChanges.size());
+						//System.out.println("Iteralunk a pendingChanges listan...");
 						ChangeRequest change = (ChangeRequest) changes.next();
 						switch (change.type) {
 						case ChangeRequest.CHANGEOPS:
@@ -91,21 +91,21 @@ public class SenderConnection implements Runnable {
 				              break;
 						}
 					}
-					System.out.println("clear elott: " + this.pendingChanges.size());
+					//System.out.println("clear elott: " + this.pendingChanges.size());
 					//System.out.println(this.pendingChanges.size());
 					this.pendingChanges.clear();
-					System.out.println("clean utan: " + this.pendingChanges.size());
+					//System.out.println("clean utan: " + this.pendingChanges.size());
 				}
 				// Wait for an event one of the registered channels
 				this.selector.select();
-				System.out.println("select utan");
+				//System.out.println("select utan");
 				//System.out.println("senderConnection run");
 				
 
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
-					System.out.println("iteralunk a selector.selectedKeys listan");
+					//System.out.println("iteralunk a selector.selectedKeys listan");
 					SelectionKey key = (SelectionKey) selectedKeys.next();
 					selectedKeys.remove();
 
@@ -117,7 +117,7 @@ public class SenderConnection implements Runnable {
 					if (key.isConnectable()) {
 						this.finishConnection(key);
 					} else if (key.isReadable()) {
-						//itt kellene olvasni
+						this.read(key);
 					} else if (key.isWritable()) {
 						this.write(key);
 					}
@@ -203,13 +203,38 @@ public class SenderConnection implements Runnable {
 			key.cancel();
 			return;
 		}		
-		//key.interestOps(SelectionKey.OP_READ);	
 		socketChannel.register(this.selector, SelectionKey.OP_READ);
 		setConnected(true);
 	}
 	
 	private Selector initSelector() throws IOException {
 		return SelectorProvider.provider().openSelector();
+	}
+	
+	private void read(SelectionKey key) throws IOException {
+		//Ha hibával áll le a kliens, akkor ezt a connectiont meg kell ölni
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+		
+		int numRead;
+	    try {
+	    	ByteBuffer buff = ByteBuffer.allocate(10000);
+	    	buff.clear();
+	    	numRead = socketChannel.read(buff);
+	    } catch (IOException e) {
+	      key.cancel();
+	      socketChannel.close();
+	      System.out.println("Sender IOException");
+	      getMsrpStack().getConnections().deleteSenderConnection(sipUri);
+	      return;
+	    }
+		 if (numRead == -1) {
+			 System.out.println("-1 adatot olvastam");
+		      key.channel().close();
+		      key.cancel();
+		      //Szabadítsuk fel az erõforrásokat
+		      getMsrpStack().getConnections().deleteSenderConnection(sipUri);
+		      return;
+		 }
 	}
 	
 	private void write(SelectionKey key) throws IOException {

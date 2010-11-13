@@ -143,7 +143,7 @@ public class Client {
 		MSRPMessage m = new MSRPMessage();
 		SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103");
 		if (s == null) {
-			System.out.println("Fuck You!!!!!!!!!!!!!!!");
+			System.out.println("Client SenderConnection is null!!!!!!!!!!!!!!!");
 			return;
 		}
 		m.createTestMessage(
@@ -152,8 +152,12 @@ public class Client {
 				MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort());
 
 		try {
-			s.send(m.toString().getBytes());	
+			for (int i = 0; i < 10; i++) {
+				Thread.sleep(20);
+				s.send(m.toString().getBytes());
+			}
 		} catch(IOException ex) {}
+		  catch(InterruptedException exc) {}
 		
 		
 	}
