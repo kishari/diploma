@@ -16,28 +16,19 @@ public class SDPUtil {
 		
 		Matcher m = attributePattern.matcher(s);
 		while (m.find()) {
-			//System.out.println("SDPUtil parse " + m.group(1));
-			//System.out.println("SDPUtil parse " + m.group(2));
-			sdp.addAttribute(m.group(1), m.group(2));
-			//System.out.println();
+			sdp.addAttribute(m.group(1).toUpperCase(), m.group(2));
 		}
 		
 		m = mediaPattern.matcher(s);
 		while (m.find()) {
-			//System.out.println("SDPUtil parse " + m.group(1));
-			//System.out.println("SDPUtil parse ." + m.group(2) + ".");
 			sdp.setPort(Integer.parseInt(m.group(2)));
-			//System.out.println();
 		}
 		
 		m = connectionPattern.matcher(s);
 		while (m.find()) {
-			//System.out.println("SDPUtil parse " + m.group(1));
 			sdp.setHost(InetAddress.getByName(m.group(1)));
-			System.out.println();
 		}
-		
-		//System.out.println("sdp parse után: "  + sdp.getHost().getHostAddress() + ":" + sdp.getPort());
+	
 		return sdp;
 	}
 	

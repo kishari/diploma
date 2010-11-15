@@ -20,13 +20,9 @@ import java.util.Map;
 import java.util.Random;
 
 public class ReceiverConnection implements Runnable {
-
-	private boolean running = false;
-	
+	private boolean running = false;	
 	private ByteBuffer buff = null;
-	
 	private MSRPStack msrpStack = null;
-	
 	private Map<SocketChannel, String> saveBuffers = new HashMap<SocketChannel, String>();
 	private InetAddress hostAddress;
 	private int port = 0;
@@ -128,6 +124,7 @@ public class ReceiverConnection implements Runnable {
 		// The remote forcibly closed the connection, cancel
 		   key.cancel();
 		   socketChannel.close();
+		   saveBuffers.remove(socketChannel);
 		   return;
 		}
 
@@ -136,6 +133,7 @@ public class ReceiverConnection implements Runnable {
 		// same from our end and cancel the channel.
 		   key.channel().close();
 		   key.cancel();
+		   saveBuffers.remove(socketChannel);
 		   return;
 	    }
 		    
@@ -236,8 +234,6 @@ public class ReceiverConnection implements Runnable {
  		 		 
 						 break;
 				case 9 :
-						//System.out.println("case 9, b: " + (char)b);
-						//System.out.println(data.remaining());
 						if (b == '$' || b == '#' || b == '+') state = 10;
 						
 				case 10 : 
@@ -247,7 +243,6 @@ public class ReceiverConnection implements Runnable {
 							buffer.get(temp, 0, byteCounter);
 							String chunk = new String(temp);
 							messages.add(chunk);
-							System.out.println("preparse end: " + chunk);
 							state = 0;
 							messageCounter++;
 							successProcessedByteCount += byteCounter;
@@ -269,19 +264,21 @@ public class ReceiverConnection implements Runnable {
 	public void start() {
 		if (!isRunning()) {
 			System.out.println("ReceiverConnection start! listen on: " + this.hostAddress.getHostAddress() + ":" + this.port);
-			new Thread(this).start();
+			Thread t = new Thread(this);
+			t.start();
 		}
 	}
 	
 	public void stop() {
 		setRunning(false);
+		this.selector.wakeup();
 	}
 
-	public synchronized boolean isRunning() {
+	public boolean isRunning() {
 		return running;
 	}
 
-	public synchronized void setRunning(boolean running) {
+	public void setRunning(boolean running) {
 		this.running = running;
 	}
 
@@ -303,6 +300,10 @@ public class ReceiverConnection implements Runnable {
 
 	public MSRPStack getMsrpStack() {
 		return msrpStack;
+	}
+	
+	public Map<SocketChannel, String> getSaveBuffers() {
+		return saveBuffers;
 	}
 
 }

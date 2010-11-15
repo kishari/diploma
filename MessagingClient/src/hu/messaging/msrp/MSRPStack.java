@@ -19,7 +19,6 @@ public class MSRPStack {
 	}
 	
 	public SenderConnection createSenderConnection(InetAddress host, int port, String sipUri) throws IOException {
-		System.out.println("MSRPStack createSenderConnection");
 		return getConnections().createSenderConnection(host, port, sipUri, this);		
 	}
 	
@@ -33,16 +32,15 @@ public class MSRPStack {
 	
 	public Session findSession(String sessionId) {
 		System.out.println("MSRPRstack findSession: " + sessionId);
-		
-		System.out.println("activeSessions mapben levo kulcsok lekerese: ");
-		for (String s : getActiveSessions().keySet()) {
-			System.out.println(s);			
-		}
-		
+				
 		if ( getActiveSessions().containsKey( sessionId ) ) {
 			System.out.println("MSRPRstack findSession: van talalat");
 			return getActiveSessions().get(sessionId);
+		} 
+		try {
+			Thread.sleep(2000);
 		}
+		catch(InterruptedException e) {}
 		return null;
 	}
 	
@@ -74,12 +72,13 @@ public class MSRPStack {
 	}
 	
 	public void disposeResources() {
-		System.out.println("disposeResources...");
+		System.out.println("MSRPStack disposeResources...");
 		SenderConnection s = getConnections().findSenderConnection(MessagingService.serverURI);
 		if (s == null) {
-			System.out.println("SenderConn null");
+			System.out.println("MSRPStack disposeResources: senderConnection is null");
 		}
 		else {
+				s.getSession().getTransactionManager().stop();
 				s.stop();
 		}
 		getConnections().getReceiverConnection().stop();

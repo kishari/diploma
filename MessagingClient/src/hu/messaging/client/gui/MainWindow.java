@@ -56,7 +56,7 @@ public class MainWindow implements Runnable {
        messageButton.addActionListener(new ActionListener()   {
            public void actionPerformed(ActionEvent e) {
         	   		String testData = "Hello Jozsi. Mi van veled? log a beled? Ez itt egy tesztuzenet.";
-        		  	client.sendData(testData.getBytes(), MessagingService.serverURI);
+        		  	client.sendMessage(testData.getBytes(), MessagingService.serverURI);
         	  
         	   //client.sendData(m.toString().getBytes(), MessagingService.serverURI);
            }

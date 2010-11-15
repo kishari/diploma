@@ -33,7 +33,7 @@ public class SenderConnection implements Runnable {
 	public SenderConnection(InetAddress remoteAddress, int remotePort, 
 							String sipUri, MSRPStack msrpStack) throws IOException {
 		
-		System.out.println("SenderConnection konstuktor");
+		System.out.println("SenderConnection constuctor");
 		this.msrpStack = msrpStack;
 		this.remoteAddress = remoteAddress;
 		this.remotePort = remotePort;
@@ -42,6 +42,7 @@ public class SenderConnection implements Runnable {
 	}
 
 	public void sendChunk(byte[] chunk) throws IOException {
+		System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
 		synchronized(this.pendingChanges) {
 			this.pendingChanges.add( new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE) );
 			ByteBuffer b = ByteBuffer.allocate(chunk.length);
@@ -57,13 +58,7 @@ public class SenderConnection implements Runnable {
 				queue.add(b);				
 			}
 		}
-		System.out.println("senderConnection send data! selector wakeup.");
 		this.selector.wakeup();
-		//System.out.println("Sending bytes: " + data.length);
-		//ByteBuffer b = ByteBuffer.allocate(data.length);
-		//b.clear();
-		//b = ByteBuffer.wrap(data);
-    	//senderChannel.write(b);
 	}
 	
 	public void run() {
@@ -72,14 +67,12 @@ public class SenderConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		//System.out.println("run eleje (senderchannel init utan)");
+		
 		while (isRunning()) {
 			try {
 				synchronized (this.pendingChanges) {
 					Iterator<ChangeRequest> changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
-						//System.out.println(this.pendingChanges.size());
-						//System.out.println("Iteralunk a pendingChanges listan...");
 						ChangeRequest change = (ChangeRequest) changes.next();
 						switch (change.type) {
 						case ChangeRequest.CHANGEOPS:
@@ -91,22 +84,16 @@ public class SenderConnection implements Runnable {
 				              break;
 						}
 					}
-					//System.out.println("clear elott: " + this.pendingChanges.size());
-					//System.out.println(this.pendingChanges.size());
 					this.pendingChanges.clear();
-					//System.out.println("clean utan: " + this.pendingChanges.size());
 				}
 				// Wait for an event one of the registered channels
 				this.selector.select();
-				System.out.println("sender run");
-				//System.out.println("select utan");
-				//System.out.println("senderConnection run");
+				System.out.println("senderConnection run");
 				
 
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
-					//System.out.println("iteralunk a selector.selectedKeys listan");
 					SelectionKey key = (SelectionKey) selectedKeys.next();
 					selectedKeys.remove();
 
@@ -140,7 +127,6 @@ public class SenderConnection implements Runnable {
 	}
 	
 	public void start() {
-		//System.out.println("SenderConnection start! (" + this.remoteAddress.getHostAddress() + ":" + this.remotePort + ")");
 		System.out.println("SenderConnection start! (" + this.sipUri + ")");
 		setRunning(true);
 		new Thread(this).start();		
@@ -148,18 +134,15 @@ public class SenderConnection implements Runnable {
 
 	public void stop() {
 		setRunning(false);
-		System.out.println("senderConnection stop: " + this.sipUri);
+		System.out.println("senderConnection stop called: " + this.sipUri);
 		this.selector.wakeup();
 		
-		//Törlöm az MSRPStackbõl a sessiont (teszt, session null miatt (amugy ez nem kellene)
-		//Ha rájövök a session miért null, akkor kiszedem
-		if (session != null)
-			getMsrpStack().removeSession(session.getId());
-		
+		this.session.getTransactionManager().stop();
+		//Törlöm az MSRPStackbõl a sessiont.
+		getMsrpStack().removeSession(session.getId());	
 	}
 	
 	private SocketChannel initiateConnection() throws IOException {
-		System.out.println("senderconnection initiateConnection");
 		// Create a non-blocking socket channel
 		SocketChannel socketChannel = SocketChannel.open();
 		socketChannel.configureBlocking(false);
@@ -196,7 +179,8 @@ public class SenderConnection implements Runnable {
 	}
 	
 	private void read(SelectionKey key) throws IOException {
-		//Ha hibával áll le a távoli gép, akkor ezt a connectiont meg kell ölni
+		//Ez akkor hívódik csak meg, ha hibával áll le a távoli gép,
+		//Ilyenkor ezt a connectiont meg kell ölni
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		
 		int numRead;
@@ -207,12 +191,10 @@ public class SenderConnection implements Runnable {
 	    } catch (IOException e) {
 	      key.cancel();
 	      socketChannel.close();
-	      System.out.println("Sender IOException");
 	      getMsrpStack().getConnections().deleteSenderConnection(sipUri);
 	      return;
 	    }
 		 if (numRead == -1) {
-			 System.out.println("-1 adatot olvastam");
 		      key.channel().close();
 		      key.cancel();
 		      //Szabadítsuk fel az erõforrásokat

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import java.util.*;
+
+import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.MessagingService;
 
 import com.ericsson.icp.ICPFactory;
@@ -17,8 +19,6 @@ import com.ericsson.icp.util.*;
 
 
 public class Client {
-	
-	//private MSRPStack msrpStack = new MSRPStack();
 	
 	private IPlatform platform = null;
 	private IProfile profile = null;
@@ -65,47 +65,6 @@ public class Client {
 		}
 
 	}
-	
-	private ISessionDescription createLocalSDP(InetAddress host, int port, String sessionId)    {
-       ISessionDescription localSdp = null;
-       try {
-    	   List<String> m = new ArrayList<String>();
-    	   
-    	   String address = host.getHostAddress();
-    	   
-    	   m.add("text/plain");
-    	   String path = new String();
-    	   path = "msrp://" + address + ":" + port + "/" + sessionId + ";tcp";
-  
-    	   String codes = "*";
-    	   codes = codes.trim();
-    	   
-           localSdp = SdpFactory.createSessionDescription("");
-           localSdp.setField(ISessionDescription.FieldType.ProtocolVersion, "0");
-           localSdp.setField(ISessionDescription.FieldType.Owner, "client 121123222 984773827 IN IP4 " + address);
-           localSdp.setField(ISessionDescription.FieldType.SessionName, "-");
-           localSdp.setField(ISessionDescription.FieldType.Connection, "IN IP4 " + address);
-           ITimeDescription timeDescription = SdpFactory.createTimeDescription();
-           timeDescription.setSessionActiveTime("0 0");
-           localSdp.addTimeDescription(timeDescription);
-           
-           IMediaDescription mediaDescription = SdpFactory.createMediaDescription();
-           mediaDescription.setField(IMediaDescription.FieldType.Name, "message " + port + " TCP/MSRP " + codes);
-                    
-       	   IAttribute attr = SdpFactory.createAttribute("accept-types", "text/plain");
-       	   mediaDescription.appendAttribute(attr);
-       	   attr = SdpFactory.createAttribute("path", path);
-       	   mediaDescription.appendAttribute(attr);
-       	   
-           localSdp.addMediaDescription(mediaDescription);
-
-       }
-       catch (Exception e)
-       {
-       	e.printStackTrace();
-       }
-       return localSdp;
-   }
    
 	public void sendInvite() {        
 		try {
@@ -118,11 +77,12 @@ public class Client {
 				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
 			
+			String sessionId = MSRPUtil.generateRandomString(20);
 			ISessionDescription sdp = createLocalSDP(MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress(),
 													 MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort(),
-													 "clientsessionid");
+													 sessionId);
 
-			MessagingService.addLocalSDP("clientsessionid", sdp.format());
+			MessagingService.addLocalSDP(MessagingService.serverURI, sdp.format());
 			
 			logArea.append("send INVITE to: " + MessagingService.serverURI + "\n");
 			session.start(MessagingService.serverURI, sdp, profile.getIdentity(), SdpFactory.createIMSContentContainer());
@@ -139,40 +99,15 @@ public class Client {
 		
 	}
 
-	/*
-	public void sendTestData() {
-		MSRPMessage m = new MSRPMessage();
-		SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI);
-		if (s == null) {
-			System.out.println("Client SenderConnection is null!!!!!!!!!!!!!!!");
-			return;
-		}
-		m.createTestMessage(
-				s.getRemoteAddress(), s.getRemotePort(),
-				MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress(),
-				MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort());
-
+	public void sendMessage(byte[] completeMessage, String sipUri) {
 		try {
-			for (int i = 0; i < 1; i++) {
-				Thread.sleep(20);
-				s.send(m.toString().getBytes());
-			}
-		} catch(IOException ex) {}
-		  catch(InterruptedException exc) {}
-		
-		
-	}
-	*/
-	
-	public void sendData(byte[] data, String sipUri) {
-		try {
-			MessagingService.sendData(data, sipUri);
+			MessagingService.sendMessage(completeMessage, sipUri);
 		}
 		catch(IOException e) { }
 	
 	}
 	
-	public void sendMessage(String message) {
+	public void sendSIPMessage(String message) {
 	/*	String msg = new String("MSG FROM CLIENT");
 		
 		logArea.append("send MESSAGE to alice: " + msg + "\n");
@@ -184,11 +119,50 @@ public class Client {
 		}
 	*/
 	}
+	
+	private ISessionDescription createLocalSDP(InetAddress host, int port, String sessionId) {
+	    ISessionDescription localSdp = null;
+		try {
+			List<String> m = new ArrayList<String>();
 
-	/*
-	public void closeConnections() {
-		getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI).stop();
-		getMsrpStack().getConnections().getReceiverConnection().stop();		
+			String address = host.getHostAddress();
+
+			m.add("text/plain");
+			String path = new String();
+			path = "msrp://" + address + ":" + port + "/" + sessionId + ";tcp";
+
+			String codes = "*";
+			codes = codes.trim();
+
+			localSdp = SdpFactory.createSessionDescription("");
+			localSdp.setField(ISessionDescription.FieldType.ProtocolVersion,
+					"0");
+			localSdp.setField(ISessionDescription.FieldType.Owner,
+					"client 121123222 984773827 IN IP4 " + address);
+			localSdp.setField(ISessionDescription.FieldType.SessionName, "-");
+			localSdp.setField(ISessionDescription.FieldType.Connection,
+					"IN IP4 " + address);
+			ITimeDescription timeDescription = SdpFactory
+					.createTimeDescription();
+			timeDescription.setSessionActiveTime("0 0");
+			localSdp.addTimeDescription(timeDescription);
+
+			IMediaDescription mediaDescription = SdpFactory
+					.createMediaDescription();
+			mediaDescription.setField(IMediaDescription.FieldType.Name,
+					"message " + port + " TCP/MSRP " + codes);
+
+			IAttribute attr = SdpFactory.createAttribute("accept-types",
+					"text/plain");
+			mediaDescription.appendAttribute(attr);
+			attr = SdpFactory.createAttribute("path", path);
+			mediaDescription.appendAttribute(attr);
+
+			localSdp.addMediaDescription(mediaDescription);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return localSdp;
 	}
-	 */
 }

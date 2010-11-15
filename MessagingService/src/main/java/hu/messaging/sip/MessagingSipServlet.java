@@ -13,11 +13,9 @@ import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
+import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
 import hu.messaging.util.*;
-
-import org.apache.log4j.Logger;
-
 
 public class MessagingSipServlet extends SipServlet {
 
@@ -32,21 +30,17 @@ public class MessagingSipServlet extends SipServlet {
 	
 	protected void doErrorResponse(SipServletResponse resp)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		super.doErrorResponse(resp);
+		
 	}
 
 	private static final long serialVersionUID = 1L;
 	
-	private Logger log = Logger.getLogger(MessagingSipServlet.class);
 	/**
 	 * The SIP Factory. Can be used to create URI and requests.
 	 */
 	private SipFactory sipFactory;
 
-	/**
-	 * @inheritDoc
-	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		ServletContext context = config.getServletContext();
@@ -66,63 +60,38 @@ public class MessagingSipServlet extends SipServlet {
 		MessagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
 	}
 
-	/**
-	 * @inheritDoc
-	 */
 	protected void doAck(SipServletRequest req)	throws ServletException, IOException {
-		//log.info("doAck calling...");
 		System.out.println("doAck calling...");
 		System.out.println("Ack from: " + req.getFrom() );
-		System.out.println("ack to: " + req.getTo());
-		System.out.println("session callId: " + req.getCallId());
-
 	}
 
-	/**
-	 * @inheritDoc
-	 */
 	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {
 		
 		System.out.println("doMessage calling...");
-		log.info("Incoming message: " + req.getContent() );
-		log.info("to: " + req.getTo());
-		log.info("from: " + req.getFrom());
-		log.info("User-Agent: " + req.getHeader("User-Agent"));
-		log.info("Accept-Contact: " + req.getHeader("Accept-Contact"));
+		System.out.println("Incoming message: " + req.getContent() );
+		System.out.println("from: " + req.getFrom());
 		req.createResponse(200).send();
 
-/*		if (true) {
-			final SipSession session = req.getSession();
-*/			
-			SipServletRequest messageRequest = sipFactory.createRequest(req, false);
-			messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
+		SipServletRequest messageRequest = sipFactory.createRequest(req, false);
+		messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
 			
-			messageRequest.pushRoute(sipFactory.createSipURI(null, MessagingUtil.getLocalIPAddress() + ":5082"));
-//	                messageRequest.addHeader("Accept-Contact", req.getHeader("Accept-Contact"));
-//	                messageRequest.addHeader("User-Agent", req.getHeader("User-Agent"));
+		messageRequest.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
+//	    messageRequest.addHeader("Accept-Contact", req.getHeader("Accept-Contact"));
+//	    messageRequest.addHeader("User-Agent", req.getHeader("User-Agent"));
 
-	        // Set the message content.
-	        messageRequest.setContent("Hello " + req.getContent(), "text/plain");
-	        
-	        messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
+        messageRequest.setContent("Hello " + req.getContent(), "text/plain");	        
+        messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
 
-	       	// Send the request
-	       	messageRequest.send();
+	    messageRequest.send();
 	}
 
-	/**
-	 * @inheritDoc
-	 */
 	protected void doInvite(SipServletRequest req) throws ServletException, IOException {
-//		log.info("doInvite calling...");
-//		log.info("Invite from: " + req.getFrom() );
-		
 		System.out.println("doInvite!...");
 		System.out.println("Invite from: " + req.getFrom() );
 		System.out.println("Invite from (regex): " + getCleanSipUri(req.getFrom().toString()) );
 		
-		System.out.println("content Type: " + req.getContentType());
-		System.out.println("content: " + req.getContent());
+//		System.out.println("content Type: " + req.getContentType());
+//		System.out.println("content: " + req.getContent());
 		
 		if (req.isInitial()) {
 			SipServletResponse resp = req.createResponse(200);
@@ -142,6 +111,8 @@ public class MessagingSipServlet extends SipServlet {
 			String address = localReceiverAddress.getHostAddress();
 			String port = Integer.toString(localReceiverPort);
 			
+			String sessionId = MSRPUtil.generateRandomString(20);
+			
 			String content = "v=0\n" +
 							 "o=weblogic 2890844526 2890844527 IN IP4 " + address + "\n" +
 							 "s=-\n" +							 
@@ -149,7 +120,7 @@ public class MessagingSipServlet extends SipServlet {
 							 "t=0 0\n" +
 							 "m=message " + port + " TCP/MSRP *\n" +
 							 "a=accept-types:text/plain\n" +
-							 "a=path:msrp://" + address + ":" + port + "/serversessionid;tcp";
+							 "a=path:msrp://" + address + ":" + port + "/" + sessionId + ";tcp";
 			resp.setContent(content, "application/sdp");
 			
 			ParsedSDP localSdp = new SDPUtil().parseSessionDescription(content);

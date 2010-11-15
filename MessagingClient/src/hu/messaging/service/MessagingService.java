@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class MessagingService {
 	
-	public static String serverURI = "sip:weblogic@152.66.144.145";
+	public static String serverURI = "sip:weblogic@192.168.1.103";
 	
 	private static Map<String, String> localSDPs = new HashMap<String, String>();
 	
@@ -35,8 +35,8 @@ public class MessagingService {
 		}
 	}
 	
-	public static void sendData(byte[] data, String sipUri) throws IOException {
-		getMsrpStack().sendMessage(data, sipUri);
+	public static void sendMessage(byte[] completeMessage, String sipUri) throws IOException {
+		getMsrpStack().sendMessage(completeMessage, sipUri);
 	}
 	
 	public static boolean isRunningReceiverConnection() {

@@ -31,10 +31,13 @@ public class ParsedSDP {
 	public URI getPath() {		
 		URI path = null;
 		try {
-			path = new URI(attributes.get("path"));
+			path = new URI(attributes.get("PATH"));
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
 		return path;
-	}	
+	}
+
+	
+	
 }

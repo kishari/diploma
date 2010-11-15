@@ -25,7 +25,6 @@ public class Connections {
 	
 	public SenderConnection createSenderConnection(InetAddress addr, int port, 
 													String sipUri, MSRPStack msrpStack) throws IOException {
-		System.out.println("Connections createSenderConnection");
 		for ( SenderConnection s : this.senderConnections ) {
 			if ( s.getRemoteAddress().equals(addr) && s.getRemotePort() == port ) {
 				return s;

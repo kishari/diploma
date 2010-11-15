@@ -8,7 +8,7 @@ import java.net.URI;
 
 public class MessagingService {
 	
-	public static String serverURI = "sip:weblogic@152.66.144.145";
+	public static String serverURI = "sip:weblogic@192.168.1.103";
 	
 	private static MSRPStack msrpStack = new MSRPStack();
 	

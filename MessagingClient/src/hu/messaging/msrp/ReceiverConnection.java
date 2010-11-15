@@ -20,13 +20,9 @@ import java.util.Map;
 import java.util.Random;
 
 public class ReceiverConnection implements Runnable {
-
-	private boolean running = false;
-	
+	private boolean running = false;	
 	private ByteBuffer buff = null;
-	
 	private MSRPStack msrpStack = null;
-	
 	private Map<SocketChannel, String> saveBuffers = new HashMap<SocketChannel, String>();
 	private InetAddress hostAddress;
 	private int port = 0;
@@ -49,7 +45,8 @@ public class ReceiverConnection implements Runnable {
 			try {
 				// Wait for an event one of the registered channels
 				this.selector.select();
-				System.out.println("run");
+
+				System.out.println("receiverconnection run");
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
@@ -112,6 +109,7 @@ public class ReceiverConnection implements Runnable {
 
 		    // Register the new SocketChannel with our Selector, indicating
 		    // we'd like to be notified when there's data waiting to be read
+		    saveBuffers.put(socketChannel, ""); 
 		    socketChannel.register(this.selector, SelectionKey.OP_READ);
 	}
 	
@@ -126,6 +124,7 @@ public class ReceiverConnection implements Runnable {
 		// The remote forcibly closed the connection, cancel
 		   key.cancel();
 		   socketChannel.close();
+		   saveBuffers.remove(socketChannel);
 		   return;
 		}
 
@@ -134,6 +133,7 @@ public class ReceiverConnection implements Runnable {
 		// same from our end and cancel the channel.
 		   key.channel().close();
 		   key.cancel();
+		   saveBuffers.remove(socketChannel);
 		   return;
 	    }
 		    
@@ -146,7 +146,13 @@ public class ReceiverConnection implements Runnable {
 		for (String m : messages) {
 		  	Message msg = MSRPUtil.createMessage(m);
 		 	try {
-				getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoIncomingMessageQueue(msg);
+		 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
+		 		if (s != null) {
+		 			s.putMessageIntoIncomingMessageQueue(msg);
+		 		}
+		 		else {
+		 			System.out.println("session is null");
+		 		}		 		
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -234,8 +240,6 @@ public class ReceiverConnection implements Runnable {
  		 		 
 						 break;
 				case 9 :
-						//System.out.println("case 9, b: " + (char)b);
-						//System.out.println(data.remaining());
 						if (b == '$' || b == '#' || b == '+') state = 10;
 						
 				case 10 : 
@@ -265,9 +269,8 @@ public class ReceiverConnection implements Runnable {
 	
 	public void start() {
 		if (!isRunning()) {
-			System.out.println("ReceiverConnection start! (daemon) listen on: " + this.hostAddress.getHostAddress() + ":" + this.port);
+			System.out.println("ReceiverConnection start! listen on: " + this.hostAddress.getHostAddress() + ":" + this.port);
 			Thread t = new Thread(this);
-			t.setDaemon(true);
 			t.start();
 		}
 	}
@@ -277,11 +280,11 @@ public class ReceiverConnection implements Runnable {
 		this.selector.wakeup();
 	}
 
-	public synchronized boolean isRunning() {
+	public boolean isRunning() {
 		return running;
 	}
 
-	public synchronized void setRunning(boolean running) {
+	public void setRunning(boolean running) {
 		this.running = running;
 	}
 
@@ -303,6 +306,10 @@ public class ReceiverConnection implements Runnable {
 
 	public MSRPStack getMsrpStack() {
 		return msrpStack;
+	}
+	
+	public Map<SocketChannel, String> getSaveBuffers() {
+		return saveBuffers;
 	}
 
 }

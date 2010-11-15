@@ -23,10 +23,7 @@ public class Session {
 		this.remoteUri = remoteUri;
 		this.id = localUri.toString()+remoteUri.toString();
 		this.senderConnection = senderConnection;
-		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, senderConnection);
-		Thread t = new Thread(transactionManager);
-		//t.setDaemon(true);
-		t.start();
+		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, this);
 	}
 
 	public void sendMessage(byte[] completeMessage) {		

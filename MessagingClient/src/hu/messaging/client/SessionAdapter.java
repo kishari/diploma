@@ -28,13 +28,12 @@ public class SessionAdapter extends BaseAdapter implements ISessionListener {
             	ParsedSDP remoteSdp = sdpUtil.parseSessionDescription(aSdpBody.format());
             	log(remoteSdp.getHost().getHostAddress());
             	log(Integer.toString(remoteSdp.getPort()));
-            	MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), MessagingService.serverURI);
-            	log("checkpoint: senderconn kesz");
+            	MessagingService.createSenderConnection(remoteSdp.getHost(), 
+            											remoteSdp.getPort(), 
+            											MessagingService.serverURI);
             	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI);
-            	log("checkpoint: senderconn talalt");
-            	//Ezt majd valahogy a válasz sdp-bõl kellene kiszedni
-//            	MessagingService.getLocalSDP("clientsessionid");
-            	ParsedSDP localSdp = sdpUtil.parseSessionDescription(MessagingService.getLocalSDP("clientsessionid"));
+
+            	ParsedSDP localSdp = sdpUtil.parseSessionDescription(MessagingService.getLocalSDP(MessagingService.serverURI));
             	log("localSdp path: " + localSdp.getPath());
             	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), MessagingService.serverURI);
             	s.start();
