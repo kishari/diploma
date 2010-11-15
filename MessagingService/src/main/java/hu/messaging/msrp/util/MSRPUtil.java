@@ -1,10 +1,13 @@
 package hu.messaging.msrp.util;
 
 import hu.messaging.msrp.Constants;
-import hu.messaging.msrp.MSRPMessage;
+import hu.messaging.msrp.Message;
+import hu.messaging.msrp.Request;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,8 +23,24 @@ public class MSRPUtil {
 															 "(.*)\r\n");
 	private static Pattern endLinePattern =  Pattern.compile("\r\n([-]{7})([\\p{Alnum}]{8,20})([+$#]{1})");
 	
-	public static MSRPMessage createMessage(String msg) {
-		MSRPMessage m = new MSRPMessage();
+	public static List<Message> createMessages(byte[] completeMessage) {
+		System.out.println("createMessages...");
+		int chunkSize = 100;
+		int index = 0;
+		List<Message> chunks = new ArrayList<Message>();
+		double div = completeMessage.length / (double) chunkSize;
+		System.out.println("Oszto (double)" + div);
+		int numOfChunks = (int)Math.floor(div);
+		System.out.println("numOfChunks: " + numOfChunks);
+		//chunks.add(e)
+		return null;
+	}
+
+
+	public static Message createMessage(String msg) {
+		System.out.println("create message from: " + msg);
+		Message m = new Message();
+		Request req = new Request();
 		long startTime = new Date().getTime();
 		System.out.println("createMessage started: " + startTime);
 		
@@ -33,10 +52,11 @@ public class MSRPUtil {
 		if (matcher.find()) {
 			method = matcher.group(3);
 		}
-		if ("SEND".equals(method)) {
-			m.setMethod(Constants.methodSEND);
+		if ("SEND".equals(method)) {			
+			req.setMethod(Constants.methodSEND);
 			
-			m.setTransactionId(matcher.group(2));
+			req.setTransactionId(matcher.group(2));
+			System.out.println("nyito tId: <" + matcher.group(2) + ">");
 			
 			matcher = toPathPattern.matcher(msg);
 			String toPath = null;
@@ -52,10 +72,10 @@ public class MSRPUtil {
 						
 			try {
 				if (toPath != null) {
-					m.createToPath(toPath);				
+					req.createToPath(toPath);				
 				}
 				if (fromPath != null) { 
-					m.createFromPath(fromPath);
+					req.createFromPath(fromPath);
 				}
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
@@ -63,28 +83,29 @@ public class MSRPUtil {
 			
 			matcher = messageIdPattern.matcher(msg);
 			if (matcher.find()) {
-				m.setMessageId(matcher.group(2));
+				req.setMessageId(matcher.group(2));
 			}				
 			
 			matcher = byteRangePattern.matcher(msg);
 			if (matcher.find()) {
-				m.setFirstByte(Integer.valueOf(matcher.group(2)));
-				m.setLastByte(Integer.valueOf(matcher.group(3)));
-				m.setSumByte(Integer.valueOf(matcher.group(4)));				
+				req.setFirstByte(Integer.valueOf(matcher.group(2)));
+				req.setLastByte(Integer.valueOf(matcher.group(3)));
+				req.setSumByte(Integer.valueOf(matcher.group(4)));				
 			}
 			
 			matcher = contentPattern.matcher(msg);
 			if (matcher.find()) {
-				m.setContentType(matcher.group(2));
-				m.setContent(matcher.group(3).getBytes());
+				req.setContentType(matcher.group(2));
+				req.setContent(matcher.group(3).getBytes());
 			}
 						
 			matcher = endLinePattern.matcher(msg);
 			if (matcher.find()) {
 				String tId = matcher.group(2);
-				if (!m.getTransactionId().equals(tId)) {
-					System.out.println("A nyitó tranzakcióId (" + m.getTransactionId() + ") " +
-									   "nem egyezik a záró tranzakcióId-val (" + tId + ")");
+				System.out.println("zaro tId: <" + tId + ">");
+				if (!req.getTransactionId().equals(tId)) {
+					System.out.println("A nyito tranzakcioId (" + req.getTransactionId() + ") " +
+									   "nem egyezik a zaro tranzakcioId-val (" + tId + ")");
 				}
 				m.setEndToken(matcher.group(3).charAt(0));
 			}
@@ -95,6 +116,6 @@ public class MSRPUtil {
 			//System.out.println("message after create: \n"  + m.toString());			
 		}
 		
-		return m;
+		return req;
 	}
 }

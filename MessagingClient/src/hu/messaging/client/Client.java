@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import java.util.*;
-import hu.messaging.msrp.*;
 import hu.messaging.service.MessagingService;
 
 import com.ericsson.icp.ICPFactory;
@@ -123,8 +122,10 @@ public class Client {
 													 MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort(),
 													 "clientsessionid");
 
-			logArea.append("send INVITE to: " + "sip:weblogic103@192.168.1.103" + "\n");
-			session.start("sip:weblogic103@192.168.1.103", sdp, profile.getIdentity(), SdpFactory.createIMSContentContainer());
+			MessagingService.addLocalSDP("clientsessionid", sdp.format());
+			
+			logArea.append("send INVITE to: " + MessagingService.serverURI + "\n");
+			session.start(MessagingService.serverURI, sdp, profile.getIdentity(), SdpFactory.createIMSContentContainer());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -133,15 +134,15 @@ public class Client {
 	public void sendBye() {
 		try {
 			session.end();
-			MessagingService.getMsrpStack().getConnections().listSenderConnections();
 		}
 		catch(Exception e) { }
 		
 	}
-	
+
+	/*
 	public void sendTestData() {
 		MSRPMessage m = new MSRPMessage();
-		SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103");
+		SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI);
 		if (s == null) {
 			System.out.println("Client SenderConnection is null!!!!!!!!!!!!!!!");
 			return;
@@ -152,7 +153,7 @@ public class Client {
 				MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort());
 
 		try {
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 1; i++) {
 				Thread.sleep(20);
 				s.send(m.toString().getBytes());
 			}
@@ -161,6 +162,7 @@ public class Client {
 		
 		
 	}
+	*/
 	
 	public void sendData(byte[] data, String sipUri) {
 		try {
@@ -185,7 +187,7 @@ public class Client {
 
 	/*
 	public void closeConnections() {
-		getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103").stop();
+		getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI).stop();
 		getMsrpStack().getConnections().getReceiverConnection().stop();		
 	}
 	 */

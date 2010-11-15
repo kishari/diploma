@@ -17,10 +17,10 @@ import java.util.Map;
 
 public class SenderConnection implements Runnable {
 
-	private Map pendingData = new HashMap();
-	private List pendingChanges = new LinkedList();
+	private Map<SocketChannel, List<ByteBuffer>> pendingData = new HashMap<SocketChannel, List<ByteBuffer>>();
+	private List<ChangeRequest> pendingChanges = new LinkedList<ChangeRequest>();
 	private MSRPStack msrpStack;
-	private List<String> sessionIds = new ArrayList<String>();
+	private Session session = null;
 	private String sipUri = null;
 	private InetAddress remoteAddress = null;
 	private int remotePort = -1; //-1 = undefined
@@ -39,16 +39,15 @@ public class SenderConnection implements Runnable {
 		this.sipUri = sipUri;
 		this.selector = initSelector();
 	}
-	
-	public void send(byte[] data) throws IOException {
-		//System.out.println("senderConnection send data!");
+
+	public void sendChunk(byte[] chunk) throws IOException {
 		synchronized(this.pendingChanges) {
-			this.pendingChanges.add(new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
-			ByteBuffer b = ByteBuffer.allocate(data.length);
+			this.pendingChanges.add( new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE) );
+			ByteBuffer b = ByteBuffer.allocate(chunk.length);
 			b.clear();
-			b = ByteBuffer.wrap(data);
+			b = ByteBuffer.wrap(chunk);
 			synchronized(pendingData) {
-				List queue = (List) this.pendingData.get(senderChannel);
+				List<ByteBuffer> queue = this.pendingData.get(senderChannel);
 				
 				if (queue == null) {
 					queue = new ArrayList<ByteBuffer>();					
@@ -57,7 +56,7 @@ public class SenderConnection implements Runnable {
 				queue.add(b);				
 			}
 		}
-		System.out.println("senderConnection send data! selector wakeup elott");
+		System.out.println("senderConnection send data! selector wakeup.");
 		this.selector.wakeup();
 		//System.out.println("Sending bytes: " + data.length);
 		//ByteBuffer b = ByteBuffer.allocate(data.length);
@@ -72,9 +71,10 @@ public class SenderConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("run eleje (senderchannel init utan)");
+		//System.out.println("run eleje (senderchannel init utan)");
 		while (isRunning()) {
-			try {
+			System.out.println("senderConnection run");
+			try {				
 				synchronized (this.pendingChanges) {
 					Iterator<ChangeRequest> changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
@@ -110,7 +110,6 @@ public class SenderConnection implements Runnable {
 					selectedKeys.remove();
 
 					if (!key.isValid()) {
-						System.out.println("key not valid");
 						continue;
 					}
 					// Check what event is available and deal with it
@@ -150,28 +149,11 @@ public class SenderConnection implements Runnable {
 		setRunning(false);
 		System.out.println("senderConnection stop: " + this.sipUri);
 		this.selector.wakeup();
-		//Ha leállítottuk a senderConnection-t, akkor zárjuk be a channelt!
 		
-		for (String sessionId : this.sessionIds) {
-			System.out.println("Torlom a sessionoket");
-			getMsrpStack().removeSession(sessionId);
-		}
+		//Törlöm az MSRPStackbõl a sessiont
+		this.session.getTransactionManager().stop();
+		getMsrpStack().removeSession(session.getId());
 		
-	}
-	
-	public void addSessionId(String sessionId) {
-		this.sessionIds.add(sessionId);
-	}
-	
-	public void removeSessionId(String sessionId) {
-		int i = 0;
-		for (String id : sessionIds) {
-			if (sessionId.equals(id)) {
-				this.sessionIds.remove(i);
-				break;
-			}
-			i++;
-		}				
 	}
 	
 	private SocketChannel initiateConnection() throws IOException {
@@ -212,7 +194,7 @@ public class SenderConnection implements Runnable {
 	}
 	
 	private void read(SelectionKey key) throws IOException {
-		//Ha hibával áll le a kliens, akkor ezt a connectiont meg kell ölni
+		//Ha hibával áll le a távoli gép, akkor ezt a connectiont meg kell ölni
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		
 		int numRead;
@@ -242,7 +224,7 @@ public class SenderConnection implements Runnable {
 
 		System.out.println("sender write");
 		synchronized (this.pendingData) {
-			List queue = (List) this.pendingData.get(socketChannel);
+			List<ByteBuffer> queue = this.pendingData.get(socketChannel);
 
 			// Write until there's not more data ...
 			while (!queue.isEmpty()) {
@@ -253,7 +235,7 @@ public class SenderConnection implements Runnable {
 					break;
 				}
 				queue.remove(0);
-				System.out.println("queue.remove");
+				//System.out.println("queue.remove");
 			}
 
 			if (queue.isEmpty()) {
@@ -262,6 +244,15 @@ public class SenderConnection implements Runnable {
 			}
 		}
 	}
+	
+	public Session getSession() {
+		return session;
+	}
+
+	public void setSession(Session session) {
+		this.session = session;
+	}
+	
 	public MSRPStack getMsrpStack() {
 		return msrpStack;
 	}

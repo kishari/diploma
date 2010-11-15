@@ -1,66 +1,85 @@
 package hu.messaging.msrp;
 
-import java.io.IOException;
+import hu.messaging.msrp.util.MSRPUtil;
 import java.util.concurrent.BlockingQueue;
 
 public class TransactionManager implements Runnable {
 
-	private BlockingQueue<MSRPMessage> messageQueue;
-	//private BlockingQueue<MSRPMessage> outputQueue;
+	private BlockingQueue<Message> incomingMessageQueue;
+	private BlockingQueue<byte[]> outgoingMessageQueue;
 	private SenderConnection senderConnection;
-	private int counter = 0;
+	private boolean running = false;
+	
+	
+	public TransactionManager(BlockingQueue<Message> incomingMessageQueue, 
+			  				  BlockingQueue<byte[]> outgoingMessageQueue,
+			  				  SenderConnection senderConnection) {
+		
+			this.incomingMessageQueue = incomingMessageQueue;
+			this.outgoingMessageQueue = outgoingMessageQueue;
+			this.senderConnection = senderConnection;
+	}
 	
 	public void run() {
-		while(true) {
-			try {
-				MSRPMessage m = messageQueue.take();
-				System.out.println("TransactionManager kivett egy üzenetet a session messagequeue-bol:");
-				System.out.println(m.toString());
-				System.out.println();
-				//outputQueue.put(processMessage(m));
-				
-				//Tesztelés végett visszaküldjük ugyanazt az üzenetet a usernak, amikor kaptunk
-				//System.out.println(processMessage(m).toString());
-				if (senderConnection != null) {
-					System.out.println("TransactionManager sendig message to " + senderConnection.getSipUri() + " " +
-										senderConnection.getRemoteAddress()+ ":" + senderConnection.getRemotePort());
-					//for (int i = 0; i < 3; i++) {
-						senderConnection.send(processMessage(m).toString().getBytes());
-					//	Thread.sleep(200);
-					//}
-					//for (int i = 0; i < 3; i++) {
-					//	senderConnection.send(processMessage(m).toString().getBytes());
-					//}
-
+		while(running) {
+				Message mIn = incomingMessageQueue.poll();
+				if (mIn != null) {
+					System.out.println("TransactionManager kivett egy üzenetet a session incomingMessageQueue-bol:");
+					System.out.println(mIn.toString());
+					System.out.println();
+					
+					processIncomingMessage(mIn);
 				}
-				else {
-					System.out.println("tranzakciomanager sender null");
+				byte[] mOut = outgoingMessageQueue.poll();
+				if (mOut != null) {
+					processOutgoingMessage(mOut);
 				}
-				
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 	
-	public TransactionManager(BlockingQueue<MSRPMessage> messageQueue, SenderConnection senderConnection) {
-		this.messageQueue = messageQueue;
-		//this.outputQueue = outputQueue;
-		this.senderConnection = senderConnection;
+	public void start() {
+		this.running = true;
+		this.start();
 	}
 	
-	//private synchronized MSRPMessage processMessage(MSRPMessage m) {
-	private MSRPMessage processMessage(MSRPMessage m) {
-		counter++;
-		System.out.println("TransactionManager.processMessage: " + counter);
-		//Itt majd szépen feldolgozzuk
+	public void stop() {
+		this.running = false;
+	}
+	
+	private void processIncomingMessage(Message chunk) {
+		System.out.println("TransactionManager.processIncomingMessage... ");
 		
-		//return retMessage;
-		m.setMessageId(m.getMessageId() + counter);
-		System.out.println("modositott messageId: " + m.getMessageId());
-		return m;
+		if (chunk.getMethod() == Constants.methodSEND) {
+			System.out.println("TransactionManager.processIncomingMessage. Incoming message is 'send' message!");
+			Request req = (Request) chunk;
+			System.out.println(req.toString());
+			Response ack = createAcknowledgement(req);
+			System.out.println("TransactionManager.processIncomingMessage. Incoming message is 'send' message! Ack created: \n" + ack.toString() );
+		}
+		else if ( chunk.getMethod() == Constants.method200OK ){
+			System.out.println("TransactionManager.processIncomingMessage. Incoming message is '200 OK' message!");
+			Response resp = (Response) chunk;
+			System.out.println(resp.toString());
+		}		
+	}
+	
+	private void processOutgoingMessage(byte[] chunk) {
+		System.out.println("TransactionManager.processOutgoingMessage... ");
+		Message mOut = MSRPUtil.createMessage(new String(chunk));
+		System.out.println("TransactionManager.processOutgoingMessage: after message create: " + mOut.toString());
+		
+	}
+	
+	private Response createAcknowledgement(Request incomingMessage) {
+		Response ack = new Response();
+		
+		ack.setMethod(Constants.method200OK);
+		ack.setToPath(incomingMessage.getFromPath());
+		ack.setFromPath(incomingMessage.getToPath());
+		ack.setTransactionId(incomingMessage.getTransactionId());
+		ack.setEndToken('$');
+				
+		return ack;
 	}
 
 }

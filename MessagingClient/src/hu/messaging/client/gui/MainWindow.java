@@ -1,6 +1,7 @@
 package hu.messaging.client.gui;
 
 import hu.messaging.client.*;
+import hu.messaging.service.MessagingService;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -23,6 +24,7 @@ public class MainWindow implements Runnable {
 	
 	public void run() {
 		mainFrame = createGui();
+		mainFrame.setPreferredSize(new Dimension(100, 100));
 		mainFrame.setVisible(true);
 		
 		client = new Client(logArea);
@@ -46,16 +48,17 @@ public class MainWindow implements Runnable {
 	private Frame createGui() {
 	   final Frame frame = new Frame();
        frame.setLayout(new GridBagLayout());
-     
+      
        Button messageButton = new Button("sendTestMessage");
        Button inviteButton = new Button("Invite");
        Button clearButton = new Button("Clear");
        
        messageButton.addActionListener(new ActionListener()   {
            public void actionPerformed(ActionEvent e) {
-        		  	client.sendTestData();
+        	   		String testData = "Hello Jozsi. Mi van veled? log a beled? Ez itt egy tesztuzenet.";
+        		  	client.sendData(testData.getBytes(), MessagingService.serverURI);
         	  
-        	   //client.sendData(m.toString().getBytes(), "sip:weblogic103@192.168.1.103");
+        	   //client.sendData(m.toString().getBytes(), MessagingService.serverURI);
            }
        });
        

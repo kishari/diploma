@@ -13,23 +13,21 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class ReceiverConnection implements Runnable {
 
-	private int sumOfReadedByte = 0;
-	private int countOfRead = 0;
-	
 	private boolean running = false;
-	
-	private String saveBuffer = new String();
 	
 	private ByteBuffer buff = null;
 	
 	private MSRPStack msrpStack = null;
 	
+	private Map<SocketChannel, String> saveBuffers = new HashMap<SocketChannel, String>();
 	private InetAddress hostAddress;
 	private int port = 0;
 	
@@ -52,6 +50,7 @@ public class ReceiverConnection implements Runnable {
 				// Wait for an event one of the registered channels
 				this.selector.select();
 
+				System.out.println("receiverconnection run");
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
@@ -114,56 +113,46 @@ public class ReceiverConnection implements Runnable {
 
 		    // Register the new SocketChannel with our Selector, indicating
 		    // we'd like to be notified when there's data waiting to be read
+		    saveBuffers.put(socketChannel, ""); 
 		    socketChannel.register(this.selector, SelectionKey.OP_READ);
 	}
 	
 	private void read(SelectionKey key) throws IOException {
-		//System.out.println("receiver read from channel!");
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
 		    
-		    // Clear out our read buffer so it's ready for new data
-		    
-		    // Attempt to read off the channel
-		    int numRead;
-		    try {
-		      buff.clear();
-		      numRead = socketChannel.read(buff);
-		      sumOfReadedByte += numRead;
-		      countOfRead++;
-		    } catch (IOException e) {
-		      // The remote forcibly closed the connection, cancel
-		      // the selection key and close the channel.
-		      key.cancel();
-		      socketChannel.close();
-		      return;
-		    }
+		int numRead;
+		try {
+		   buff.clear();
+		   numRead = socketChannel.read(buff);
+		} catch (IOException e) {
+		// The remote forcibly closed the connection, cancel
+		   key.cancel();
+		   socketChannel.close();
+		   return;
+		}
 
-		    if (numRead == -1) {
-		      // Remote entity shut the socket down cleanly. Do the
-		      // same from our end and cancel the channel.
-		      key.channel().close();
-		      key.cancel();
-		      return;
-		    }
+		if (numRead == -1) {
+		// Remote entity shut the socket down cleanly. Do the
+		// same from our end and cancel the channel.
+		   key.channel().close();
+		   key.cancel();
+		   return;
+	    }
 		    
-		    byte[] data = new byte[numRead];
+		byte[] data = new byte[numRead];
 		    
-		    buff.rewind();
-		    buff.get(data, 0, numRead);
+		buff.rewind();
+		buff.get(data, 0, numRead);
 		    
-		    List<String> messages = preParse(data);
-		    for (String m : messages) {
-		    	MSRPMessage msg = MSRPUtil.createMessage(m);
-		    	try {
-		    		//System.out.println("receiver find session: ");
-		    		//System.out.println(msg.getToPath().toString());
-		    		//System.out.println(msg.getFromPath().toString());
-					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoMessageQueue(msg);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-		    }
-	    
+		List<String> messages = preParse(data, socketChannel);
+		for (String m : messages) {
+		  	Message msg = MSRPUtil.createMessage(m);
+		 	try {
+				getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoIncomingMessageQueue(msg);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+	    }	    
 	}
 	  
 	private Selector initSelector() throws IOException {
@@ -181,21 +170,19 @@ public class ReceiverConnection implements Runnable {
 	    return socketSelector;
 	}
 	
-	private List<String> preParse(byte[] data) {
+	private List<String> preParse(byte[] data, SocketChannel channel) {
 		List<String> messages = new ArrayList<String>();
 		int successProcessedByteCount = 0;
 		String m = new String(data);
-		if (!"".equals(saveBuffer)) {
-			m = saveBuffer + m;
-			saveBuffer = "";
+		String saveBuff = saveBuffers.get(channel);
+		
+		if (!"".equals(saveBuff)) {
+			m = saveBuff + m;
+			saveBuffers.put(channel, "");
 		}
 		
-		//System.out.println("preparser üzenet: " + m);
-		
 		ByteBuffer buffer = ByteBuffer.wrap(m.getBytes(), 0, m.length());
-		//System.out.println("preparser data length: " + buffer.capacity());
 		buffer.limit(buffer.capacity());
-		//System.out.println("data limit: " + buffer.limit());
 		
 		int state = 0;
 		int byteCounter = 0;
@@ -255,13 +242,12 @@ public class ReceiverConnection implements Runnable {
 						
 				case 10 : 
 						if (state == 10) {
-							//System.out.println("case 10");
 							byte[] temp = new byte[byteCounter];
 							buffer.position(buffer.position() - byteCounter);
-							//System.out.println("Lekérjük a bufferból a " + buffer.position() + ". bytetól " + byteCounter + " byteot");
 							buffer.get(temp, 0, byteCounter);
 							String chunk = new String(temp);
 							messages.add(chunk);
+							System.out.println("preparse end: " + chunk);
 							state = 0;
 							messageCounter++;
 							successProcessedByteCount += byteCounter;
@@ -269,14 +255,13 @@ public class ReceiverConnection implements Runnable {
 						}
 			    }			
 		}
-		
-		//System.out.println("success processed byte: " + succesProcessedByteCount);		
+				
 		if (byteCounter != 0) {
 			byte[] save = new byte[byteCounter];
 			buffer.position(buffer.position() - byteCounter);
 			buffer.get(save, 0, byteCounter);
-			saveBuffer = new String(save);
-			//System.out.println("Maradék adat: " + saveBuffer);
+			saveBuff = new String(save);
+			saveBuffers.put(channel, saveBuff);
 		}
 		return messages;
 	}

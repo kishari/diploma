@@ -20,31 +20,22 @@ public class MSRPStack {
 		return getConnections().createSenderConnection(host, port, sipUri, this);		
 	}
 	
-	public void sendMessage(byte[] message, String sipUri) {	
-		getConnections().findSenderConnection(sipUri);
-	}
-	
-	public synchronized void putNewSession(Session session) {
-		if ( findSession( session ) != null ) {
+	public void putNewSession(Session session) {
+		if ( findSession( session.getId() ) != null ) {
 			return;
 		}
-		System.out.println("MSRPStack putNewSession");
-		System.out.println(session.getSenderConnection().getSipUri());
+		System.out.println("MSRPStack putNewSession to: " + session.getSenderConnection().getSipUri());
 		getActiveSessions().put(session.getId(), session);
-	}
-	
-	public Session findSession(Session session) {
-		if ( getActiveSessions().containsKey( session.getId() ) ) {
-			return getActiveSessions().get(session.getId());
-		}
-		return null;
 	}
 	
 	public Session findSession(String sessionId) {
 		System.out.println("MSRPRstack findSession: " + sessionId);
+		
+		System.out.println("activeSessions mapben levo kulcsok lekerese: ");
 		for (String s : getActiveSessions().keySet()) {
-			System.out.println(s);
+			System.out.println(s);			
 		}
+		
 		if ( getActiveSessions().containsKey( sessionId ) ) {
 			System.out.println("MSRPRstack findSession: van talalat");
 			return getActiveSessions().get(sessionId);
@@ -54,8 +45,16 @@ public class MSRPStack {
 	
 	public void removeSession(String sessionId) {
 		System.out.println("MSRPStack removeSession: " + sessionId);
+		
 		Session s = getActiveSessions().remove(sessionId);
-		System.out.println(s.getId());
+		
+		System.out.println("MSRPStack: session torolve: " + s.getId());
+	}
+	
+	public void sendMessage(byte[] completeMessage, String sipUri) {
+		SenderConnection s = getConnections().findSenderConnection(sipUri);
+		Session session = s.getSession();
+		session.sendMessage(completeMessage);
 	}
 	
 	public Connections getConnections() {

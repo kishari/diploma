@@ -117,10 +117,9 @@ public class MessagingSipServlet extends SipServlet {
 //		log.info("doInvite calling...");
 //		log.info("Invite from: " + req.getFrom() );
 		
-		System.out.println("doInvite!");
+		System.out.println("doInvite!...");
 		System.out.println("Invite from: " + req.getFrom() );
 		System.out.println("Invite from (regex): " + getCleanSipUri(req.getFrom().toString()) );
-		System.out.println("session callId: " + req.getCallId());
 		
 		System.out.println("content Type: " + req.getContentType());
 		System.out.println("content: " + req.getContent());
@@ -136,14 +135,7 @@ public class MessagingSipServlet extends SipServlet {
 					MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
 			
-			ParsedSDP remoteSdp = new SDPUtil().parseSessionDescription(req.getContent().toString());
-			
-			boolean isConnectionToRemoteHost = false; //Meg kell vizsgálni, hogy a távoli géphez van-e már élõ senderConnection
-			if (!isConnectionToRemoteHost) {
-				MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
-				//MessagingService.getMsrpStack().getConnections().findSenderConnection(sdp.getHost(), sdp.getPort()).start();
-				MessagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
-			}
+			ParsedSDP remoteSdp = new SDPUtil().parseSessionDescription(req.getContent().toString());						
 			
 			InetAddress localReceiverAddress = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
 			int localReceiverPort = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort();
@@ -161,8 +153,11 @@ public class MessagingSipServlet extends SipServlet {
 			resp.setContent(content, "application/sdp");
 			
 			ParsedSDP localSdp = new SDPUtil().parseSessionDescription(content);
-			
+
+			MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
+			MessagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
 			MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
+
 			resp.send();			
 		}
 		else {

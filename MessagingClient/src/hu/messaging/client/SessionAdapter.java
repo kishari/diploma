@@ -1,5 +1,6 @@
 package hu.messaging.client;
 
+import hu.messaging.msrp.SenderConnection;
 import hu.messaging.service.MessagingService;
 import hu.messaging.util.*;
 import java.awt.TextArea;
@@ -27,9 +28,16 @@ public class SessionAdapter extends BaseAdapter implements ISessionListener {
             	ParsedSDP remoteSdp = sdpUtil.parseSessionDescription(aSdpBody.format());
             	log(remoteSdp.getHost().getHostAddress());
             	log(Integer.toString(remoteSdp.getPort()));
-            	MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), "sip:weblogic103@192.168.1.103");
-            	MessagingService.getMsrpStack().getConnections().findSenderConnection("sip:weblogic103@192.168.1.103").start();
-            	MessagingService.getMsrpStack().getConnections().listSenderConnections();
+            	MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), MessagingService.serverURI);
+            	log("checkpoint: senderconn kesz");
+            	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI);
+            	log("checkpoint: senderconn talalt");
+            	//Ezt majd valahogy a válasz sdp-bõl kellene kiszedni
+//            	MessagingService.getLocalSDP("clientsessionid");
+            	ParsedSDP localSdp = sdpUtil.parseSessionDescription(MessagingService.getLocalSDP("clientsessionid"));
+            	log("localSdp path: " + localSdp.getPath());
+            	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), MessagingService.serverURI);
+            	s.start();
             }
         }
         catch(Exception e) {}

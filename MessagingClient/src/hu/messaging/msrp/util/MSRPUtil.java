@@ -1,17 +1,21 @@
 package hu.messaging.msrp.util;
 
 import hu.messaging.msrp.Constants;
-import hu.messaging.msrp.MSRPMessage;
+import hu.messaging.msrp.Message;
+import hu.messaging.msrp.Request;
 
 import java.net.URISyntaxException;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MSRPUtil {
 	private static Pattern methodPattern =  Pattern.compile("(^MSRP) ([\\p{Alnum}]{8,20}) ([\\p{Upper}]{1,20})\r\n(.*)", Pattern.DOTALL);
-	private static Pattern toPathPattern =  Pattern.compile("(To-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
-	private static Pattern fromPathPattern =  Pattern.compile("(From-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
+	private static Pattern toPathPattern =  Pattern.compile("(To-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
+	private static Pattern fromPathPattern =  Pattern.compile("(From-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
 	private static Pattern messageIdPattern =  Pattern.compile("(Message-ID:) ([\\p{Alnum}]{10,50})\r\n");
 	private static Pattern byteRangePattern =  Pattern.compile("(Byte-Range:) ([\\p{Digit}]{1,})-([\\p{Digit}]{1,})" +
 															   "/([\\p{Digit}]{1,})\r\n");
@@ -19,13 +23,49 @@ public class MSRPUtil {
 	private static Pattern contentPattern =  Pattern.compile("(Content-Type:) ([\\p{Alpha}]{1,}/[\\p{Alpha}]{1,})\r\n\r\n" +
 															 "(.*)\r\n");
 	private static Pattern endLinePattern =  Pattern.compile("\r\n([-]{7})([\\p{Alnum}]{8,20})([+$#]{1})");
+	
+	public static List<Message> createMessages(byte[] completeMessage) {
+		System.out.println("createMessages...");
+		int chunkSize = 100;
+		int index = 0;
+		List<Message> chunks = new ArrayList<Message>();
+		double div = completeMessage.length / (double) chunkSize;
+		System.out.println("Oszto (double)" + div);
+		int numOfChunks = (int)Math.floor(div);
+		System.out.println("numOfChunks: " + numOfChunks);
+		//chunks.add(e)
+		return null;
+	}
 
-	private static int counter = 0;
-	public static MSRPMessage createMessage(String msg) {
+	public static Request createRequest( byte[] content, URI localURI, URI remoteURI, 
+										 String transactionId, String messageId,
+										 int offset, int chunkSize, int completeMessageSize, char endToken) {
+		Request req = new Request();
+		req.setMethod(Constants.methodSEND);
+		try {
+			req.createFromPath(localURI.toString());
+			req.createToPath(remoteURI.toString());
+		}
+		catch(URISyntaxException e) {}
+	
+		req.setMessageId(messageId);
+		req.setTransactionId(transactionId);
+		
+		req.setFirstByte(offset);
+		req.setLastByte(offset + chunkSize - 1);
+		req.setSumByte(completeMessageSize);
+		req.setContentType("text/plain");
+		req.setContent(content);
+		
+		req.setEndToken(endToken);
+		
+		return req;
+	}
+
+	public static Message createMessage(String msg) {
+		Message m = new Message();
 		long startTime = new Date().getTime();
 		System.out.println("createMessage started: " + startTime);
-		counter++;
-		MSRPMessage m = new MSRPMessage();
 		
 		//System.out.println("MESSAGEUTIL inc msg: \n" + msg);
 		
@@ -36,9 +76,10 @@ public class MSRPUtil {
 			method = matcher.group(3);
 		}
 		if ("SEND".equals(method)) {
-			m.setMethod(Constants.methodSEND);
+			Request req = new Request();
+			req.setMethod(Constants.methodSEND);
 			
-			m.setTransactionId(matcher.group(2));
+			req.setTransactionId(matcher.group(2));
 			
 			matcher = toPathPattern.matcher(msg);
 			String toPath = null;
@@ -54,10 +95,10 @@ public class MSRPUtil {
 						
 			try {
 				if (toPath != null) {
-					m.createToPath(toPath);				
+					req.createToPath(toPath);				
 				}
 				if (fromPath != null) { 
-					m.createFromPath(fromPath);
+					req.createFromPath(fromPath);
 				}
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
@@ -65,20 +106,20 @@ public class MSRPUtil {
 			
 			matcher = messageIdPattern.matcher(msg);
 			if (matcher.find()) {
-				m.setMessageId(matcher.group(2));
+				req.setMessageId(matcher.group(2));
 			}				
 			
 			matcher = byteRangePattern.matcher(msg);
 			if (matcher.find()) {
-				m.setFirstByte(Integer.valueOf(matcher.group(2)));
-				m.setLastByte(Integer.valueOf(matcher.group(3)));
-				m.setSumByte(Integer.valueOf(matcher.group(4)));				
+				req.setFirstByte(Integer.valueOf(matcher.group(2)));
+				req.setLastByte(Integer.valueOf(matcher.group(3)));
+				req.setSumByte(Integer.valueOf(matcher.group(4)));				
 			}
 			
 			matcher = contentPattern.matcher(msg);
 			if (matcher.find()) {
-				m.setContentType(matcher.group(2));
-				m.setContent(matcher.group(3).getBytes());
+				req.setContentType(matcher.group(2));
+				req.setContent(matcher.group(3).getBytes());
 			}
 						
 			matcher = endLinePattern.matcher(msg);
@@ -90,12 +131,11 @@ public class MSRPUtil {
 				}
 				m.setEndToken(matcher.group(3).charAt(0));
 			}
-			//System.out.println("message after create: \n"  + m.toString());
-			System.out.println(m.getMessageId());
+			
 			long endTime = new Date().getTime();
 			System.out.println("createMessage ended: " + endTime);
 			System.out.println("duration: " + (endTime - startTime) );
-			System.out.println("Bejovo uzenetek szama: " + counter);
+			//System.out.println("message after create: \n"  + m.toString());			
 		}
 		
 		return m;

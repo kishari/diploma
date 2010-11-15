@@ -5,13 +5,14 @@ import java.util.regex.Matcher;
 import java.net.*;
 
 public class SDPUtil {
-	private static Pattern attributePattern =  Pattern.compile("a=([\\p{Alnum}]{1,}-?[\\p{Alnum}]{1,}):([\\p{Graph}]{1,})");
-	private static Pattern mediaPattern =  Pattern.compile("m=([\\p{Alpha}]{1,}) ([\\p{Digit}]{4,5}) TCP/MSRP \\*");
-	private static Pattern connectionPattern =  Pattern.compile("c=IN IP4 " + 
+	private Pattern attributePattern =  Pattern.compile("a=([\\p{Alnum}]{1,}-?[\\p{Alnum}]{1,}):([\\p{Graph}]{1,})");
+	private Pattern mediaPattern =  Pattern.compile("m=([\\p{Alpha}]{1,}) ([\\p{Digit}]{4,5}) TCP/MSRP \\*");
+	private Pattern connectionPattern =  Pattern.compile("c=IN IP4 " + 
 																"([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})\r\n");
 	
 	
 	public ParsedSDP parseSessionDescription(String s) throws UnknownHostException {
+		System.out.println("sdpUtil parseSDPStart");
 		ParsedSDP sdp = new ParsedSDP();
 		
 		
@@ -41,6 +42,7 @@ public class SDPUtil {
 		}
 		
 		//System.out.println("sdp parse után: "  + sdp.getHost().getHostAddress() + ":" + sdp.getPort());
+		System.out.println("sdpUtil parseSDP finished");
 		return sdp;
 	}
 	

@@ -8,6 +8,8 @@ import java.net.URI;
 
 public class MessagingService {
 	
+	public static String serverURI = "sip:weblogic@152.66.144.145";
+	
 	private static MSRPStack msrpStack = new MSRPStack();
 	
 	public static void createSenderConnection(InetAddress host, int port, String sipUri) {
@@ -32,6 +34,10 @@ public class MessagingService {
 		}
 	}
 	
+	public void sendMessage(byte[] completeMessage, String sipUri) {
+		getMsrpStack().sendMessage(completeMessage, sipUri);
+	}
+	
 	public static boolean isRunningReceiverConnection() {
 		return getMsrpStack().getConnections().isRunningReceiverConnection();
 	}
@@ -40,15 +46,21 @@ public class MessagingService {
 		return getMsrpStack().getConnections().isReceiverConnection();
 	}
 
-	public static void createNewSession(URI localURI, URI remoteURI, String sipUri) {
+	public static Session createNewSession(URI localURI, URI remoteURI, String sipUri) {
 		SenderConnection s = getMsrpStack().getConnections().findSenderConnection(sipUri);
 		System.out.println("MessagingService createNewSession");
 		
-		if (s == null)
+		if (s == null) {
 			System.out.println("nem találtunk a sessionhoz sendert");
+			return null;
+		}
 		
-		getMsrpStack().putNewSession(new Session(localURI, remoteURI, s));
-		s.addSessionId(localURI.toString()+remoteURI.toString());
+		Session newSession = new Session(localURI, remoteURI, s);
+		getMsrpStack().putNewSession(newSession);
+		
+		s.setSession(newSession);
+		
+		return newSession;
 	}
 	
 	public static MSRPStack getMsrpStack() {
