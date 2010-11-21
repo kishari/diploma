@@ -5,18 +5,22 @@ import hu.messaging.msrp.util.MSRPUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class OutgoingMessageProcessor implements Runnable {
+public class OutgoingMessageProcessor extends Observable implements Runnable {
 
 	private boolean running = false;
 	private BlockingQueue<byte[]> outgoingMessageQueue;
 	private Session session;
 	
-	public OutgoingMessageProcessor(BlockingQueue<byte[]> outgoingMessageQueue, Session session ) {
+	public OutgoingMessageProcessor(BlockingQueue<byte[]> outgoingMessageQueue, 
+									Session session,
+									TransactionManager transactionManager ) {
 		this.outgoingMessageQueue = outgoingMessageQueue;
 		this.session = session;
+		this.addObserver(transactionManager);
 	}
 	
 	public void run() {
@@ -61,7 +65,9 @@ public class OutgoingMessageProcessor implements Runnable {
 			try {
 				this.session.getSenderConnection().sendChunk(mOut.toString().getBytes());
 			}
-			catch (IOException e) {}		
+			catch (IOException e) {}
+			this.setChanged();
+			this.notifyObservers(mOut);
 		}				
 	}
 	

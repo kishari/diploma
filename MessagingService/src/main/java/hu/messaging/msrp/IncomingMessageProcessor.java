@@ -1,18 +1,22 @@
 package hu.messaging.msrp;
 
+import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.io.IOException;
 
-public class IncomingMessageProcessor implements Runnable {
+public class IncomingMessageProcessor extends Observable implements Runnable {
 	
 	private BlockingQueue<Message> incomingMessageQueue;
 	private Session session;
 	private boolean running = false;
 	
-	public IncomingMessageProcessor(BlockingQueue<Message> incomingMessageQueue, Session session ) {
+	public IncomingMessageProcessor(BlockingQueue<Message> incomingMessageQueue, 
+									Session session, 
+									TransactionManager transactionManager ) {
 		this.incomingMessageQueue = incomingMessageQueue;
 		this.session = session;
+		this.addObserver(transactionManager);
 	}
 	
 	public void run() {
@@ -46,6 +50,8 @@ public class IncomingMessageProcessor implements Runnable {
 			System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is '200 OK' message!");
 			Response resp = (Response) chunk;
 			System.out.println(resp.toString());
+			this.setChanged();
+			this.notifyObservers(resp);
 		}		
 	}
 	
