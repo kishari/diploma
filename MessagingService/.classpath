@@ -6,5 +6,7 @@
 	<classpathentry kind="lib" path="C:/Ericsson/SDS4.0/extension/eclipse/plugins/com.ericsson.sds.3pp_4.0.2.v20080505/sipservlet/sipservlet.jar"/>
 	<classpathentry kind="lib" path="C:/Ericsson/SDS4.0/extension/eclipse/plugins/com.ericsson.sds.3pp_4.0.2.v20080505/tomcat/common/lib/servlet-api.jar"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/log4j-1.2.15.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.4.jar"/>
 	<classpathentry kind="output" path="eclipse_classes"/>
 </classpath>

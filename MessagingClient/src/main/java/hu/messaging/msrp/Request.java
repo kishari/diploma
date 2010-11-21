@@ -72,7 +72,6 @@ public class Request extends Message implements Comparable{
 		return msg;
 	}
 
-	@Override
 	public int compareTo(Object otherRequest){
 		
 		if ( !(otherRequest instanceof Request) ) {

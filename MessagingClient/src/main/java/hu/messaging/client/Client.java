@@ -15,6 +15,8 @@ import com.ericsson.icp.IProfile;
 import com.ericsson.icp.IService;
 import com.ericsson.icp.ISession;
 
+import com.ericsson.icp.services.PGM.IRLSManager;
+import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.*;
 
 
@@ -24,6 +26,8 @@ public class Client {
 	private IProfile profile = null;
 	private IService service = null;
 	private ISession session = null;
+	private IRLSManager rlsManager = null;
+	private GroupHelper groupHelper = null;
 	
 	private TextArea logArea = new TextArea();	
 
@@ -31,7 +35,7 @@ public class Client {
 		this.logArea = logArea;
 	}
 	
-	public void initICP() {
+	public void init() {
 		try {
 			platform = ICPFactory.createPlatform();
 			platform.registerClient("MessagingClient");
@@ -46,19 +50,29 @@ public class Client {
 			System.out.println(session.getState());
 			System.out.println(session.isValid());
 			session.addListener(new SessionAdapter(logArea));
+			
+			rlsManager = PGMFactory.createRLSManager(profile);
+			if (rlsManager == null) {
+				System.out.println("rslManager null. fuck you");
+			}
+			rlsManager.addListener(new RLSMAdapter(logArea));
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		this.groupHelper = new GroupHelper(this.rlsManager);
 	}
 
 	public void dispose() {		
 		try {
 			MessagingService.getMsrpStack().disposeResources();
 			session.release();
+			rlsManager.release();
 			service.release();
 			profile.release();
 			platform.release();
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -164,5 +178,9 @@ public class Client {
 			e.printStackTrace();
 		}
 		return localSdp;
+	}
+
+	public GroupHelper getGroupHelper() {
+		return groupHelper;
 	}
 }

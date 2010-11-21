@@ -1,6 +1,6 @@
 package hu.messaging.msrp;
 
-public class Request extends Message {
+public class Request extends Message implements Comparable{
 	
 	private int sumByte = 0;
 	private int firstByte = 0;
@@ -71,4 +71,22 @@ public class Request extends Message {
 		msg += "-------" + getTransactionId() + getEndToken();
 		return msg;
 	}
+
+	public int compareTo(Object otherRequest){
+		
+		if ( !(otherRequest instanceof Request) ) {
+			throw new ClassCastException("Invalid object");
+		}
+		Request r = (Request)otherRequest;
+		
+ 		if (this.getFirstByte() > r.getFirstByte() ) {
+ 			return 1;
+		}
+ 		else if (this.getFirstByte() < r.getFirstByte()) {
+ 			return -1;
+ 		}
+ 		
+		return 0;
+	}
+	
 }

@@ -1,6 +1,7 @@
 package hu.messaging.client.gui;
 
 import hu.messaging.client.*;
+import hu.messaging.client.model.GroupListStruct;
 import hu.messaging.service.MessagingService;
 
 import java.awt.BorderLayout;
@@ -16,24 +17,36 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 
-public class MainWindow implements Runnable {
+public class MainWindow extends JFrame implements Runnable {
 	
-	private Frame mainFrame;
 	private Client client = null;
 	private TextArea logArea = new TextArea();
 	private boolean done = false;
 	
+	public static MainWindow instance = null;
+	public GroupPanel groupPanel;
+	public MessageSendingPanel messagePanel;
+	
+	public MainWindow() {
+		groupPanel = new GroupPanel();
+		messagePanel = new MessageSendingPanel();
+		instance = this;
+	}
+	
 	public void run() {
-		mainFrame = createGui();
-		mainFrame.setPreferredSize(new Dimension(100, 100));
-		mainFrame.setVisible(true);
+		createGui();
 		
 		client = new Client(logArea);
-		client.initICP();
+		client.init();
 		
 	    while (!done) {
 	           try {
@@ -44,25 +57,46 @@ public class MainWindow implements Runnable {
 	           }
 	       }
 	    
-	    //mainFrame.setVisible(false);
 	    client.sendBye();
 	    client.dispose();
-	    mainFrame.dispose();
+	    dispose();
 	}
 	
-	private Frame createGui() {
-	   final Frame frame = new Frame();
-       frame.setLayout(new GridBagLayout());
-      
+	private void createGui() {			
+		setLayout(new BorderLayout());
+        
+        setTitle("Messaging Client");
+                               
+        JTabbedPane tabbedPane = new JTabbedPane();
+        
+        JPanel groupCard = new JPanel();
+        groupCard.add(groupPanel);
+        
+        
+        JPanel messageCard = new JPanel();
+        messageCard.add(messagePanel);
+        tabbedPane.addTab("groups", groupCard);
+        tabbedPane.addTab("messages", messageCard);
+
+        add(tabbedPane);
+        
+        setPreferredSize(new Dimension(400, 600));
+        addWindowListener(new WindowAdapter(){
+            public void windowClosing(WindowEvent e){
+            	done = true;
+            }
+        });
+        setResizable(false);
+    
+        pack();        
+ 
+        /*
        Button messageButton = new Button("sendTestMessage");
        Button inviteButton = new Button("Invite");
        Button clearButton = new Button("Clear");
        
        messageButton.addActionListener(new ActionListener()   {
-           public void actionPerformed(ActionEvent e) {
-        	   
-        	   		//String testData = "Hello Jozsi. Mi van veled? log a beled? Ez itt egy tesztuzenet.";
-        	   
+           public void actionPerformed(ActionEvent e) {        	          	   
         	   String tmp = "";
         	   try {
         		  tmp = FileUtils.readFileToString(new File("C:\\diploma\\MessagingClient\\testData\\input.txt"));
@@ -99,17 +133,7 @@ public class MainWindow implements Runnable {
        buttonPanel.add(clearButton);
        mainPanel.add(buttonPanel, BorderLayout.NORTH);
        mainPanel.add(logArea, BorderLayout.CENTER);
-       frame.add(mainPanel);
-     
-       frame.setSize(new Dimension(500, 500));
-       frame.addWindowListener(new WindowAdapter()
-       {
-           public void windowClosing(WindowEvent e) {
-               done = true;
-           }
-       });
-       
-		return frame;
+       */
 	}
 	
 	public static void main(String[] args) throws Exception {
