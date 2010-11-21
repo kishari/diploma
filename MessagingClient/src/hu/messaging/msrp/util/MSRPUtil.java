@@ -12,15 +12,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MSRPUtil {
-	private static Pattern methodPattern =  Pattern.compile("(^MSRP) ([\\p{Alnum}]{8,20}) ([\\p{Alnum}]{3,5}[\\p{Blank}]{0,1}[\\p{Alnum}]{0,2})\r\n(.*)", Pattern.DOTALL);
+	private static Pattern methodPattern =  Pattern.compile("(^MSRP) ([\\p{Alnum}]{8,50}) ([\\p{Alnum}]{3,5}[\\p{Blank}]{0,1}[\\p{Alnum}]{0,2})\r\n(.*)", Pattern.DOTALL);
 	private static Pattern toPathPattern =  Pattern.compile("(To-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
 	private static Pattern fromPathPattern =  Pattern.compile("(From-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
 	private static Pattern messageIdPattern =  Pattern.compile("(Message-ID:) ([\\p{Alnum}]{10,50})\r\n");
 	private static Pattern byteRangePattern =  Pattern.compile("(Byte-Range:) ([\\p{Digit}]{1,})-([\\p{Digit}]{1,})" +
 															   "/([\\p{Digit}]{1,})\r\n");
 	private static Pattern contentPattern =  Pattern.compile("(Content-Type:) ([\\p{Alpha}]{1,}/[\\p{Alpha}]{1,})\r\n\r\n" +
-															 "(.*)\r\n");
-	private static Pattern endLinePattern =  Pattern.compile("\r\n([-]{7})([\\p{Alnum}]{8,20})([+$#]{1})");
+															 "(.*)\r\n-------", Pattern.DOTALL);
+	private static Pattern endLinePattern =  Pattern.compile("\r\n([-]{7})([\\p{Alnum}]{8,50})([+$#]{1})");
 	
 	public static Request createRequest(byte[] content, URI localURI,
 										URI remoteURI, String transactionId, String messageId, int offset,
@@ -55,22 +55,27 @@ public class MSRPUtil {
 		if (matcher.find()) {
 			method = matcher.group(3);
 		}
+		System.out.println("method: " + method);
 		if ("SEND".equals(method)) {
+			System.out.println("SEND");
 			Request req = new Request();
 			
 			req.setMethod(Constants.methodSEND);			
 			req.setTransactionId(matcher.group(2));
+			System.out.println("tId: " + matcher.group(2));
 			
 			matcher = toPathPattern.matcher(msg);
 			String toPath = null;
 			if (matcher.find()) {
 				toPath = matcher.group(2);
+				System.out.println("toPath: " + toPath);
 			}
 									
 			matcher = fromPathPattern.matcher(msg);
 			String fromPath = null;
 			if (matcher.find()) {
 				fromPath = matcher.group(2);
+				System.out.println("fromPath: " + fromPath);
 			}
 						
 			try {
@@ -87,6 +92,7 @@ public class MSRPUtil {
 			matcher = messageIdPattern.matcher(msg);
 			if (matcher.find()) {
 				req.setMessageId(matcher.group(2));
+				System.out.println("messageId: " + req.getMessageId());
 			}				
 			
 			matcher = byteRangePattern.matcher(msg);
@@ -112,6 +118,7 @@ public class MSRPUtil {
 				req.setEndToken(matcher.group(3).charAt(0));
 			}	
 			
+			System.out.println(req.toString());
 			return req;
 		}
 		else if("200 OK".equals(method)) {
@@ -153,7 +160,7 @@ public class MSRPUtil {
 				resp.setEndToken(matcher.group(3).charAt(0));
 			}	
 			
-			System.out.println(resp.toString());
+			
 			return resp;
 		}
 		

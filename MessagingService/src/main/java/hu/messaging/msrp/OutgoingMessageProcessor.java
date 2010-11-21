@@ -42,19 +42,20 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		System.out.println("OutgoingProcessor processOutgoingMessage... ");
 		System.out.println(new String(completeMessage));
 
-		int chunkSize = 10;
+		int chunkSize = 200;
 		
 		List<byte[]> chunks = splitMessageToChunks(completeMessage, chunkSize);
 		
 		int offset = 1;
 		char endToken = '+';
-		String tId = "transactionId";
+		String tId = "";
 		String messageId = "messageId";
 		for (byte[] chunk : chunks) {
 			if (chunk.length < chunkSize) {
 				endToken = '$';
 			}
 			
+			tId = MSRPUtil.generateRandomString(10);
 			Request mOut = MSRPUtil.createRequest(chunk, session.getLocalUri(), session.getRemoteUri(),
 												  tId, messageId, 
 												  offset, chunk.length, completeMessage.length, 

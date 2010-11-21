@@ -14,6 +14,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 
 public class MainWindow implements Runnable {
 	
@@ -55,8 +60,20 @@ public class MainWindow implements Runnable {
        
        messageButton.addActionListener(new ActionListener()   {
            public void actionPerformed(ActionEvent e) {
-        	   		String testData = "Hello Jozsi. Mi van veled? log a beled? Ez itt egy tesztuzenet.";
-        		  	client.sendMessage(testData.getBytes(), MessagingService.serverURI);
+        	   
+        	   		//String testData = "Hello Jozsi. Mi van veled? log a beled? Ez itt egy tesztuzenet.";
+        	   
+        	   String tmp = "";
+        	   try {
+        		  tmp = FileUtils.readFileToString(new File("C:\\diploma\\MessagingClient\\testData\\input.txt"));
+        		  System.out.println(tmp);
+        		  System.out.println(tmp.length());
+        	   }
+        	   catch(IOException exc) { }
+        	   
+        	   //String testData = StringEscapeUtils.escapeJava(tmp);
+        	   String testData = tmp;
+        		client.sendMessage(testData.getBytes(), MessagingService.serverURI);
         	  
         	   //client.sendData(m.toString().getBytes(), MessagingService.serverURI);
            }

@@ -40,10 +40,11 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 		if (chunk.getMethod() == Constants.methodSEND) {
 			System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message!");
 			Request req = (Request) chunk;
-			System.out.println(req.toString());
+			//System.out.println(req.toString());
 			Response ack = createAcknowledgement(req);
-			System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message! Ack created: \n" + ack.toString() );
-			
+			//System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message! Ack created: \n" + ack.toString() );
+			 this.setChanged();
+			 this.notifyObservers(req);
 			this.session.getSenderConnection().sendChunk(ack.toString().getBytes());
 		}
 		else if ( chunk.getMethod() == Constants.method200OK ){

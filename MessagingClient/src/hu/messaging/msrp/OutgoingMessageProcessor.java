@@ -41,8 +41,9 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	private void processOutgoingMessage(byte[] completeMessage) {
 		System.out.println("OutgoingProcessor processOutgoingMessage... ");
 		System.out.println(new String(completeMessage));
+		System.out.println(new String(completeMessage).length());
 
-		int chunkSize = 10;
+		int chunkSize = 200;
 		
 		List<byte[]> chunks = splitMessageToChunks(completeMessage, chunkSize);
 		
