@@ -8,6 +8,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
+import java.util.LinkedList;
+
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -67,19 +69,19 @@ public class GroupPanel extends JPanel implements ActionListener {
     /**
      * felépíti a csoportfát
      */
-    public void buildTree() {
-    	buildTree(treePanel);
+    public void buildTree(LinkedList<GroupListStruct> groupList) {
+    	buildTree(treePanel, groupList);
     }
     
     /**
      * Inicializálja a csoportfát.
      * @param treePanel
      */
-    public void buildTree(GroupTree treePanel) {
+    public void buildTree(GroupTree treePanel, LinkedList<GroupListStruct> groupList) {
  
         DefaultMutableTreeNode node;
 
-        Iterator<GroupListStruct> it = MainWindow.instance.getGroupList().iterator();
+        Iterator<GroupListStruct> it = groupList.iterator();
         while (it.hasNext()) {
            GroupListStruct element = (GroupListStruct) it.next();
            String gName = element.groupName;
@@ -105,10 +107,11 @@ public class GroupPanel extends JPanel implements ActionListener {
            	
         	//ha több csoport lenne, mint amennyi a megengedett maximum (100), akkor nem hozhat létre.
         	
-        	if (!(Main.instance.numberOfGroupsMax > numOfGroups)) {
-        		JOptionPane.showMessageDialog(Main.instance,
+        	//if (!(MainWindow.instance.numberOfGroupsMax > numOfGroups)) {
+        	if (!(100 > numOfGroups)) {
+        		JOptionPane.showMessageDialog(MainWindow.instance,
         			    "Túllépte a létrehozható csoportok maximális számát("
-        				+ Integer.toString(Main.instance.numberOfGroupsMax) + ")",
+        				+ Integer.toString(100) + ")",
         			    "Figyelem!",
         			    JOptionPane.WARNING_MESSAGE);
         				return;        		
@@ -117,24 +120,26 @@ public class GroupPanel extends JPanel implements ActionListener {
         	depth = treePanel.getPathDepth();
            	        	
         	if (depth == 1) {
-        		String s = (String)JOptionPane.showInputDialog(Main.instance, "Új csoport neve:",
+        		String s = (String)JOptionPane.showInputDialog(MainWindow.instance, "Új csoport neve:",
         				                                       "Új csoport felvétele",
         				                                       JOptionPane.PLAIN_MESSAGE);
         		if (s != null) {
-        			Main.instance.addGroup(s);
-        			Main.instance.updateMessagePanel();
+        			
+        			MainWindow.instance.getClient().getGroupHelper().addGroup(s);
+        			//MainWindow.instance.getClient().addGroup(s);
+        			MainWindow.instance.updateMessagePanel();
         			treePanel.addObject(s);
         		}        		
         	}
         	if (depth == 2) {
         		
         		String groupName = treePanel.getPath().getLastPathComponent().toString();
-        		String s = (String)JOptionPane.showInputDialog(Main.instance, "Új csoporttag URI-ja:",
+        		String s = (String)JOptionPane.showInputDialog(MainWindow.instance, "Új csoporttag URI-ja:",
                         									   "Új csoporttag felvétele",
                         									   	JOptionPane.PLAIN_MESSAGE);
         		if (s != null) {
-        			Main.instance.addBuddyToGroup(s, groupName);
-        			Main.instance.updateMessagePanel();
+        			MainWindow.instance.getClient().getGroupHelper().addBuddyToGroup(s, groupName);
+        			MainWindow.instance.updateMessagePanel();
         			treePanel.addObject(s);
         		}
         	}
@@ -152,14 +157,14 @@ public class GroupPanel extends JPanel implements ActionListener {
         		case 3: msg = "csoporttagot";
         				break;
         		
-        		default: JOptionPane.showMessageDialog(Main.instance,
+        		default: JOptionPane.showMessageDialog(MainWindow.instance,
         			    "A gyökér csoport nem törölhetõ!",
         			    "Figyelem!",
         			    JOptionPane.WARNING_MESSAGE);
         				return;        		
         	}
         	
-        	int answer = JOptionPane.showConfirmDialog(Main.instance, "Biztos törlöd a kiválasztott "+ msg + "?",
+        	int answer = JOptionPane.showConfirmDialog(MainWindow.instance, "Biztos törlöd a kiválasztott "+ msg + "?",
         												"Figyelem!", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         	if(answer == JOptionPane.YES_OPTION) {
         		String groupName = new String();
@@ -169,29 +174,29 @@ public class GroupPanel extends JPanel implements ActionListener {
         		switch (path.getPathCount()) {
         		
         			case 2: groupName = path.getLastPathComponent().toString();
-        					Main.instance.delGroup(groupName);
+        					MainWindow.instance.getClient().getGroupHelper().delGroup(groupName);
         					numOfGroups--;
         					break;
         			
         			case 3: groupName = path.getParentPath().getLastPathComponent().toString();
         					memberName = path.getLastPathComponent().toString();
-        					Main.instance.delBuddyFromGroup(memberName, groupName);
+        					MainWindow.instance.getClient().getGroupHelper().delBuddyFromGroup(memberName, groupName);
         					break;
         		}
         		
-        		Main.instance.updateMessagePanel();
+        		MainWindow.instance.updateMessagePanel();
         		treePanel.removeCurrentNode();
         		
         	}
         	
         } else if (CLEAR_COMMAND.equals(command)) {
         	
-        	int answer = JOptionPane.showConfirmDialog(Main.instance, "Biztos törölsz minden csoportot?",
+        	int answer = JOptionPane.showConfirmDialog(MainWindow.instance, "Biztos törölsz minden csoportot?",
 														"Figyelem!", JOptionPane.YES_NO_OPTION, 
 														JOptionPane.QUESTION_MESSAGE);
         	if(answer == JOptionPane.YES_OPTION) {
         		treePanel.clear();
-        		Main.instance.delAllGroupsFromPGM();
+        		MainWindow.instance.getClient().getGroupHelper().delAllGroupsFromPGM();
         		numOfGroups = 0;
         	}            
         }

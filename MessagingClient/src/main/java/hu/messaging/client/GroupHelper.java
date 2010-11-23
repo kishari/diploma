@@ -14,10 +14,18 @@ import com.ericsson.icp.util.IIterator;
 public class GroupHelper {
 
 	private IRLSManager rlsManager = null;
-	private LinkedList<GroupListStruct> groupList = null;
+	private LinkedList<GroupListStruct> groupList = new LinkedList<GroupListStruct>();
 	
 	public GroupHelper(IRLSManager rlsManager) {
 		this.rlsManager = rlsManager;
+		init();
+	}
+	
+	private boolean init() {
+		boolean ret = true;
+		ret = getGroups();
+		
+		return ret;
 	}
 	
 	/**
@@ -171,7 +179,7 @@ public class GroupHelper {
 	/**
 	 * Lekéri a PGM szervertõl a csoportokat.
 	 */
-	public void getGroups() {
+	public boolean getGroups() {
 		
 		groupList.clear();
 
@@ -212,9 +220,10 @@ public class GroupHelper {
 	   		
 	   		System.out.println("-------------------------------------------------");
 		} catch (Exception e) {
-				//e.printStackTrace();
 			System.out.println("getGroups catch");
-		}	
+			return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -229,6 +238,7 @@ public class GroupHelper {
 			if (rlsManager == null) {
 				System.out.println("rlsManager null");
 			}
+			
 			rlsManager.addGroup(group);
 			System.out.println("checkout2");
 			GroupListStruct temp = new GroupListStruct();
@@ -241,7 +251,7 @@ public class GroupHelper {
 			
 		} catch (Exception e) {
 			System.out.println(e.getMessage() + " " +
-					"Sikertelen csoport létrehozás: A usernek már létezik ilyen nevû csoportja!");
+					"Sikertelen csoport létrehozás!");
 			//e.printStackTrace();			
 		}
 	}
@@ -252,15 +262,24 @@ public class GroupHelper {
 	 */
 	public void delGroup(String groupName) {
 		try {
-			
-			IRLSGroup group = PGMFactory.createGroup(groupName);
-			rlsManager.removeGroup(group);
-			
+			System.out.println("delete group from pgm: " + groupName);
+
+			IIterator iterator = rlsManager.getGroupIterator();
+			iterator.reset();
+			IRLSGroup group = PGMFactory.createGroup("1");
+			while( iterator.hasNext() )	{
+				iterator.next();
+				group = (IRLSGroup) iterator.getElement();
+				if (group.getName().equals(groupName)) {
+					rlsManager.removeGroup(group);
+					break;
+				}			
+			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage() + " " +
-					"Sikertelen csoport létrehozás: A usernek már létezik ilyen nevû csoportja!");
-			//e.printStackTrace();			
+					"Sikertelen csoport törlés!");	
 		}
+		delGroupFromList(groupName);
 	}
 	
 	/**
@@ -270,7 +289,7 @@ public class GroupHelper {
 	private void delGroupFromList(String groupName) {
 			
 		GroupListStruct temp = new GroupListStruct();
-		
+		System.out.println("delete group from local list: " + groupName);
 		Iterator i = groupList.iterator();
 		while (i.hasNext()) {
 			temp = (GroupListStruct) i.next();
@@ -301,14 +320,6 @@ public class GroupHelper {
 			System.out.println(" delAllGroupsFromPGM catch");
 			//e.printStackTrace();
 		}		
-	}
-
-	/**
-	 * Frissíti a messagePanelen látható csoportokat. Ez azért kell, hogy mindig csak az aktuálisan érvényes
-	 * csoportoknak tudjunk üzenetet küldeni.
-	 */
-	public void updateMessagePanel() {
-        messagePanel.updateGroupList();
 	}
 	
 	/**

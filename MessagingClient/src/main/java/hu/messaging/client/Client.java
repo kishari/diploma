@@ -6,6 +6,7 @@ import java.net.InetAddress;
 
 import java.util.*;
 
+import hu.messaging.client.model.GroupListStruct;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.MessagingService;
 
@@ -15,6 +16,7 @@ import com.ericsson.icp.IProfile;
 import com.ericsson.icp.IService;
 import com.ericsson.icp.ISession;
 
+import com.ericsson.icp.services.PGM.IRLSGroup;
 import com.ericsson.icp.services.PGM.IRLSManager;
 import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.*;
@@ -52,10 +54,12 @@ public class Client {
 			session.addListener(new SessionAdapter(logArea));
 			
 			rlsManager = PGMFactory.createRLSManager(profile);
+			System.out.println("initICP");
 			if (rlsManager == null) {
 				System.out.println("rslManager null. fuck you");
 			}
 			rlsManager.addListener(new RLSMAdapter(logArea));
+			System.out.println("client rlsManager: " + rlsManager);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -182,5 +186,30 @@ public class Client {
 
 	public GroupHelper getGroupHelper() {
 		return groupHelper;
+	}
+	
+	public void addGroup(String groupName) {
+		try {
+			
+			IRLSGroup group = PGMFactory.createGroup(groupName);
+			System.out.println("checkout1");
+			if (rlsManager == null) {
+				System.out.println("rlsManager null");
+			}
+			
+			rlsManager.addGroup(group);
+			System.out.println("checkout2");
+			GroupListStruct temp = new GroupListStruct();
+			System.out.println("checkout3");
+			temp.groupName = groupName;
+			System.out.println("checkout4");
+			temp.members = new LinkedList<String>();
+			System.out.println("checkout5");
+			
+		} catch (Exception e) {
+			System.out.println(e.getMessage() + " " +
+					"Sikertelen csoport létrehozás!");
+			//e.printStackTrace();			
+		}
 	}
 }

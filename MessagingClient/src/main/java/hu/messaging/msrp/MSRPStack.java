@@ -74,13 +74,15 @@ public class MSRPStack {
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
 		SenderConnection s = getConnections().findSenderConnection(MessagingService.serverURI);
-		if (s == null) {
-			System.out.println("MSRPStack disposeResources: senderConnection is null");
+		if (s != null) {
+			s.getSession().getTransactionManager().stop();
+			s.stop();
 		}
 		else {
-				s.getSession().getTransactionManager().stop();
-				s.stop();
+			//System.out.println("MSRPStack disposeResources: senderConnection is null");
 		}
-		getConnections().getReceiverConnection().stop();
+		if (getConnections().getReceiverConnection() != null) {
+			getConnections().getReceiverConnection().stop();
+		}
 	}
 }

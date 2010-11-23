@@ -1,17 +1,21 @@
 package hu.messaging.client.gui;
 
+import hu.messaging.client.model.GroupListStruct;
+import hu.messaging.service.MessagingService;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -20,7 +24,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 
-import com.ericsson.icp.util.SdpFactory;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Az üzenetek küldése ezen a panelen valósul meg.
@@ -65,11 +69,27 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		
 		super(new BorderLayout());
 		
-		JButton sendButton = new JButton("Send");
-        sendButton.setActionCommand(SEND_COMMAND);
-        sendButton.addActionListener(this);
-        
-        numOfGroupsMax = Main.instance.numberOfGroupsMax;
+		 JButton sendButton = new JButton("send");
+		 JButton inviteButton = new JButton("Invite");
+	       
+		 sendButton.addActionListener(new ActionListener()   {
+	           public void actionPerformed(ActionEvent e) {        	          	   
+	        	   String testData = "";
+	        	   try {
+	        		   testData = FileUtils.readFileToString(new File("C:\\diploma\\MessagingClient\\testData\\input.txt"));
+	        	   }
+	        	   catch(IOException exc) { }	        	   
+	        		MainWindow.instance.getClient().sendMessage(testData.getBytes(), MessagingService.serverURI);	        	
+	           }
+	       });
+	       
+	       inviteButton.addActionListener(new ActionListener()   {
+	           public void actionPerformed(ActionEvent e) {
+	        	   MainWindow.instance.getClient().sendInvite();
+	           }
+	       });
+	               
+        numOfGroupsMax = 100;
         
         msgArea = new JTextArea();
         msgArea.setColumns(5);
@@ -91,9 +111,12 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
         
         JPanel groupPanel = new JPanel(new FlowLayout());
         groupPanel.setPreferredSize(new Dimension(390,300));
-                
-        add(sendButton, BorderLayout.SOUTH);
-		
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(sendButton);
+        buttonPanel.add(inviteButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+        
         selectedGroups = new JCheckBox[numOfGroupsMax];
 		
 		for (int i = 0; i < numOfGroupsMax; i++) {
@@ -109,13 +132,13 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 	 * frissíti a kiválasztható csoportokat. Ez azért kell, hogy az üzenetküldõ panelon mindig 
 	 * csak az aktuális csoportokat lehessek kiválasztani címzettnek.
 	 */
-	public void updateGroupList() {
+	public void updateGroupList(LinkedList<GroupListStruct> groupList) {
 		
 		for (int i = 0; i < numOfGroupsMax; i++) {
 			selectedGroups[i].setVisible(false);
 		}
 		String groupName;
-		Iterator <GroupListStruct> i = Main.instance.getGroupList().iterator();
+		Iterator <GroupListStruct> i = groupList.iterator();
 		int index = -1;
 		while (i.hasNext()) {
     		groupName = i.next().groupName;
@@ -130,8 +153,8 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 	 * A groupName nevû csoport tagjainak elküldi az üzenetet.
 	 * @param groupName
 	 */
-	private void sendMessageToGroup(String groupName) {
-		Iterator<GroupListStruct> i = Main.instance.getGroupList().iterator();
+	private void sendMessageToGroup(String groupName, LinkedList<GroupListStruct> groupList) {
+		Iterator<GroupListStruct> i = groupList.iterator();
 		GroupListStruct element;
 		while (i.hasNext()) {
 			element = i.next();
@@ -168,8 +191,10 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		String command = e.getActionCommand();
 		if (SEND_COMMAND.equals(command)) {
 			for (int i = 0; i < 100; i++) {
-				if (selectedGroups[i].isSelected())
-				sendMessageToGroup(selectedGroups[i].getText());
+				if (selectedGroups[i].isSelected()) {
+					
+				}
+				//sendMessageToGroup(selectedGroups[i].getText());
 			}
 		}				
 	}

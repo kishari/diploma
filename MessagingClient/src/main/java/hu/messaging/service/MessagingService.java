@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class MessagingService {
 	
-	public static String serverURI = "sip:weblogic@192.168.1.103";
+	public static String serverURI = "sip:weblogic@192.168.1.102";
 	
 	private static Map<String, String> localSDPs = new HashMap<String, String>();
 	
