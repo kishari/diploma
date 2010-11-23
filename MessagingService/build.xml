@@ -81,6 +81,12 @@
 				<exclude name="**/*.java" />
 			</fileset>
 		</copy>
+		<echo>Copying Resources from ${lib.dir} to ${build.dir}/WEB-INF/lib</echo>
+				<copy todir="${build.dir}/WEB-INF/lib">
+					<fileset dir="${lib.dir}">
+						<include name="**/*.jar" />
+					</fileset>
+				</copy>
 	
 	</target>
 

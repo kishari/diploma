@@ -1,6 +1,7 @@
 package hu.messaging.msrp;
 
 import hu.messaging.Constants;
+import hu.messaging.dao.MessagingDAO;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,8 +41,8 @@ public class TransactionManager implements Observer {
 	}
 
 	public void update(Observable o, Object obj) {
-		System.out.println("update");
-		System.out.println(o.toString());
+		System.out.println("TManager update: " + o.toString());
+		//System.out.println(o.toString());
 		if (o.toString().contains("OutgoingMessageProcessor")) {
 			Request r = (Request) obj;
 			this.sentMessages.put(r.getTransactionId(), r);					
@@ -50,7 +51,24 @@ public class TransactionManager implements Observer {
 			Message m = (Message) obj;
 			if (m.getMethod() == Constants.methodSEND) {
 				Request req = (Request) m;
-				this.incomingMessages.put(req.getTransactionId(), req);				
+				this.incomingMessages.put(req.getTransactionId(), req);		
+				System.out.println(req.getEndToken());
+				if (req.getEndToken() == '$') {
+					System.out.println("Utolso csomag is megjott");
+					List<Request> allMessage = new ArrayList<Request>();
+					for (String key : this.incomingMessages.keySet()) {
+						allMessage.add(this.incomingMessages.get(key));
+					}
+					
+					Collections.sort(allMessage);
+					
+					String total = "";
+					for (Request r : allMessage) {
+						total += new String(r.getContent());
+					}
+					//System.out.println(total);
+					new MessagingDAO().insertMessage(total.getBytes());
+				}
 			}
 			else if (m.getMethod() == Constants.method200OK) {
 				Response resp = (Response) m;

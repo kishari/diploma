@@ -47,7 +47,7 @@ public class MSRPUtil {
 	}
 	
 	public static Message createMessage(String msg) {
-		System.out.println("create message from: " + msg);
+		//System.out.println("create message from: " + msg);
 		
 		Matcher matcher = methodPattern.matcher(msg);
 		
@@ -55,27 +55,27 @@ public class MSRPUtil {
 		if (matcher.find()) {
 			method = matcher.group(3);
 		}
-		System.out.println("method: " + method);
+		//System.out.println("method: " + method);
 		if ("SEND".equals(method)) {
-			System.out.println("SEND");
+			//System.out.println("SEND");
 			Request req = new Request();
 			
 			req.setMethod(Constants.methodSEND);			
 			req.setTransactionId(matcher.group(2));
-			System.out.println("tId: " + matcher.group(2));
+			//System.out.println("tId: " + matcher.group(2));
 			
 			matcher = toPathPattern.matcher(msg);
 			String toPath = null;
 			if (matcher.find()) {
 				toPath = matcher.group(2);
-				System.out.println("toPath: " + toPath);
+				//System.out.println("toPath: " + toPath);
 			}
 									
 			matcher = fromPathPattern.matcher(msg);
 			String fromPath = null;
 			if (matcher.find()) {
 				fromPath = matcher.group(2);
-				System.out.println("fromPath: " + fromPath);
+				//System.out.println("fromPath: " + fromPath);
 			}
 						
 			try {
@@ -92,7 +92,7 @@ public class MSRPUtil {
 			matcher = messageIdPattern.matcher(msg);
 			if (matcher.find()) {
 				req.setMessageId(matcher.group(2));
-				System.out.println("messageId: " + req.getMessageId());
+				//System.out.println("messageId: " + req.getMessageId());
 			}				
 			
 			matcher = byteRangePattern.matcher(msg);
@@ -118,7 +118,7 @@ public class MSRPUtil {
 				req.setEndToken(matcher.group(3).charAt(0));
 			}	
 			
-			System.out.println(req.toString());
+			//System.out.println(req.toString());
 			return req;
 		}
 		else if("200 OK".equals(method)) {

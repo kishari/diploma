@@ -40,6 +40,7 @@ public class TransactionManager implements Observer {
 	}
 
 	public void update(Observable o, Object obj) {
+		System.out.println("TManager update: " + o.toString());
 		if (o.toString().contains("OutgoingMessageProcessor")) {
 			Request r = (Request) obj;
 			this.sentMessages.put(r.getTransactionId(), r);					

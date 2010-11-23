@@ -14,6 +14,7 @@ import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
 import hu.messaging.Constants;
+import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
 import hu.messaging.util.*;
@@ -59,6 +60,12 @@ public class MessagingSipServlet extends SipServlet {
 		req.createResponse(200).send();
 		System.out.println(getCleanSipUri(req.getFrom().toString()));
 		MessagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
+		
+		
+//TESZT
+		MessagingDAO dao = new MessagingDAO();
+		dao.getMessages();
+//TESZT
 	}
 
 	protected void doAck(SipServletRequest req)	throws ServletException, IOException {

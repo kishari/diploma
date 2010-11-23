@@ -56,7 +56,7 @@ public class SenderConnection implements Runnable {
 				queue.add(b);				
 			}
 		}
-		System.out.println("senderConnection send data! selector wakeup.");
+		//System.out.println("senderConnection send data! selector wakeup.");
 		this.selector.wakeup();
 		//System.out.println("Sending bytes: " + data.length);
 		//ByteBuffer b = ByteBuffer.allocate(data.length);
@@ -73,7 +73,7 @@ public class SenderConnection implements Runnable {
 		}
 		//System.out.println("run eleje (senderchannel init utan)");
 		while (isRunning()) {
-			System.out.println("senderConnection run");
+			//System.out.println("senderConnection run");
 			try {				
 				synchronized (this.pendingChanges) {
 					Iterator<ChangeRequest> changes = this.pendingChanges.iterator();

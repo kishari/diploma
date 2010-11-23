@@ -62,7 +62,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 												  offset, chunk.length, completeMessage.length, 
 												  endToken);
 			offset += chunk.length;
-			System.out.println("OutgoingProcessor: after message create: \n" + mOut.toString());
+			//System.out.println("OutgoingProcessor: after message create: \n" + mOut.toString());
 			
 			try {
 				this.session.getSenderConnection().sendChunk(mOut.toString().getBytes());
