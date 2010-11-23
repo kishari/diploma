@@ -1,6 +1,6 @@
 package hu.messaging.msrp.util;
 
-import hu.messaging.msrp.Constants;
+import hu.messaging.Constants;
 import hu.messaging.msrp.Message;
 import hu.messaging.msrp.Request;
 import hu.messaging.msrp.Response;

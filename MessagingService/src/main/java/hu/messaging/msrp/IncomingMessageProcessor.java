@@ -1,5 +1,7 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
+
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +24,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	public void run() {
 		while(running) {
 			try {
-				Message mIn = this.incomingMessageQueue.poll(500, TimeUnit.MILLISECONDS);
+				Message mIn = this.incomingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS);
 				if (mIn != null) {
 					processIncomingMessage(mIn);
 				}				

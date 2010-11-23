@@ -1,5 +1,7 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
+
 public class Response extends Message {
 
 	@Override

@@ -13,6 +13,7 @@ import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
+import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
 import hu.messaging.util.*;
@@ -111,7 +112,7 @@ public class MessagingSipServlet extends SipServlet {
 			String address = localReceiverAddress.getHostAddress();
 			String port = Integer.toString(localReceiverPort);
 			
-			String sessionId = MSRPUtil.generateRandomString(20);
+			String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
 			
 			String content = "v=0\n" +
 							 "o=weblogic 2890844526 2890844527 IN IP4 " + address + "\n" +

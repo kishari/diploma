@@ -1,5 +1,6 @@
 package hu.messaging.client;
 
+import hu.messaging.Constants;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.service.MessagingService;
 import hu.messaging.util.*;
@@ -30,12 +31,12 @@ public class SessionAdapter extends BaseAdapter implements ISessionListener {
             	log(Integer.toString(remoteSdp.getPort()));
             	MessagingService.createSenderConnection(remoteSdp.getHost(), 
             											remoteSdp.getPort(), 
-            											MessagingService.serverURI);
-            	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(MessagingService.serverURI);
+            											Constants.serverURI);
+            	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(Constants.serverURI);
 
-            	ParsedSDP localSdp = sdpUtil.parseSessionDescription(MessagingService.getLocalSDP(MessagingService.serverURI));
+            	ParsedSDP localSdp = sdpUtil.parseSessionDescription(MessagingService.getLocalSDP(Constants.serverURI));
             	log("localSdp path: " + localSdp.getPath());
-            	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), MessagingService.serverURI);
+            	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverURI);
             	s.start();
             }
         }

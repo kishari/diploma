@@ -6,6 +6,7 @@ import java.net.InetAddress;
 
 import java.util.*;
 
+import hu.messaging.Constants;
 import hu.messaging.client.model.GroupListStruct;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.MessagingService;
@@ -95,15 +96,16 @@ public class Client {
 				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
 			
-			String sessionId = MSRPUtil.generateRandomString(20);
+			String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
+			
 			ISessionDescription sdp = createLocalSDP(MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress(),
 													 MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort(),
 													 sessionId);
 
-			MessagingService.addLocalSDP(MessagingService.serverURI, sdp.format());
+			MessagingService.addLocalSDP(Constants.serverURI, sdp.format());
 			
-			logArea.append("send INVITE to: " + MessagingService.serverURI + "\n");
-			session.start(MessagingService.serverURI, sdp, profile.getIdentity(), SdpFactory.createIMSContentContainer());
+			logArea.append("send INVITE to: " + Constants.serverURI + "\n");
+			session.start(Constants.serverURI, sdp, profile.getIdentity(), SdpFactory.createIMSContentContainer());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -146,8 +148,7 @@ public class Client {
 			String address = host.getHostAddress();
 
 			m.add("text/plain");
-			String path = new String();
-			path = "msrp://" + address + ":" + port + "/" + sessionId + ";tcp";
+			String path = "msrp://" + address + ":" + port + "/" + sessionId + ";tcp";
 
 			String codes = "*";
 			codes = codes.trim();
@@ -187,29 +188,5 @@ public class Client {
 	public GroupHelper getGroupHelper() {
 		return groupHelper;
 	}
-	
-	public void addGroup(String groupName) {
-		try {
-			
-			IRLSGroup group = PGMFactory.createGroup(groupName);
-			System.out.println("checkout1");
-			if (rlsManager == null) {
-				System.out.println("rlsManager null");
-			}
-			
-			rlsManager.addGroup(group);
-			System.out.println("checkout2");
-			GroupListStruct temp = new GroupListStruct();
-			System.out.println("checkout3");
-			temp.groupName = groupName;
-			System.out.println("checkout4");
-			temp.members = new LinkedList<String>();
-			System.out.println("checkout5");
-			
-		} catch (Exception e) {
-			System.out.println(e.getMessage() + " " +
-					"Sikertelen csoport létrehozás!");
-			//e.printStackTrace();			
-		}
-	}
+
 }

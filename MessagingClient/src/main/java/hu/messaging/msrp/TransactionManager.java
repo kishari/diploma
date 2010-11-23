@@ -1,5 +1,7 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,8 +10,6 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.BlockingQueue;
-
-import org.apache.commons.lang.StringEscapeUtils;
 
 public class TransactionManager implements Observer {
 
@@ -40,8 +40,6 @@ public class TransactionManager implements Observer {
 	}
 
 	public void update(Observable o, Object obj) {
-		System.out.println("update");
-		System.out.println(o.toString());
 		if (o.toString().contains("OutgoingMessageProcessor")) {
 			Request r = (Request) obj;
 			this.sentMessages.put(r.getTransactionId(), r);					
@@ -57,6 +55,8 @@ public class TransactionManager implements Observer {
 				Request ackedReq = this.sentMessages.remove(resp.getTransactionId());
 				this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
 				
+//***********************************************************************				
+//****************** Innentõl csak teszteléshez *************************		
 				if (this.sentMessages.isEmpty()) {
 					System.out.println("Mindenre jott ack");
 					List<Request> allMessage = new ArrayList<Request>();
@@ -72,6 +72,8 @@ public class TransactionManager implements Observer {
 					}
 					System.out.println(total);
 				}
+//****************** Idáig csak teszteléshez ****************************
+//***********************************************************************
 			}
 		}		
 	}

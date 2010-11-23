@@ -42,7 +42,7 @@ public class SenderConnection implements Runnable {
 	}
 
 	public void sendChunk(byte[] chunk) throws IOException {
-		System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
+		//System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
 		synchronized(this.pendingChanges) {
 			this.pendingChanges.add( new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE) );
 			ByteBuffer b = ByteBuffer.allocate(chunk.length);
@@ -88,7 +88,7 @@ public class SenderConnection implements Runnable {
 				}
 				// Wait for an event one of the registered channels
 				this.selector.select();
-				System.out.println("senderConnection run");
+				//System.out.println("senderConnection run");
 				
 
 				// Iterate over the set of keys for which events are available
@@ -151,7 +151,6 @@ public class SenderConnection implements Runnable {
 		System.out.println("sender initiateConnection: " + addr.getAddress().getHostAddress() + " : " + addr.getPort());
 		socketChannel.connect(new InetSocketAddress(this.remoteAddress, this.remotePort));
 		
-		//socketChannel.register(this.selector, SelectionKey.OP_CONNECT);
 		synchronized(this.pendingChanges) {
 		      this.pendingChanges.add( new ChangeRequest( socketChannel, 
 		    		  				  					 ChangeRequest.REGISTER, 
@@ -223,7 +222,7 @@ public class SenderConnection implements Runnable {
 			}
 
 			if (queue.isEmpty()) {
-				System.out.println("Nincs kuldendo adat!");
+				//System.out.println("Nincs kuldendo adat!");
 				socketChannel.register(this.selector, SelectionKey.OP_READ);
 			}
 		}

@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			try {
 				//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
 				//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
-				byte[] data = this.outgoingMessageQueue.poll(500, TimeUnit.MILLISECONDS); 
+				byte[] data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 				if (data != null) {
 					processOutgoingMessage(data);
 				}				
@@ -43,18 +44,20 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		System.out.println(new String(completeMessage));
 		System.out.println(new String(completeMessage).length());
 
-		int chunkSize = 200;
+		int chunkSize = Constants.chunkSize;
 		
 		List<byte[]> chunks = splitMessageToChunks(completeMessage, chunkSize);
 		
 		int offset = 1;
 		char endToken = '+';
-		String tId = "transactionId";
-		String messageId = "messageId";
+		String tId = "";
+		String messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
 		int i = 0;
 		for (byte[] chunk : chunks) {
-			tId += Integer.toString(i);
-			i++;
+			//tId += Integer.toString(i);
+			//i++;
+			tId = MSRPUtil.generateRandomString(Constants.transactionIdLength);
+			
 			//tId = MSRPUtil.generateRandomString(10);
 			if (chunk.length < chunkSize) {
 				endToken = '$';

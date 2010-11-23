@@ -1,7 +1,7 @@
 package hu.messaging.client.gui;
 
+import hu.messaging.Constants;
 import hu.messaging.client.model.GroupListStruct;
-import hu.messaging.service.MessagingService;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -39,7 +39,7 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 	private static String SEND_COMMAND = "send";
 	
 	/**
-	 * A csatolandó fájl elérési útját tartalmazõ szövegmezõ.
+	 * A csatolandó fájl elérési útját tartalmazó szövegmezõ.
 	 */
 	private JTextField fileField;
 	
@@ -79,7 +79,7 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 	        		   testData = FileUtils.readFileToString(new File("C:\\diploma\\MessagingClient\\testData\\input.txt"));
 	        	   }
 	        	   catch(IOException exc) { }	        	   
-	        		MainWindow.instance.getClient().sendMessage(testData.getBytes(), MessagingService.serverURI);	        	
+	        		MainWindow.instance.getClient().sendMessage(testData.getBytes(), Constants.serverURI);	        	
 	           }
 	       });
 	       

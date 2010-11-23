@@ -1,5 +1,7 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
+
 public class Request extends Message implements Comparable{
 	
 	private int sumByte = 0;

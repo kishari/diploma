@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class ReceiverConnection implements Runnable {
 		this.hostAddress = localHostAddress;
 		this.msrpStack = msrpStack;
 		this.selector = initSelector();
-		buff = ByteBuffer.allocate(1000000);
+		buff = ByteBuffer.allocate(Constants.receiverBufferSize);
 		buff.clear();
 	}
 
@@ -46,7 +47,7 @@ public class ReceiverConnection implements Runnable {
 				// Wait for an event one of the registered channels
 				this.selector.select();
 
-				System.out.println("receiverconnection run");
+				//System.out.println("receiverconnection run");
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {

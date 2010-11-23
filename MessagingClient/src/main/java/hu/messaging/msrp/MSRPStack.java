@@ -1,7 +1,6 @@
 package hu.messaging.msrp;
 
-import hu.messaging.service.MessagingService;
-
+import hu.messaging.Constants;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collections;
@@ -37,10 +36,6 @@ public class MSRPStack {
 			System.out.println("MSRPRstack findSession: van talalat");
 			return getActiveSessions().get(sessionId);
 		} 
-		try {
-			Thread.sleep(2000);
-		}
-		catch(InterruptedException e) {}
 		return null;
 	}
 	
@@ -73,7 +68,7 @@ public class MSRPStack {
 	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		SenderConnection s = getConnections().findSenderConnection(MessagingService.serverURI);
+		SenderConnection s = getConnections().findSenderConnection(Constants.serverURI);
 		if (s != null) {
 			s.getSession().getTransactionManager().stop();
 			s.stop();
