@@ -17,7 +17,7 @@ import org.apache.commons.io.IOUtils;
 public class MessagingDAO {
 	 private DataSource dataSource = null;
 	 public static final String DATA_SOURCE_NAME = "jdbc/messagingDataSource";
-	 private static final String INSERT_MESSAGE = "insert into  messages(recipientId, content) values (?, ?)";
+	 private static final String INSERT_MESSAGE = "insert into  messages(messageId, content) values (?, ?)";
 	 
 	 public MessagingDAO() {
 		 init();
@@ -62,14 +62,14 @@ public class MessagingDAO {
 	    	return false;
 	    }
 	   */
-	 	public void insertMessage( byte[] content ) {
+	 	public void insertMessage( String messageId, byte[] content ) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
 	        try {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(INSERT_MESSAGE);
-	            pstmt.setInt(1, 100);
+	            pstmt.setString(1, messageId);
 	            pstmt.setBytes(2, content);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
@@ -92,7 +92,7 @@ public class MessagingDAO {
 	        PreparedStatement pstmt = null;
 	        ResultSet rs = null;
 	        
-	        String selectCommand = "SELECT id, content FROM messagingDB.messages";
+	        String selectCommand = "SELECT id, messageId, content FROM messagingdb.messages";
 	        
 	        try {
 	            pstmt = getConnection().prepareStatement(selectCommand);
@@ -100,7 +100,9 @@ public class MessagingDAO {
 	            
 	            while (rs.next()) {
 	            	System.out.println("id: " + rs.getInt(1));
-	            	InputStream is = rs.getBlob(2).getBinaryStream();
+	            	System.out.println("messageId: " + rs.getString(2));
+	            	
+	            	InputStream is = rs.getBlob(3).getBinaryStream();
 	            	try {
 						byte[] content = IOUtils.toByteArray(is);
 						System.out.println(new String(content));

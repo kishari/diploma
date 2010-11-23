@@ -67,7 +67,7 @@ public class TransactionManager implements Observer {
 						total += new String(r.getContent());
 					}
 					//System.out.println(total);
-					new MessagingDAO().insertMessage(total.getBytes());
+					new MessagingDAO().insertMessage(req.getMessageId(), total.getBytes());
 				}
 			}
 			else if (m.getMethod() == Constants.method200OK) {
