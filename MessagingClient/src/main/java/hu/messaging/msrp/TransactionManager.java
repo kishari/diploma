@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class TransactionManager implements Observer {
 
+	private boolean totalMessageSent = false;
 	private Map<String, Request> acknowledgedMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 	private Map<String, Request> sentMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 	private Map<String, Request> incomingMessages = Collections.synchronizedMap(new HashMap<String, Request>());
@@ -56,9 +57,10 @@ public class TransactionManager implements Observer {
 				Request ackedReq = this.sentMessages.remove(resp.getTransactionId());
 				this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
 				
+				if (this.sentMessages.isEmpty()) {
+					this.totalMessageSent = true;
 //***********************************************************************				
 //****************** Innentõl csak teszteléshez *************************		
-				if (this.sentMessages.isEmpty()) {
 					System.out.println("Mindenre jott ack");
 					List<Request> allMessage = new ArrayList<Request>();
 					for (String key : this.acknowledgedMessages.keySet()) {
@@ -77,6 +79,10 @@ public class TransactionManager implements Observer {
 //***********************************************************************
 			}
 		}		
+	}
+
+	public boolean isTotalMessageSent() {
+		return totalMessageSent;
 	}
 
 }

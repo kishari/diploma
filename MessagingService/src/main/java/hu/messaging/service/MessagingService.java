@@ -1,18 +1,25 @@
 package hu.messaging.service;
 
+import hu.messaging.User;
 import hu.messaging.msrp.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
-public class MessagingService {
+public class MessagingService implements Observer{
+	
+	public List<User> onlineUsers = new ArrayList<User>();
 	
 	public static String serverURI = "sip:weblogic@192.168.1.102";
 	
-	private static MSRPStack msrpStack = new MSRPStack();
+	private MSRPStack msrpStack = new MSRPStack();
 	
-	public static void createSenderConnection(InetAddress host, int port, String sipUri) {
+	public void createSenderConnection(InetAddress host, int port, String sipUri) {
 		try {
 			getMsrpStack().createSenderConnection(host, port, sipUri);	
 		}
@@ -21,11 +28,11 @@ public class MessagingService {
 		}
 	}
 	
-	public static void disposeSenderConnection(String sipUri) {
+	public void disposeSenderConnection(String sipUri) {
 		getMsrpStack().getConnections().deleteSenderConnection(sipUri);
 	}
 	
-	public static void createReceiverConnection(InetAddress host) {
+	public void createReceiverConnection(InetAddress host) {
 		try {
 			getMsrpStack().createReceiverConnection(host);
 		}
@@ -38,15 +45,15 @@ public class MessagingService {
 		getMsrpStack().sendMessage(completeMessage, sipUri);
 	}
 	
-	public static boolean isRunningReceiverConnection() {
+	public boolean isRunningReceiverConnection() {
 		return getMsrpStack().getConnections().isRunningReceiverConnection();
 	}
 	
-	public static boolean isReceiverConnection() {
+	public boolean isReceiverConnection() {
 		return getMsrpStack().getConnections().isReceiverConnection();
 	}
 
-	public static Session createNewSession(URI localURI, URI remoteURI, String sipUri) {
+	public Session createNewSession(URI localURI, URI remoteURI, String sipUri) {
 		SenderConnection s = getMsrpStack().getConnections().findSenderConnection(sipUri);
 		System.out.println("MessagingService createNewSession");
 		
@@ -63,7 +70,44 @@ public class MessagingService {
 		return newSession;
 	}
 	
-	public static MSRPStack getMsrpStack() {
+	public MSRPStack getMsrpStack() {
 		return msrpStack;
+	}
+
+	public synchronized void removeUser(User user) {
+		int index = 0;
+		for (User u : this.onlineUsers) {
+			if (user.getSipURI().equals(u.getSipURI())) {
+				u.getTimer().cancel();
+				this.onlineUsers.remove(index);
+				
+				break;
+			}
+			index++;
+		}
+	}
+	
+	public synchronized User findUser(String sipURI) {
+		for (User u : this.onlineUsers) {
+			if (sipURI.equals(u.getSipURI())) {
+				return u;
+			}
+		}
+		return null;
+	}
+	
+	public synchronized void addUser(User user) {
+		if(findUser(user.getSipURI()) == null) {
+			this.onlineUsers.add(user);	
+		}
+		else {
+			removeUser(user);
+			this.onlineUsers.add(user);
+		}
+	}
+	
+	public void update(Observable o, Object arg) {
+		User user = (User)o;
+		removeUser(user);		
 	}
 }

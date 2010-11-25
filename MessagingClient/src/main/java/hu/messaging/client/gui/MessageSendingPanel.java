@@ -71,6 +71,7 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		
 		 JButton sendButton = new JButton("send");
 		 JButton inviteButton = new JButton("Invite");
+		 JButton updateStatusButton = new JButton("Update reg status");
 	       
 		 sendButton.addActionListener(new ActionListener()   {
 	           public void actionPerformed(ActionEvent e) {        	          	   
@@ -86,6 +87,12 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 	       inviteButton.addActionListener(new ActionListener()   {
 	           public void actionPerformed(ActionEvent e) {
 	        	   MainWindow.instance.getClient().sendInvite();
+	           }
+	       });
+	       
+	       updateStatusButton.addActionListener(new ActionListener()   {
+	           public void actionPerformed(ActionEvent e) {
+	        	   MainWindow.instance.getClient().sendSIPMessage("REGISTER");
 	           }
 	       });
 	               
@@ -115,6 +122,7 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(sendButton);
         buttonPanel.add(inviteButton);
+        buttonPanel.add(updateStatusButton);
         add(buttonPanel, BorderLayout.SOUTH);
         
         selectedGroups = new JCheckBox[numOfGroupsMax];

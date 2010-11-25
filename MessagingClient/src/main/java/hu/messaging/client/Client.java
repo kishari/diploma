@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.util.*;
 
 import hu.messaging.Constants;
-import hu.messaging.client.model.GroupListStruct;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.MessagingService;
 
@@ -17,7 +16,6 @@ import com.ericsson.icp.IProfile;
 import com.ericsson.icp.IService;
 import com.ericsson.icp.ISession;
 
-import com.ericsson.icp.services.PGM.IRLSGroup;
 import com.ericsson.icp.services.PGM.IRLSManager;
 import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.*;
@@ -25,6 +23,7 @@ import com.ericsson.icp.util.*;
 
 public class Client {
 	
+	private Timer timer = null;
 	private IPlatform platform = null;
 	private IProfile profile = null;
 	private IService service = null;
@@ -57,16 +56,20 @@ public class Client {
 			rlsManager = PGMFactory.createRLSManager(profile);
 			System.out.println("initICP");
 			if (rlsManager == null) {
-				System.out.println("rslManager null. fuck you");
+				System.out.println("rslManager null.");
 			}
 			rlsManager.addListener(new RLSMAdapter(logArea));
-			System.out.println("client rlsManager: " + rlsManager);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 		this.groupHelper = new GroupHelper(this.rlsManager);
+		this.sendSIPMessage("REGISTER");
+		this.timer = new Timer();
+		this.timer.scheduleAtFixedRate(new UpdateStatusTask(), 
+									   Constants.onlineUserTimeOut - 1000, 
+									   Constants.onlineUserTimeOut - 1000);
 	}
 
 	public void dispose() {		
@@ -77,6 +80,7 @@ public class Client {
 			service.release();
 			profile.release();
 			platform.release();
+			this.timer.cancel();
 			
 
 		} catch (Exception e) {
@@ -128,16 +132,12 @@ public class Client {
 	}
 	
 	public void sendSIPMessage(String message) {
-	/*	String msg = new String("MSG FROM CLIENT");
-		
-		logArea.append("send MESSAGE to alice: " + msg + "\n");
-		
+		logArea.append("send MESSAGE: " + message + "\n");
 		try {
-			service.sendMessage("sip:alice@ericsson.com", "sip:alice@ericsson.com", "text/plain", msg.getBytes(), msg.length() );
+			service.sendMessage("sip:weblogic@ericsson.com", "sip:weblogic@ericsson.com", "text/plain", message.getBytes(), message.length() );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	*/
 	}
 	
 	private ISessionDescription createLocalSDP(InetAddress host, int port, String sessionId) {
@@ -187,6 +187,16 @@ public class Client {
 
 	public GroupHelper getGroupHelper() {
 		return groupHelper;
+	}
+	
+	public void update() {
+		this.sendSIPMessage("REGISTER");
+	}
+	
+	private class UpdateStatusTask extends TimerTask {
+		public void run() {
+			update();
+		}		
 	}
 
 }

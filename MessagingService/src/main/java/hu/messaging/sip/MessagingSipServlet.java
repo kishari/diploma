@@ -14,6 +14,7 @@ import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
 import hu.messaging.Constants;
+import hu.messaging.User;
 import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
@@ -21,6 +22,7 @@ import hu.messaging.util.*;
 
 public class MessagingSipServlet extends SipServlet {
 
+	private MessagingService messagingService = null;
 	private static Pattern sipUriPattern =  Pattern.compile("sip:([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
 															"[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");
 	
@@ -47,7 +49,7 @@ public class MessagingSipServlet extends SipServlet {
 		super.init(config);
 		ServletContext context = config.getServletContext();
 		sipFactory = (SipFactory) context.getAttribute(SipServlet.SIP_FACTORY);
-		
+		this.messagingService = new MessagingService();
 		System.out.println("MessagingSipServlet inited!");
 	}
 
@@ -59,7 +61,7 @@ public class MessagingSipServlet extends SipServlet {
 		System.out.println("Server doBye");
 		req.createResponse(200).send();
 		System.out.println(getCleanSipUri(req.getFrom().toString()));
-		MessagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
+		this.messagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
 		
 		
 //TESZT
@@ -73,24 +75,30 @@ public class MessagingSipServlet extends SipServlet {
 		System.out.println("Ack from: " + req.getFrom() );
 	}
 
-	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {
+	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
+		if ("REGISTER".equals(req.getContent())) {
+			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
+			user.addObserver(this.messagingService);
+			this.messagingService.addUser(user);
+		}
 		
 		System.out.println("doMessage calling...");
 		System.out.println("Incoming message: " + req.getContent() );
 		System.out.println("from: " + req.getFrom());
 		req.createResponse(200).send();
 
-		SipServletRequest messageRequest = sipFactory.createRequest(req, false);
+/*		SipServletRequest messageRequest = sipFactory.createRequest(req, false);
 		messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
 			
 		messageRequest.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-//	    messageRequest.addHeader("Accept-Contact", req.getHeader("Accept-Contact"));
-//	    messageRequest.addHeader("User-Agent", req.getHeader("User-Agent"));
+	    messageRequest.addHeader("Accept-Contact", req.getHeader("Accept-Contact"));
+	    messageRequest.addHeader("User-Agent", req.getHeader("User-Agent"));
 
         messageRequest.setContent("Hello " + req.getContent(), "text/plain");	        
         messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
 
 	    messageRequest.send();
+	    */
 	}
 
 	protected void doInvite(SipServletRequest req) throws ServletException, IOException {
@@ -104,18 +112,18 @@ public class MessagingSipServlet extends SipServlet {
 		if (req.isInitial()) {
 			SipServletResponse resp = req.createResponse(200);
 			
-			if (!MessagingService.isReceiverConnection()) {				
-				MessagingService.createReceiverConnection(InetAddress.getLocalHost()); 
-				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+			if (!this.messagingService.isReceiverConnection()) {				
+				this.messagingService.createReceiverConnection(InetAddress.getLocalHost()); 
+				this.messagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			} 
-			else if (!MessagingService.isRunningReceiverConnection()) {
-					MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+			else if (!this.messagingService.isRunningReceiverConnection()) {
+				this.messagingService.getMsrpStack().getConnections().getReceiverConnection().start();
 			}
 			
 			ParsedSDP remoteSdp = new SDPUtil().parseSessionDescription(req.getContent().toString());						
 			
-			InetAddress localReceiverAddress = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
-			int localReceiverPort = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort();
+			InetAddress localReceiverAddress = this.messagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
+			int localReceiverPort = this.messagingService.getMsrpStack().getConnections().getReceiverConnection().getPort();
 			String address = localReceiverAddress.getHostAddress();
 			String port = Integer.toString(localReceiverPort);
 			
@@ -133,9 +141,9 @@ public class MessagingSipServlet extends SipServlet {
 			
 			ParsedSDP localSdp = new SDPUtil().parseSessionDescription(content);
 
-			MessagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
-			MessagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
-			MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
+			this.messagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
+			this.messagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
+			this.messagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
 
 			resp.send();			
 		}
