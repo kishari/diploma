@@ -1,12 +1,15 @@
 package hu.messaging.dao;
 
+import hu.messaging.Recipient;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -18,6 +21,12 @@ public class MessagingDAO {
 	 private DataSource dataSource = null;
 	 public static final String DATA_SOURCE_NAME = "jdbc/messagingDataSource";
 	 private static final String INSERT_MESSAGE = "insert into  messages(messageId, content) values (?, ?)";
+	 private static final String INSERT_RECIPIENT = "insert into  recipients(messageId, name, address) values (?, ?, ?)";
+	 private static final String SELECT_MESSAGE = "SELECT messageId, content FROM messagingdb.messages " + 
+	 															"WHERE messageId IN(" + 
+	 																	"SELECT messageId " +
+	 																	"FROM messagingdb.recipients " + 
+	 																	"WHERE address = ?)";
 	 
 	 public MessagingDAO() {
 		 init();
@@ -47,21 +56,29 @@ public class MessagingDAO {
 			throw new IllegalStateException();
 		}
 	}
-	 	    
-	   /* public static boolean init() {
-	    	try {
-				connection = getConnection();
-			} catch (SQLException e) {
-				
-				e.printStackTrace();
-			}
-	    	if (connection != null) {
-	    		
-	        	return true;
-	    	}
-	    	return false;
+	 	 
+	 public void insertRecipients( String messageId, List<Recipient> recipients ) {
+	    	
+	 		Connection conn = null;
+	        PreparedStatement pstmt = null;
+	        try {
+	            conn = getConnection();
+	            pstmt = conn.prepareStatement(INSERT_RECIPIENT);
+	            
+	            for (Recipient r : recipients) {		            
+		            pstmt.setString(1, messageId);
+		            pstmt.setString(2, r.getName());
+		            pstmt.setString(3, r.getSipURI());
+		            pstmt.executeUpdate();
+	            }
+	            
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        } finally {
+	        	closeAll(null, pstmt, conn);
+	        }
 	    }
-	   */
+	 
 	 	public void insertMessage( String messageId, byte[] content ) {
 	    	
 	 		Connection conn = null;
@@ -75,37 +92,30 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	            if (pstmt != null)
-	                try {
-	                    pstmt.close();
-	                } catch (SQLException ignore) { }
-
-	            if (conn != null)
-	                try {
-	                    conn.close();
-	                } catch (SQLException ignore) { }
+	        	closeAll(null, pstmt, conn);
 	        }
 	    }
 	 
-	    public String getMessages() {
+	    public List<byte[]> getMessagesToSipURI( String sipURI ) {
 	    	
+	    	Connection conn = null;
 	        PreparedStatement pstmt = null;
 	        ResultSet rs = null;
 	        
-	        String selectCommand = "SELECT id, messageId, content FROM messagingdb.messages";
-	        
+	        List<byte[]> result = new ArrayList<byte[]>();
+	        	        
 	        try {
-	            pstmt = getConnection().prepareStatement(selectCommand);
+	        	conn = getConnection();
+	            pstmt = conn.prepareStatement(SELECT_MESSAGE);
+	            pstmt.setString(1, sipURI);
 	            rs = pstmt.executeQuery();	        
 	            
-	            while (rs.next()) {
-	            	System.out.println("id: " + rs.getInt(1));
-	            	System.out.println("messageId: " + rs.getString(2));
-	            	
+	            while (rs.next()) {            	
 	            	InputStream is = rs.getBlob(3).getBinaryStream();
+	            	
 	            	try {
 						byte[] content = IOUtils.toByteArray(is);
-						System.out.println(new String(content));
+						result.add(content);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -113,49 +123,34 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	        	closeAll(rs, pstmt);
+	        	closeAll(rs, pstmt, conn);
 			}
 	        
-	        return null;
+	        return result;
 	    }
 	
-/*	    
-	    private static Connection getConnection() throws SQLException {
-	    	Connection conn = null;
-	    	
-	    	String user = "root";
-	        String pass = "root";
-	        String db = "hibernatedb";
-	        String hostport = "localhost:3306";
-	        String url = "jdbc:mysql://" + hostport + "/";
-	        url = url + db;
-	        String driver = "com.mysql.jdbc.Driver";
-	        
-	        try {
-	            Class.forName(driver).newInstance();
-	            conn = DriverManager.getConnection(url, user, pass);
-
-	        } catch (Exception e) { }
-	        
-	        return conn;
-	    }
-*/	    
-	    private static void closeAll(ResultSet rs, PreparedStatement pstmt) {
-	    	
+	    private void closeAll(ResultSet rs, PreparedStatement pstmt, Connection conn) {	    	
 	    	if (rs != null) {
 	            try {
 	                rs.close();
 	            } catch (SQLException ignore) {
-
+	            	ignore.printStackTrace();
 	            }
-	       }
-	    	
+	       }	    	
 	       if (pstmt != null) {
 	            try {
 	                pstmt.close();
 	            } catch (SQLException ignore) {
-	            	
+	            	ignore.printStackTrace();
 	            }
+	       }
+	       
+	       if (conn != null) {
+	    		   try {
+					conn.close();
+				} catch (SQLException e) { 
+					e.printStackTrace();
+				}
 	       }
 	    }
 	    

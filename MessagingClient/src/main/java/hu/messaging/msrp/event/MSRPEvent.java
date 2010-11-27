@@ -7,6 +7,7 @@ public class MSRPEvent {
 	public static final int brokenTrasmissionCode = 3;
 	
 	private String description;
+	private String messageId;
 	private int code;
 	
 	public MSRPEvent(String description, int code) {
@@ -28,5 +29,13 @@ public class MSRPEvent {
 
 	public void setCode(int code) {
 		this.code = code;
+	}
+
+	public String getMessageId() {
+		return messageId;
+	}
+
+	public void setMessageId(String messageId) {
+		this.messageId = messageId;
 	}
 }

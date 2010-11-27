@@ -2,6 +2,8 @@ package hu.messaging.sip;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,8 +15,7 @@ import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
-import hu.messaging.Constants;
-import hu.messaging.User;
+import hu.messaging.*;
 import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
@@ -25,6 +26,10 @@ public class MessagingSipServlet extends SipServlet {
 	private MessagingService messagingService = null;
 	private static Pattern sipUriPattern =  Pattern.compile("sip:([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
 															"[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");
+	private static Pattern recipientsMessagePattern =  Pattern.compile("^RECIPIENTS\r\n" + 
+																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n\r\n" + 
+																	   "(.*)" + 
+																	   "\r\n\r\n-----END", Pattern.DOTALL);
 	
 	private String getCleanSipUri(String incomingUri) {
 		Matcher m = sipUriPattern.matcher(incomingUri);
@@ -76,16 +81,37 @@ public class MessagingSipServlet extends SipServlet {
 	}
 
 	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
+		
+		System.out.println("doMessage calling...");
+		System.out.println("Incoming message: " + req.getContent() );
+		req.createResponse(200).send();
+		
 		if ("UPDATESTATUS".equals(req.getContent())) {
 			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
 			user.addObserver(this.messagingService);
 			this.messagingService.addUser(user);
 		}
 		
-		System.out.println("doMessage calling...");
-		System.out.println("Incoming message: " + req.getContent() );
-		System.out.println("from: " + req.getFrom());
-		req.createResponse(200).send();
+		if (req.getContent().toString().startsWith("RECIPIENTS")) {
+			Matcher m = recipientsMessagePattern.matcher(req.getContent().toString());
+			m.find();
+			
+			String messageId = m.group(1);
+			String[] rTemp = m.group(2).split("\r\n");
+			
+			List<Recipient> recipients = new ArrayList<Recipient>();
+			
+			for (String r : rTemp) {
+				String[] t = r.split("#");
+				Recipient recipient = new Recipient(t[0], t[1]);
+				recipients.add(recipient);
+			}
+			
+			MessagingDAO dao = new MessagingDAO();
+			dao.insertRecipients(messageId, recipients);			
+		}
+
+		
 
 /*		SipServletRequest messageRequest = sipFactory.createRequest(req, false);
 		messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));

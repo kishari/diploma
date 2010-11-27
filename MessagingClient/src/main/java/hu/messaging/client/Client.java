@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.util.*;
 
 import hu.messaging.Constants;
+import hu.messaging.Recipient;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
@@ -200,7 +201,15 @@ public class Client implements MSRPListener {
 
 	public void messageSentSuccess(MSRPEvent event) {
 		System.out.println("Client - sikeres küldés");
-		this.sendSIPMessage("EBBE LESZNEK A CIMZETTEK");
+		
+		event.getMessageId();
+		
+		List<Recipient> testRecipients = new ArrayList<Recipient>();
+		for (int i = 0; i < 4; i++) {
+			Recipient r = new Recipient("Name" + i, "sip:test" + i + "@ericsson.com");
+			testRecipients.add(r);
+		}
+		this.sendSIPMessage(buildRecipientsSIPMessage(event.getMessageId(), testRecipients));
 	}
 
 	public void startTrasmission(MSRPEvent event) {
@@ -215,6 +224,18 @@ public class Client implements MSRPListener {
 		public void run() {
 			update();
 		}		
+	}
+	
+	private String buildRecipientsSIPMessage(String messageId, List<Recipient> recipients) {
+		String msg = "RECIPIENTS\r\n";
+		msg += "Message-ID: " + messageId + "\r\n\r\n"; 
+		
+		for (Recipient r : recipients) {
+			msg += r.getName() + "#" + r.getSipURI() + "\r\n";
+		}
+		
+		msg += "\r\n-----END";
+		return msg;
 	}
 
 }
