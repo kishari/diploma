@@ -32,7 +32,7 @@ public class PlatformAdapter extends BaseAdapter implements IPlatformListener {
 
 	@Override
 	public void processError(ErrorReason error) {
-		// TODO Auto-generated method stub
+		log("processError");
 
 	}
 

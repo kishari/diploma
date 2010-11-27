@@ -14,19 +14,19 @@ public class ProfileAdapter extends BaseAdapter implements IProfileListener {
 
 	@Override
 	public void processEvent(String event, String source, ErrorReason reasonCode) {
-		// TODO Auto-generated method stub
+		log("ProfAdapter processEvent");
 
 	}
 
 	@Override
 	public void processStateChanged(State state) {
-		// TODO Auto-generated method stub
+		log("ProfAdapter processStateChanged");
 
 	}
 
 	@Override
 	public void processError(ErrorReason error) {
-		// TODO Auto-generated method stub
+		log("ProfAdapter processError");
 
 	}
 

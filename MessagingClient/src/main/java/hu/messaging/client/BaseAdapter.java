@@ -15,10 +15,12 @@ public class BaseAdapter {
 
     public void processError(ErrorReason aError){
         logArea.setText("processError: " + aError.getReasonString());
+        System.out.println(aError.getReasonString());
     }
     
     public void log(String message)  {
     	logArea.append(message + "\r\n");
+    	System.out.println(message);
     }
     
 }
