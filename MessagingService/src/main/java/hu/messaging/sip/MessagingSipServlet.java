@@ -66,7 +66,7 @@ public class MessagingSipServlet extends SipServlet {
 		
 //TESZT
 		MessagingDAO dao = new MessagingDAO();
-		dao.getMessages();
+		//dao.getMessages();
 //TESZT
 	}
 
@@ -76,7 +76,7 @@ public class MessagingSipServlet extends SipServlet {
 	}
 
 	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
-		if ("REGISTER".equals(req.getContent())) {
+		if ("UPDATESTATUS".equals(req.getContent())) {
 			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
 			user.addObserver(this.messagingService);
 			this.messagingService.addUser(user);

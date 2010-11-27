@@ -2,7 +2,7 @@ package hu.messaging.msrp;
 
 import hu.messaging.Constants;
 
-public class Request extends Message implements Comparable{
+public class Request extends Message implements Comparable<Object>{
 	
 	private int sumByte = 0;
 	private int firstByte = 0;

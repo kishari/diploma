@@ -2,7 +2,9 @@ package hu.messaging.msrp;
 
 import hu.messaging.Constants;
 import hu.messaging.dao.MessagingDAO;
+import hu.messaging.msrp.event.MSRPEvent;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +16,8 @@ import java.util.concurrent.BlockingQueue;
 
 public class TransactionManager implements Observer {
 
+	private boolean isSentMessageChunk = false;
+	private Session session;
 	private Map<String, Request> acknowledgedMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 	private Map<String, Request> sentMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 	private Map<String, Request> incomingMessages = Collections.synchronizedMap(new HashMap<String, Request>());
@@ -27,6 +31,7 @@ public class TransactionManager implements Observer {
 			  				  BlockingQueue<byte[]> outgoingMessageQueue,
 			  				  Session session) {
 		
+			this.session = session;
 			outgoingMessageProcessor = new OutgoingMessageProcessor(outgoingMessageQueue, session, this);
 			outgoingMessageProcessor.start();
 			
@@ -45,7 +50,8 @@ public class TransactionManager implements Observer {
 		//System.out.println(o.toString());
 		if (o.toString().contains("OutgoingMessageProcessor")) {
 			Request r = (Request) obj;
-			this.sentMessages.put(r.getTransactionId(), r);					
+			this.sentMessages.put(r.getTransactionId(), r);		
+			isSentMessageChunk = true;
 		}
 		else if (o.toString().contains("IncomingMessageProcessor")) {
 			Message m = (Message) obj;
@@ -55,19 +61,27 @@ public class TransactionManager implements Observer {
 				System.out.println(req.getEndToken());
 				if (req.getEndToken() == '$') {
 					System.out.println("Utolso csomag is megjott");
-					List<Request> allMessage = new ArrayList<Request>();
+					List<Request> chunks = new ArrayList<Request>();
+					
+					int byteCount = 0;
 					for (String key : this.incomingMessages.keySet()) {
-						allMessage.add(this.incomingMessages.get(key));
+						chunks.add(this.incomingMessages.get(key));
+						byteCount += this.incomingMessages.get(key).getContent().length;
+					}
+										
+					Collections.sort(chunks);				
+					
+					ByteBuffer b = ByteBuffer.allocate(byteCount);
+					b.clear();
+					byte[] message = new byte[byteCount];
+					
+					for (Request r : chunks) {
+						b.put(r.getContent());
 					}
 					
-					Collections.sort(allMessage);
-					
-					String total = "";
-					for (Request r : allMessage) {
-						total += new String(r.getContent());
-					}
-					//System.out.println(total);
-					new MessagingDAO().insertMessage(req.getMessageId(), total.getBytes());
+					b.rewind();
+					b.get(message);
+					new MessagingDAO().insertMessage(req.getMessageId(), message);
 				}
 			}
 			else if (m.getMethod() == Constants.method200OK) {
@@ -75,23 +89,18 @@ public class TransactionManager implements Observer {
 				Request ackedReq = this.sentMessages.remove(resp.getTransactionId());
 				this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
 				
-				if (this.sentMessages.isEmpty()) {
-					System.out.println("Mindenre jott ack");
-					List<Request> allMessage = new ArrayList<Request>();
-					for (String key : this.acknowledgedMessages.keySet()) {
-						allMessage.add(this.acknowledgedMessages.get(key));
-					}
-					
-					Collections.sort(allMessage);
-					
-					String total = "";
-					for (Request r : allMessage) {
-						total += new String(r.getContent());
-					}
-					System.out.println(total);
+				if (isAckedTotalSentMessage()) {
+					this.isSentMessageChunk = false;
+					MSRPEvent event = new MSRPEvent("sentSuccess", MSRPEvent.messageSentSuccessCode);
+					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
 		}		
+	}
+	
+	private boolean isAckedTotalSentMessage() {
+		boolean t = this.sentMessages.isEmpty() && this.isSentMessageChunk;
+		return t;
 	}
 
 }

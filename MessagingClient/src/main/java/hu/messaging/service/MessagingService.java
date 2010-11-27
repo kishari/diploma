@@ -1,6 +1,7 @@
 package hu.messaging.service;
 
 import hu.messaging.msrp.*;
+import hu.messaging.msrp.event.MSRPListener;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -71,11 +72,19 @@ public class MessagingService {
 		
 		System.out.println(localURI);
 		System.out.println(remoteURI);
-		Session newSession = new Session(localURI, remoteURI, s);
+		Session newSession = new Session(localURI, remoteURI, s, msrpStack);
 		getMsrpStack().putNewSession(newSession);
 		
 		s.setSession(newSession);
 		
 		return newSession;
+	}
+	
+	public static void addMSRPListener(MSRPListener listener) {
+		getMsrpStack().addMSRPListener(listener);
+	}
+	
+	public static void removeMSRPListener(MSRPListener listener) {
+		getMsrpStack().removeMSRPListener(listener);
 	}
 }

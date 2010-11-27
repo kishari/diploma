@@ -7,6 +7,8 @@ import java.net.InetAddress;
 import java.util.*;
 
 import hu.messaging.Constants;
+import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.MessagingService;
 
@@ -21,7 +23,7 @@ import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.*;
 
 
-public class Client {
+public class Client implements MSRPListener {
 	
 	private Timer timer = null;
 	private IPlatform platform = null;
@@ -39,6 +41,8 @@ public class Client {
 	
 	public void init() {
 		try {
+			System.out.println("initICP started");
+			
 			platform = ICPFactory.createPlatform();
 			platform.registerClient("MessagingClient");
 			platform.addListener(new PlatformAdapter(logArea));
@@ -54,7 +58,6 @@ public class Client {
 			session.addListener(new SessionAdapter(logArea));
 			
 			rlsManager = PGMFactory.createRLSManager(profile);
-			System.out.println("initICP");
 			if (rlsManager == null) {
 				System.out.println("rslManager null.");
 			}
@@ -65,11 +68,13 @@ public class Client {
 		}
 		
 		this.groupHelper = new GroupHelper(this.rlsManager);
-		this.sendSIPMessage("REGISTER");
+		this.sendSIPMessage(Constants.updateStatusMessage);
 		this.timer = new Timer();
 		this.timer.scheduleAtFixedRate(new UpdateStatusTask(), 
-									   Constants.onlineUserTimeOut - 1000, 
-									   Constants.onlineUserTimeOut - 1000);
+									   Constants.onlineUserTimeOut - 10000, 
+									   Constants.onlineUserTimeOut - 10000);
+		
+		System.out.println("initICP finished");
 	}
 
 	public void dispose() {		
@@ -90,8 +95,7 @@ public class Client {
 	}
    
 	public void sendInvite() {        
-		try {
-		
+		try {		
 			if (!MessagingService.getMsrpStack().getConnections().isReceiverConnection()) {
 				MessagingService.getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
 				MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
@@ -107,6 +111,7 @@ public class Client {
 													 sessionId);
 
 			MessagingService.addLocalSDP(Constants.serverURI, sdp.format());
+			MessagingService.addMSRPListener(this);
 			
 			logArea.append("send INVITE to: " + Constants.serverURI + "\n");
 			session.start(Constants.serverURI, sdp, profile.getIdentity(), SdpFactory.createIMSContentContainer());
@@ -132,9 +137,9 @@ public class Client {
 	}
 	
 	public void sendSIPMessage(String message) {
-		logArea.append("send MESSAGE: " + message + "\n");
+		logArea.append("send SIP MESSAGE: " + message + "\n");
 		try {
-			service.sendMessage("sip:weblogic@ericsson.com", "sip:weblogic@ericsson.com", "text/plain", message.getBytes(), message.length() );
+			service.sendMessage("sip:alice@ericsson.com", "sip:weblogic@ericsson.com", "text/plain", message.getBytes(), message.length() );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -189,8 +194,21 @@ public class Client {
 		return groupHelper;
 	}
 	
+	public void brokenTrasmission(MSRPEvent event) {
+		
+	}
+
+	public void messageSentSuccess(MSRPEvent event) {
+		System.out.println("Client - sikeres küldés");
+		this.sendSIPMessage("EBBE LESZNEK A CIMZETTEK");
+	}
+
+	public void startTrasmission(MSRPEvent event) {
+		
+	}
+	
 	public void update() {
-		this.sendSIPMessage("REGISTER");
+		this.sendSIPMessage(Constants.updateStatusMessage);
 	}
 	
 	private class UpdateStatusTask extends TimerTask {

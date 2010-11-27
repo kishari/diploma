@@ -1,17 +1,22 @@
 package hu.messaging.msrp;
 
 import hu.messaging.Constants;
+import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.event.MSRPListener;
+
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MSRPStack {
 
 	private Connections connections = new Connections(this);
 	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
-	
+	private List<MSRPListener> msrpListeners = new ArrayList<MSRPListener>();
 
 	public void createReceiverConnection(InetAddress host) throws IOException {
 		getConnections().createReceiverConnection(host);
@@ -50,12 +55,7 @@ public class MSRPStack {
 	public void sendMessage(byte[] completeMessage, String sipUri) {
 		SenderConnection s = getConnections().findSenderConnection(sipUri);
 		Session session = s.getSession();
-		if (session != null) {
-			session.sendMessage(completeMessage);
-		}
-		else {
-			System.out.println("MSRPStack sendMessage. session null");
-		}
+		session.sendMessage(completeMessage);
 	}
 	
 	public Connections getConnections() {
@@ -68,16 +68,42 @@ public class MSRPStack {
 	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		SenderConnection s = getConnections().findSenderConnection(Constants.serverURI);
-		if (s != null) {
-			s.getSession().getTransactionManager().stop();
-			s.stop();
-		}
-		else {
-			//System.out.println("MSRPStack disposeResources: senderConnection is null");
-		}
+		getConnections().deleteSenderConnections();
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}
 	}
+	
+	public synchronized void addMSRPListener(MSRPListener listener) {
+		this.msrpListeners.add(listener);
+	}
+	
+	public synchronized void removeMSRPListener(MSRPListener listener) {
+		this.msrpListeners.remove(listener);
+	}
+
+	public synchronized void notifyListeners(MSRPEvent event) {
+		List<MSRPListener> temp = new ArrayList<MSRPListener>();
+		synchronized(this.msrpListeners) {
+			for (MSRPListener l : this.msrpListeners ) {
+				temp.add(l);
+			}
+		}
+		switch (event.getCode()) {
+		case MSRPEvent.messageSentSuccessCode :	for (MSRPListener listener : temp) {					
+														listener.messageSentSuccess(event);
+												}			
+												break;
+		case MSRPEvent.startTrasmissionCode :	for (MSRPListener listener : temp) {					
+													listener.startTrasmission(event);
+												}	
+												break;					
+		case MSRPEvent.brokenTrasmissionCode :	for (MSRPListener listener : temp) {					
+													listener.brokenTrasmission(event);
+												}	
+												break;
+		}
+	}
+	
+	
 }

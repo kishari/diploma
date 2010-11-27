@@ -48,6 +48,13 @@ public class Connections {
 		return false;
 	}
 	
+	public void deleteSenderConnections() {
+		for (SenderConnection s : this.senderConnections) {
+			s.stop();
+		}
+		this.senderConnections.clear();
+	}
+	
 	public SenderConnection findSenderConnection(String sipUri) {
 		System.out.println("findSenderConn to sipUri: " + sipUri);
 		for ( SenderConnection c : senderConnections ) {

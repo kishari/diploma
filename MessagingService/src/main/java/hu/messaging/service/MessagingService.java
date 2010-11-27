@@ -2,6 +2,7 @@ package hu.messaging.service;
 
 import hu.messaging.User;
 import hu.messaging.msrp.*;
+import hu.messaging.msrp.event.MSRPListener;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,8 +15,6 @@ import java.util.Observer;
 public class MessagingService implements Observer{
 	
 	public List<User> onlineUsers = new ArrayList<User>();
-	
-	public static String serverURI = "sip:weblogic@192.168.1.102";
 	
 	private MSRPStack msrpStack = new MSRPStack();
 	
@@ -62,7 +61,7 @@ public class MessagingService implements Observer{
 			return null;
 		}
 		
-		Session newSession = new Session(localURI, remoteURI, s);
+		Session newSession = new Session(localURI, remoteURI, s, msrpStack);
 		getMsrpStack().putNewSession(newSession);
 		
 		s.setSession(newSession);
@@ -108,6 +107,16 @@ public class MessagingService implements Observer{
 	
 	public void update(Observable o, Object arg) {
 		User user = (User)o;
+		System.out.println("User timeOut. Removing from online list: " + user.getSipURI());
+		
 		removeUser(user);		
+	}
+	
+	public void addMSRPListener(MSRPListener listener) {
+		getMsrpStack().addMSRPListener(listener);
+	}
+	
+	public void removeMSRPListener(MSRPListener listener) {
+		getMsrpStack().removeMSRPListener(listener);
 	}
 }

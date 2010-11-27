@@ -15,7 +15,8 @@ public class Constants {
 	public static final int transactionIdLength = 10;
 	public static final int messageIdLength = 10;
 	public static final int receiverBufferSize = 1000000;
-	public static final int onlineUserTimeOut = 20000;
+	public static final int onlineUserTimeOut = 60000;
+	public static final String updateStatusMessage = "UPDATESTATUS";
 	
     public static final Map<Integer, String> methods = new HashMap<Integer, String>(){
 		{

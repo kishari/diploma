@@ -10,17 +10,19 @@ public class Session {
 	private URI remoteUri;	
 	private String id;
 	private SenderConnection senderConnection;
+	private MSRPStack msrpStack;
 	
 	private BlockingQueue<Message> incomingMessageQueue = new LinkedBlockingQueue<Message>();
 	private BlockingQueue<byte[]> outgoingMessageQueue = new LinkedBlockingQueue<byte[]>();
 
 	private TransactionManager transactionManager = null;
 
-	public Session(URI localUri, URI remoteUri, SenderConnection senderConnection) {
+	public Session(URI localUri, URI remoteUri, SenderConnection senderConnection, MSRPStack msrpStack) {
 		this.localUri = localUri;
 		this.remoteUri = remoteUri;
 		this.id = localUri.toString()+remoteUri.toString();
 		this.senderConnection = senderConnection;
+		this.msrpStack = msrpStack;
 		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, this);
 	}
 	
@@ -69,5 +71,9 @@ public class Session {
 
 	public TransactionManager getTransactionManager() {
 		return transactionManager;
+	}
+
+	public MSRPStack getMsrpStack() {
+		return msrpStack;
 	}
 }
