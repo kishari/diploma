@@ -1,7 +1,9 @@
 package hu.messaging.sip;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -10,10 +12,12 @@ import java.util.regex.Pattern;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.sip.ServletParseException;
 import javax.servlet.sip.SipFactory;
 import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
+import javax.servlet.sip.SipURI;
 
 import hu.messaging.*;
 import hu.messaging.dao.MessagingDAO;
@@ -24,7 +28,7 @@ import hu.messaging.util.*;
 public class MessagingSipServlet extends SipServlet {
 
 	private MessagingService messagingService = null;
-	private static Pattern sipUriPattern =  Pattern.compile("sip:([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
+	private static Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
 															"[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");
 	private static Pattern recipientsMessagePattern =  Pattern.compile("^RECIPIENTS\r\n" + 
 																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n\r\n" + 
@@ -86,6 +90,20 @@ public class MessagingSipServlet extends SipServlet {
 		System.out.println("Incoming message: " + req.getContent() );
 		req.createResponse(200).send();
 		
+		if ("TESTINVITE".equals(req.getContent())) {
+			SipServletRequest messageRequest = sipFactory.createRequest(req, false);
+			/*SipServletRequest messageRequest = sipFactory.createRequest(req.getApplicationSession(),
+																		"MESSAGE",
+																		"sip:weblogic@ericsson.com",
+																		"sip:alice@ericsson.com");
+			*/
+			messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
+			//messageRequest.pushRoute(sipFactory.createSipURI(null, "192.168.1.102:5082"));
+            messageRequest.setContent("Hello " + req.getContent(), "text/plain");
+            messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
+
+            messageRequest.send();
+		}
 		if ("UPDATESTATUS".equals(req.getContent())) {
 			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
 			user.addObserver(this.messagingService);
@@ -108,7 +126,8 @@ public class MessagingSipServlet extends SipServlet {
 			}
 			
 			MessagingDAO dao = new MessagingDAO();
-			dao.insertRecipients(messageId, recipients);			
+			dao.insertRecipients(messageId, recipients);
+			notifyOnlineRecipients(req, recipients);
 		}
 
 		
@@ -127,6 +146,28 @@ public class MessagingSipServlet extends SipServlet {
 	    */
 	}
 
+	private void notifyOnlineRecipients(SipServletRequest req, 
+										List<Recipient> recipients) throws ServletParseException, IOException {
+
+		System.out.println("notifyOnlineRecipients");
+		for (Recipient recipient : recipients) {
+			for (User user : this.messagingService.onlineUsers ) {
+				System.out.println(recipient.getSipURI() + "--" + user.getSipURI() );
+				if (recipient.getSipURI().equals(user.getSipURI())) {
+					System.out.println("send notify message");
+					SipServletRequest r = sipFactory.createRequest(req, false);
+					//r.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
+					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
+					//r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
+					r.setContent("Uzeneted jott basszameg ", "text/plain");	        
+					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
+					
+					r.send();
+				}
+			}			
+		}
+	}
+	
 	protected void doInvite(SipServletRequest req) throws ServletException, IOException {
 		System.out.println("doInvite!...");
 		System.out.println("Invite from: " + req.getFrom() );

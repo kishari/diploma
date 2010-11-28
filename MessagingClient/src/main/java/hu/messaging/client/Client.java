@@ -205,8 +205,8 @@ public class Client implements MSRPListener {
 		event.getMessageId();
 		
 		List<Recipient> testRecipients = new ArrayList<Recipient>();
-		for (int i = 0; i < 4; i++) {
-			Recipient r = new Recipient("Name" + i, "sip:test" + i + "@ericsson.com");
+		for (int i = 0; i < 2; i++) {
+			Recipient r = new Recipient("Alice", "sip:alice@ericsson.com");
 			testRecipients.add(r);
 		}
 		this.sendSIPMessage(buildRecipientsSIPMessage(event.getMessageId(), testRecipients));
