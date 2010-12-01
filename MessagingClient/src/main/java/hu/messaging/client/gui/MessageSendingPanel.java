@@ -31,37 +31,22 @@ import org.apache.commons.io.FileUtils;
  * @author Harangozó Csaba
  *
  */
-public class MessageSendingPanel extends JPanel implements ActionListener{
+public class MessageSendingPanel { //extends JPanel implements ActionListener{
 
+	/*
 	private static final long serialVersionUID = 1296253198192003019L;
 	
 	private static String INPUT_FILE_PATH = "c:\\<csatolandó fájl elérési út>";
 	private static String SEND_COMMAND = "send";
 	
-	/**
-	 * A csatolandó fájl elérési útját tartalmazó szövegmezõ.
-	 */
 	private JTextField fileField;
 	
-	/**
-	 * Az üzenet szövegét tartalmazó rész.
-	 */
 	private JTextArea msgArea;
 	
-	/**
-	 * A TextArea-t tartalmazó komponens.
-	 */
 	private JScrollPane scrollPane;
 	
-	/**
-	 * A címzett csoportok kiválasztására használt CheckBoxok.
-	 */
 	private JCheckBox[] selectedGroups;
 	
-	/**
-	 * A csoportok maximális számát tároló lokális változó, értéket a Main ugyanezen funkciót szolgáló
-	 * változójától kapja.
-	 */
 	private int numOfGroupsMax;
 	
 	
@@ -136,10 +121,6 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		
 	}
 
-	/**
-	 * frissíti a kiválasztható csoportokat. Ez azért kell, hogy az üzenetküldõ panelon mindig 
-	 * csak az aktuális csoportokat lehessek kiválasztani címzettnek.
-	 */
 	public void updateGroupList(LinkedList<GroupListStruct> groupList) {
 		
 		for (int i = 0; i < numOfGroupsMax; i++) {
@@ -157,10 +138,6 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
     	}
 	}
 	
-	/**
-	 * A groupName nevû csoport tagjainak elküldi az üzenetet.
-	 * @param groupName
-	 */
 	private void sendMessageToGroup(String groupName, LinkedList<GroupListStruct> groupList) {
 		Iterator<GroupListStruct> i = groupList.iterator();
 		GroupListStruct element;
@@ -177,10 +154,6 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
     	}
 	}
 	
-	/**
-	 * Elküldi a buddyURI azonosítójú felhasználónak az üzenetet.
-	 * @param buddyURI
-	 */
 	private void sendMessage(String buddyURI) {
 		try {
 			System.out.println("sendMessage to: " + buddyURI);
@@ -192,9 +165,6 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		}
 	}
 
-	/**
-	 * A Send gomb lenyomására hívódik meg.
-	 */
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if (SEND_COMMAND.equals(command)) {
@@ -207,9 +177,6 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		}				
 	}
 	
-	/**
-	 * Megvalósítja, hogy a szöveges üzenet maximum 100 karakter hosszú lehet.
-	 */
 	private class JTextAreaLimit extends PlainDocument {
 
 		private static final long serialVersionUID = 1L;
@@ -234,4 +201,5 @@ public class MessageSendingPanel extends JPanel implements ActionListener{
 		    }
 		  }
 		}
+		*/
 }

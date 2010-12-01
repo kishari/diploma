@@ -21,22 +21,18 @@ import javax.swing.tree.TreePath;
  * @author Harangozó Csaba
  *
  */
-public class GroupPanel extends JPanel implements ActionListener {
+public class GroupPanel { //extends JPanel implements ActionListener {
 	
+	/*
 	private static final long serialVersionUID = 571508598589333611L;
 	
 	private static String ADD_COMMAND = "add";
     private static String REMOVE_COMMAND = "remove";
     private static String CLEAR_COMMAND = "clear";
     
-    /**
-     * A felhasználó csoportjainak száma.
-     */
+
     private int numOfGroups = 0;
     
-    /**
-     * A csoportfa kezelését végzõ osztály példánya.
-     */
     private GroupTree treePanel;
 
     public GroupPanel() {
@@ -66,17 +62,11 @@ public class GroupPanel extends JPanel implements ActionListener {
 	    add(panel, BorderLayout.SOUTH);
     }
 
-    /**
-     * felépíti a csoportfát
-     */
+
     public void buildTree(LinkedList<GroupListStruct> groupList) {
     	buildTree(treePanel, groupList);
     }
     
-    /**
-     * Inicializálja a csoportfát.
-     * @param treePanel
-     */
     public void buildTree(GroupTree treePanel, LinkedList<GroupListStruct> groupList) {
  
         DefaultMutableTreeNode node;
@@ -97,9 +87,7 @@ public class GroupPanel extends JPanel implements ActionListener {
         }
     }
 
-    /**
-     * Gombok lenyomását figyelõ eseménykezelõ.
-     */
+
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
         int depth = 0;
@@ -201,5 +189,6 @@ public class GroupPanel extends JPanel implements ActionListener {
         	}            
         }
     }
+    */
 }
 

@@ -12,7 +12,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-public class MainWindow extends JFrame implements Runnable {
+public class MainWindow { //extends JFrame implements Runnable {
+	/*
 	private static final long serialVersionUID = 1L;
 	private Client client = null;
 	private TextArea logArea = new TextArea();
@@ -85,10 +86,7 @@ public class MainWindow extends JFrame implements Runnable {
 		return client;
 	}
 
-	/**
-	 * Frissíti a messagePanelen látható csoportokat. Ez azért kell, hogy mindig csak az aktuálisan érvényes
-	 * csoportoknak tudjunk üzenetet küldeni.
-	 */
+
 	public void updateMessagePanel() {
         this.messagePanel.updateGroupList(client.getGroupHelper().getGroupList());
 	}
@@ -98,4 +96,5 @@ public class MainWindow extends JFrame implements Runnable {
 		MainWindow mainWin = new MainWindow();
 		mainWin.run();
 	}
+	*/
 }

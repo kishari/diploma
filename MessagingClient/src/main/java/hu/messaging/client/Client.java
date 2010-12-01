@@ -24,8 +24,8 @@ import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.*;
 
 
-public class Client implements MSRPListener {
-	
+public class Client {//implements MSRPListener {
+/*	
 	private Timer timer = null;
 	private IPlatform platform = null;
 	private IProfile profile = null;
@@ -46,7 +46,7 @@ public class Client implements MSRPListener {
 			
 			platform = ICPFactory.createPlatform();
 			platform.registerClient("MessagingClient");
-			platform.addListener(new PlatformAdapter(logArea));
+			platform.addListener(new PlatformListener(logArea));
 			profile = platform.createProfile("IMSSetting");
 			profile.addListener(new ProfileAdapter(logArea));
 			
@@ -242,5 +242,5 @@ public class Client implements MSRPListener {
 		msg += "\r\n-----END";
 		return msg;
 	}
-
+*/
 }

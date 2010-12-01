@@ -22,6 +22,7 @@ public class Constants {
 		{
             put(methodSEND, "SEND");
             put(method200OK, "200 OK");
+            
         }
     };
 }

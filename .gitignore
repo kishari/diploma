@@ -1,2 +1,4 @@
 messageClientApp
 *~
+bin
+*.class
