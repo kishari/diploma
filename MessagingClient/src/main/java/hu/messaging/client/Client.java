@@ -81,11 +81,16 @@ public class Client implements MSRPListener {
 	public void dispose() {		
 		try {
 			MessagingService.getMsrpStack().disposeResources();
-			session.release();
-			rlsManager.release();
-			service.release();
-			profile.release();
-			platform.release();
+			if (session != null)
+				session.release();
+			if (rlsManager != null)
+				rlsManager.release();
+			if (service != null)
+				service.release();
+			if (profile != null)
+				profile.release();
+			if (platform != null)
+				platform.release();
 			this.timer.cancel();
 			
 
