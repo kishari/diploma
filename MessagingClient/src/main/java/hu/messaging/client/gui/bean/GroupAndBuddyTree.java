@@ -189,7 +189,7 @@ public class GroupAndBuddyTree extends JTree {
                 }
                 else if(data instanceof Buddy)
                 {
-                	System.out.println("GroupAndBuddyTree.getTreeCellRendererComponent data is Buddy");
+                	//System.out.println("GroupAndBuddyTree.getTreeCellRendererComponent data is Buddy");
                     Buddy contact = (Buddy) data;
                     text = contact.getDisplayName();
                     setIcon(contact.getUserImage());
