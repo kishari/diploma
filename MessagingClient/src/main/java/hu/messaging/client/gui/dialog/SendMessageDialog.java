@@ -9,10 +9,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
+import hu.messaging.Constants;
 import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Group;
@@ -37,8 +39,16 @@ import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.ericsson.icp.util.ISessionDescription;
+
 import hu.messaging.client.Resources;
-public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener {
+import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.msrp.util.MSRPUtil;
+import hu.messaging.service.MessagingService;
+import hu.messaging.util.SDPUtil;
+
+public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
 	
 	private static final long serialVersionUID = -211908165523434927L;
 	
@@ -92,51 +102,6 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    
 		pack();
 		
-		/*
-		// Send panel
-        JPanel sendPanel = new JPanel();
-		sendPanel.setLayout(new GridBagLayout());
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-		
-        JTextField messageToSend = new JTextField();
-        messageToSend.setName("communication.message.field");
-		messageToSend.setColumns(50);
-		sendPanel.add(messageToSend, constraints);
-		messageToSend.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent arg0) 
-			{
-				System.out.println("sendMessage");
-			}
-		});
-		
-        JButton sendButton = new JButton(Resources.resources.get("button.send"));
-        sendButton.addActionListener(new ActionListener(){
-
-			public void actionPerformed(ActionEvent event)
-			{
-				System.out.println("sendMessage");
-			}
-		});
-        GridBagConstraints buttonConstraints = new GridBagConstraints();
-        buttonConstraints.insets = new Insets(0, 5, 0, 0);
-		sendPanel.add(sendButton, buttonConstraints);
-		textMessagePanel.add(sendPanel, BorderLayout.SOUTH);
-		add(textMessagePanel, BorderLayout.CENTER);
-		pack();
-        
-        // grab focus to be able to type text right away
-        messageToSend.grabFocus();
-
-        // Start the communication
-        try {
-            startCommunication();
-        }
-        catch(Exception e) {}
-
-*/
     }
 
     /**
@@ -152,8 +117,14 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
             }
             case Connected:
             { 
-                //setTitle(Resources.getInstance().get(connectedStringKey, new Object[] {connection.getRemoteUser().getDisplayName()}));
-                //setGuiEnabled(true);
+            	System.out.println("Connected!");
+            	try {
+            		Thread.sleep(1000);
+            		MessagingService.sendMessage(messageContent, Constants.serverSipURI);
+            	}
+            	catch (Exception e) { 
+            		
+            	}            	
                 break;
             }
             case Refused:
@@ -350,11 +321,17 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    JButton sendButton = new JButton("Send");
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		    	  System.out.println("send");
-		    	  if (getSelectedGroupNames().length != 0 && getMessageContent() != null) {
-		    		  System.out.println("send 2");
-		    		  getSelectedGroupsMembers();
-		    		  
+		    	  if (getSelectedGroupNames().length != 0 && getMessageContent() != null) {		    		  
+		    		  try {
+		    			  ISessionDescription sdp = getLocalSDP();
+		    			  MessagingService.addMSRPListener(SendMessageDialog.this);
+		    			  
+		    			  icpController.getCommunicationController().sendInvite(sdp);
+		    			  MessagingService.addLocalSDP(Constants.serverSipURI, sdp.format());
+		    		  }
+		    		  catch(Exception e1) {
+		    			  
+		    		  }		    		  		    		  
 		    	  }
 		      }
 		    });
@@ -414,8 +391,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		String[] selectedGroupNames = getSelectedGroupNames();		
 		List<Group> allGroup = contactListController.getGroups();
 		
-		List<Buddy> selectedGroupMembers = new ArrayList<Buddy>();
-		
+		List<Buddy> selectedGroupMembers = new ArrayList<Buddy>();		
 		List<Group> selectedGroups = new ArrayList<Group>();
 		
 		for (int i = 0; i < selectedGroupNames.length; i++) {
@@ -442,9 +418,59 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 			}
 		}
 		
-		for (Buddy sb : selectedGroupMembers) {
-			System.out.println(sb.getContact());
-		}
 		return selectedGroupMembers;
 	}
+	
+	private ISessionDescription getLocalSDP() throws IOException {
+		
+		if (!MessagingService.getMsrpStack().getConnections().isReceiverConnection()) {
+			MessagingService.getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
+			MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+		}
+		else if (!MessagingService.getMsrpStack().getConnections().isRunningReceiverConnection()) {
+			MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+		}
+		
+		InetAddress localhost = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
+		int port = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort();
+		String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
+		
+		return SDPUtil.createSDP(localhost, port, sessionId);
+	}
+	
+	public void brokenTrasmission(MSRPEvent event) {
+		
+	}
+	
+	public void messageSentSuccess(MSRPEvent event) {
+		String message = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
+		icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, message);
+		
+		MessagingService.removeMSRPListener(this);
+	}
+	
+	public void sessionStarted(MSRPEvent event) {
+    	try {
+    		MessagingService.sendMessage(messageContent, Constants.serverSipURI);
+    	}
+    	catch (Exception e) { 
+    		
+    	} 
+	}
+	public void startTrasmission(MSRPEvent event) {
+		
+	}
+	
+	private String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
+		String msg = "RECIPIENTS\r\n";
+		msg += "Message-ID: " + messageId + "\r\n\r\n"; 
+		
+		for (Buddy r : recipients) {
+			msg += r.getDisplayName() + "#" + r.getContact() + "\r\n";
+		}
+		
+		msg += "\r\n-----END";
+		return msg;
+	}
 }
+

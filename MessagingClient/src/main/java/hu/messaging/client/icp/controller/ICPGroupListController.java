@@ -1,7 +1,6 @@
 package hu.messaging.client.icp.controller;
 
 import hu.messaging.client.gui.controller.ContactListController;
-import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.data.ContactList;
 import hu.messaging.client.gui.data.Group;
@@ -17,8 +16,6 @@ import com.ericsson.icp.services.PGM.IRLSManager;
 import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.IBuddy;
 import com.ericsson.icp.util.IIterator;
-import com.ericsson.icp.util.IUri;
-import com.ericsson.icp.util.ITuple.Basic;
 
 
 /**
@@ -50,7 +47,6 @@ public class ICPGroupListController
 
     public ICPGroupListController(IProfile profile, ContactListController contactListController) throws Exception
     {
-    	System.out.println(getClass().getSimpleName() + " konstuktor called");
         contactListController.setIcpGroupListController(this);
         groupListManager = PGMFactory.createRLSManager(profile);
 
@@ -73,7 +69,6 @@ public class ICPGroupListController
      */
     public void addBuddy(Group group, Buddy contact) throws Exception
     {
-    	System.out.println(getClass().getSimpleName() + "addBuddy: " + group.getDisplayName() + " buddy: " + contact.getDisplayName());
         IRLSGroup icpGroup = findGroup(group.getName());
         IBuddy newBuddy = PGMFactory.createBuddy(contact.getContact());
         newBuddy.setDisplayName(contact.getDisplayName());
@@ -210,18 +205,15 @@ public class ICPGroupListController
      */
     private void loadGroups() throws Exception
     {
-    	System.out.println(getClass().getSimpleName() + " : loadGroups()");
+    	//System.out.println(getClass().getSimpleName() + " : loadGroups()");
         IIterator groupList = groupListManager.getGroupIterator();
         while (groupList.hasNext())        	
         {
-        	System.out.print("csoport: ");
             groupList.next();
             IRLSGroup icpGroup = (IRLSGroup) groupList.getElement();
 
-            System.out.println(icpGroup.getName());
             if(!StringUtil.isEmpty(icpGroup.getDisplayName()))
             {
-            	System.out.println("displayName nem ures: " + icpGroup.getDisplayName());
                 Group group = new Group(icpGroup.getName());
                 group.setDisplayName(icpGroup.getDisplayName());
                 contactListController.addGroupToGui(group);

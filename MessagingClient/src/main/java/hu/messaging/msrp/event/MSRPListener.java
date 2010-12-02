@@ -8,4 +8,6 @@ public interface MSRPListener {
 	
 	public void brokenTrasmission(MSRPEvent event);
 	
+	public void sessionStarted(MSRPEvent event);
+	
 }

@@ -1,9 +1,14 @@
 package hu.messaging.client.icp.listener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ericsson.icp.util.ErrorReason;
 
 public class BaseListener {
 
+	protected boolean logEnabled = true;
+	
     protected BaseListener(){
 
     }
@@ -13,7 +18,10 @@ public class BaseListener {
     }
     
     public void log(String message)  {
-    	System.out.println(message);
+    	if (logEnabled) {
+    		System.out.println(message);
+    	}
+    	
     }
     
 }

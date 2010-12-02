@@ -40,7 +40,7 @@ public class Session {
 	}
 	
 	public void putMessageIntoOutgoingMessageQueue(byte[] message) throws InterruptedException {
-		//System.out.println("Session.putMessageIntoOutgoingMessageQueue");
+		System.out.println("Session.putMessageIntoOutgoingMessageQueue");
 		this.outgoingMessageQueue.put(message);
 	}
 	

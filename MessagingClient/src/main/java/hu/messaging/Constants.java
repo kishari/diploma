@@ -3,9 +3,6 @@ package hu.messaging;
 import java.util.*;
 
 public class Constants {
-
-	public static final String serverURI = "sip:weblogic@192.168.1.102";
-	
 	
 	public static final int methodSEND = 1;
 	public static final int method200OK = 2;

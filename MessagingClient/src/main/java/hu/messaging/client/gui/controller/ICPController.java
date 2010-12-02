@@ -34,7 +34,7 @@ public class ICPController {
     private IService service;
     
     private ISession session;
-    
+    private SessionListener sessionListener;
     /**
      * The local user
      */
@@ -115,7 +115,8 @@ public class ICPController {
     
     private void createSession() throws Exception {
     	session = service.createSession();
-    	session.addListener(new SessionListener());
+    	sessionListener = new SessionListener();
+    	session.addListener(sessionListener);
     }
 
     /**
@@ -237,6 +238,10 @@ public class ICPController {
 
 	public ISession getSession() {
 		return session;
+	}
+
+	public SessionListener getSessionListener() {
+		return sessionListener;
 	}
 	
 	

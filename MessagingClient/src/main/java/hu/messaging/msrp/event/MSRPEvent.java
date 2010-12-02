@@ -5,6 +5,7 @@ public class MSRPEvent {
 	public static final int messageSentSuccessCode = 1;
 	public static final int startTrasmissionCode = 2;
 	public static final int brokenTrasmissionCode = 3;
+	public static final int sessionStartedCode = 4;
 	
 	private String description;
 	private String messageId;

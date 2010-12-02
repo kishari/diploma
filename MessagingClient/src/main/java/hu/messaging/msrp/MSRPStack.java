@@ -1,6 +1,5 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 
@@ -11,12 +10,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observer;
 
 public class MSRPStack {
 
 	private Connections connections = new Connections(this);
 	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
 	private List<MSRPListener> msrpListeners = new ArrayList<MSRPListener>();
+	
 
 	public void createReceiverConnection(InetAddress host) throws IOException {
 		getConnections().createReceiverConnection(host);
@@ -102,8 +103,11 @@ public class MSRPStack {
 													listener.brokenTrasmission(event);
 												}	
 												break;
+		case MSRPEvent.sessionStartedCode :			for (MSRPListener listener : temp) {					
+													listener.sessionStarted(event);
+												}	
+												break;												
 		}
 	}
-	
 	
 }

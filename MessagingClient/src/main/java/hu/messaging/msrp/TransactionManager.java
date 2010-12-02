@@ -3,10 +3,8 @@ package hu.messaging.msrp;
 import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;

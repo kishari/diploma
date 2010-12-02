@@ -1,5 +1,7 @@
 package hu.messaging.msrp;
 
+import hu.messaging.msrp.event.MSRPEvent;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -42,7 +44,7 @@ public class SenderConnection implements Runnable {
 	}
 
 	public void sendChunk(byte[] chunk) throws IOException {
-		//System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
+		System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
 		synchronized(this.pendingChanges) {
 			this.pendingChanges.add( new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE) );
 			ByteBuffer b = ByteBuffer.allocate(chunk.length);
@@ -68,6 +70,7 @@ public class SenderConnection implements Runnable {
 			e.printStackTrace();
 		}
 		
+		this.msrpStack.notifyListeners(new MSRPEvent("", MSRPEvent.sessionStartedCode));
 		while (isRunning()) {
 			try {
 				synchronized (this.pendingChanges) {
@@ -76,8 +79,17 @@ public class SenderConnection implements Runnable {
 						ChangeRequest change = (ChangeRequest) changes.next();
 						switch (change.type) {
 						case ChangeRequest.CHANGEOPS:
-							SelectionKey key = change.socket.keyFor(this.selector);
-							key.interestOps(change.ops);
+							try {
+								System.out.println(change.socket);
+								SelectionKey key = change.socket.keyFor(this.selector);
+								System.out.println("checkpoint");
+								System.out.println(key);
+								key.interestOps(change.ops);							
+							}
+							catch (Exception e) {
+								e.printStackTrace();
+								return;
+							}
 							break;
 						case ChangeRequest.REGISTER:
 				              change.socket.register(this.selector, change.ops);

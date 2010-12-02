@@ -34,7 +34,7 @@ public class CommunicationController
      * @param message The text message to send.
      */
 	public void sendSIPMessage(String to, String message) {
-	   	System.out.println(getClass().getSimpleName() + " sendSIPMessage(String to, String message)");
+	   	//System.out.println(getClass().getSimpleName() + " sendSIPMessage(String to, String message)");
         try
         {
            // Send the message
@@ -57,7 +57,7 @@ public class CommunicationController
     }
     
     public void sendInvite(ISessionDescription localSdp) throws Exception {        
-    	icpController.getSession().start(Constants.serverURI, localSdp, 
+    	icpController.getSession().start(Constants.serverSipURI, localSdp, 
     									 icpController.getProfile().getIdentity(), 
     									 SdpFactory.createIMSContentContainer());
 	}

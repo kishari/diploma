@@ -17,7 +17,7 @@ public class SDPUtil {
 																"([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})\r\n");
 	
 	
-	public SessionDescription parseSessionDescription(String s) throws UnknownHostException {
+	public static SessionDescription parseSessionDescription(String s) throws UnknownHostException {
 		SessionDescription sdp = new SessionDescription();
 		
 		Matcher m = attributePattern.matcher(s);

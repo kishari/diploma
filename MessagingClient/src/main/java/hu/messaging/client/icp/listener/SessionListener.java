@@ -1,6 +1,11 @@
 package hu.messaging.client.icp.listener;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import hu.messaging.Constants;
+import hu.messaging.client.icp.listener.ConnectionListener.ConnectionState;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.service.MessagingService;
 import hu.messaging.util.SessionDescription;
@@ -12,7 +17,7 @@ import com.ericsson.icp.util.IMSContentContainer;
 import com.ericsson.icp.util.ISessionDescription;
 
 public class SessionListener extends BaseListener implements ISessionListener{
-
+	
 	public void processSessionStarted(ISessionDescription sdpBody) {
 		log(getClass().getSimpleName() + ": processSessionStarted");
 		try {
@@ -20,26 +25,24 @@ public class SessionListener extends BaseListener implements ISessionListener{
         	//log(Integer.toString(mCount));
         	log(sdpBody.format());
             for (int i = 0; i < mCount; i++) {
-            	SDPUtil sdpUtil = new SDPUtil();
-            	SessionDescription remoteSdp = sdpUtil.parseSessionDescription(sdpBody.format());
-            	log(remoteSdp.getHost().getHostAddress());
-            	log(Integer.toString(remoteSdp.getPort()));
+            	SessionDescription remoteSdp = SDPUtil.parseSessionDescription(sdpBody.format());
             	
-            	/*MessagingService.createSenderConnection(remoteSdp.getHost(), 
+            	MessagingService.createSenderConnection(remoteSdp.getHost(), 
             											remoteSdp.getPort(), 
-            											Constants.serverURI);
-            	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(Constants.serverURI);
+            											Constants.serverSipURI);
+            	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(Constants.serverSipURI);
 
-            	ParsedSDP localSdp = sdpUtil.parseSessionDescription(MessagingService.getLocalSDP(Constants.serverURI));
-            	log("localSdp path: " + localSdp.getPath());
-            	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverURI);
+            	//System.out.println(s.getRemotePort() + " " + s.getSipUri());
+            	SessionDescription localSdp = SDPUtil.parseSessionDescription(MessagingService.getLocalSDP(Constants.serverSipURI));
+            	
+            	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);
             	s.start();
-            	*/
             }
         }
         catch(Exception e) {}
-		
+        		
 	}
+	
 	public void processSessionAlerting() {
 		log(getClass().getSimpleName() + ": processSessionAlerting");
 	}
@@ -250,8 +253,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	}
 
 	public void processSessionUpdateSuccessful(ISessionDescription sdpBody) {
-		log(getClass().getSimpleName() + ": processSessionUpdateSuccessful");
-		
+		log(getClass().getSimpleName() + ": processSessionUpdateSuccessful");		
 	}
 
 }

@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.util.*;
 
 import hu.messaging.Constants;
-import hu.messaging.Recipient;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
