@@ -4,6 +4,7 @@ import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.icp.listener.PlatformListener;
 import hu.messaging.client.icp.listener.ProfileListener;
 import hu.messaging.client.icp.listener.ServiceListener;
+import hu.messaging.client.icp.listener.SessionListener;
 import hu.messaging.client.icp.controller.ICPGroupListController;
 import hu.messaging.client.gui.util.IcpUtils;
 
@@ -99,9 +100,7 @@ public class ICPController {
         communicationController = new CommunicationController(this);
 
         createService();
-
-        // Update the connection state
-        //profileListener.processStateChanged(profile.getState());
+        createSession();
     }
 
     /**
@@ -112,6 +111,11 @@ public class ICPController {
         // Create the service and add a listener on it to be notified on incoming calls
         service = profile.createService(SERVICE_ID, APPLICATION_ID);
         service.addListener(new ServiceListener(this));
+    }
+    
+    private void createSession() throws Exception {
+    	session = service.createSession();
+    	session.addListener(new SessionListener());
     }
 
     /**
@@ -229,6 +233,10 @@ public class ICPController {
 
 	public CommunicationController getCommunicationController() {
 		return communicationController;
+	}
+
+	public ISession getSession() {
+		return session;
 	}
 	
 	

@@ -57,7 +57,7 @@ public class Resources {
             put("dialog.instant.message.send.title", "Message to send");
             put("dialog.instant.message.send.message", "Type the message to send:");
             put("dialog.instant.message.receive.title", "Message received from {0}");
-            put("dialog.communication.connecting", "Connecting to remote party...");
+            put("dialog.communication.sendMessage", "Send message to groups");
             put("dialog.communication.incoming.title", "Incoming Communication");
             put("dialog.communication.incoming.label", "You have an incoming {0} from {1}. Do you want to accept it?");
             put("dialog.communication.remaining", "Remaining time to connect:");

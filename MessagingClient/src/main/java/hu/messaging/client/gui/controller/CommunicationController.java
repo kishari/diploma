@@ -1,9 +1,13 @@
 package hu.messaging.client.gui.controller;
 
 import hu.messaging.Constants;
+import hu.messaging.client.gui.dialog.SendMessageDialog;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import com.ericsson.icp.util.ISessionDescription;
+import com.ericsson.icp.util.SdpFactory;
 
 /**
  * Handle the communications in the client. This class interacs with the ICP controler to create the appropriate data object, and delegate the
@@ -42,7 +46,6 @@ public class CommunicationController
         }
 	}
 	
-	
     /**
      * 
      * @param remote The callee
@@ -51,6 +54,17 @@ public class CommunicationController
     public void incomingSIPMessage(String to, String message)
     {
        System.out.println("CommunicationController.incomingInstantMessage(): to: " + to + ". \nMessage: " + message);
+    }
+    
+    public void sendInvite(ISessionDescription localSdp) throws Exception {        
+    	icpController.getSession().start(Constants.serverURI, localSdp, 
+    									 icpController.getProfile().getIdentity(), 
+    									 SdpFactory.createIMSContentContainer());
+	}
+    
+    public void openSendMessageDialog(String[] groupList) {
+    	SendMessageDialog dialog = new SendMessageDialog(groupList);
+    	dialog.setVisible(true);
     }
     
     private void update() {

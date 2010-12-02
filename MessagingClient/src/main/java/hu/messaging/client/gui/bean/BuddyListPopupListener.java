@@ -55,8 +55,6 @@ public class BuddyListPopupListener extends MouseAdapter
         	addItem(items.get("menu.edit.buddy.remove"));
         	//Move to other group
         	addItem(items.get("menu.edit.buddy.move"));
-        	//Send message to this contact
-        	addItem(items.get("menu.edit.sendmessage"));
         }
         //A group is selected
         else
@@ -70,6 +68,9 @@ public class BuddyListPopupListener extends MouseAdapter
         	addItem(items.get("menu.edit.group.edit"));
         	//removeGroup
         	addItem(items.get("menu.edit.group.remove"));
+        	//Send message to this group
+        	addItem(items.get("menu.edit.sendmessage"));
+
         }     
         popupMenu.addSeparator();
 //      sortContentAscending

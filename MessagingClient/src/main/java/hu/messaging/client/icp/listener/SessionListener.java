@@ -3,7 +3,7 @@ package hu.messaging.client.icp.listener;
 import hu.messaging.Constants;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.service.MessagingService;
-import hu.messaging.util.ParsedSDP;
+import hu.messaging.util.SessionDescription;
 import hu.messaging.util.SDPUtil;
 
 import com.ericsson.icp.ISessionListener;
@@ -21,7 +21,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
         	log(sdpBody.format());
             for (int i = 0; i < mCount; i++) {
             	SDPUtil sdpUtil = new SDPUtil();
-            	ParsedSDP remoteSdp = sdpUtil.parseSessionDescription(sdpBody.format());
+            	SessionDescription remoteSdp = sdpUtil.parseSessionDescription(sdpBody.format());
             	log(remoteSdp.getHost().getHostAddress());
             	log(Integer.toString(remoteSdp.getPort()));
             	
