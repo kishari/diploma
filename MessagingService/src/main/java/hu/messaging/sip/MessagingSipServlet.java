@@ -92,8 +92,7 @@ public class MessagingSipServlet extends SipServlet {
 		req.createResponse(200).send();
 		
 		if ("TESTINVITE".equals(req.getContent())) {
-			System.out.println("keres from: " + req.getFrom());
-			System.out.println("keres to: " + req.getTo());
+			//System.out.println(req);
 			SipServletRequest messageRequest = sipFactory.createRequest(req, false);
 			
 			/*
@@ -106,9 +105,7 @@ public class MessagingSipServlet extends SipServlet {
 			//messageRequest.pushRoute(sipFactory.createSipURI(null, "192.168.1.102:5082"));
             messageRequest.setContent("Hello " + req.getContent(), "text/plain");
             messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
-                       
-            System.out.println("valasz from: " + messageRequest.getFrom());
-            System.out.println("valasz to: " + messageRequest.getTo());
+            System.out.println(messageRequest);                       
             messageRequest.send();
 		}
 		if ("UPDATESTATUS".equals(req.getContent())) {
@@ -162,13 +159,15 @@ public class MessagingSipServlet extends SipServlet {
 				System.out.println(recipient.getSipURI() + "--" + user.getSipURI() );
 				if (recipient.getSipURI().equals(user.getSipURI())) {
 					System.out.println("send notify message");
+					
 					SipServletRequest r = sipFactory.createRequest(req, false);
-					//r.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
-					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
-					//r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
+					r.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
+					//r.setRequestURI(sipFactory.createURI(user.getSipURI()));
+					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
 					r.setContent("Uzeneted jott basszameg ", "text/plain");	        
 					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
 					
+					System.out.println(r);
 					r.send();
 				}
 			}			

@@ -222,7 +222,7 @@ public class SenderConnection implements Runnable {
 	private void write(SelectionKey key) throws IOException {
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		System.out.println("sender write");
+		//System.out.println("sender write");
 		synchronized (this.pendingData) {
 			List<ByteBuffer> queue = this.pendingData.get(socketChannel);
 
@@ -239,7 +239,7 @@ public class SenderConnection implements Runnable {
 			}
 
 			if (queue.isEmpty()) {
-				System.out.println("Nincs kuldendo adat!");
+				//System.out.println("Nincs kuldendo adat!");
 				socketChannel.register(this.selector, SelectionKey.OP_READ);
 			}
 		}
