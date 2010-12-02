@@ -1,31 +1,17 @@
 package hu.messaging.client.gui.dialog;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
@@ -34,10 +20,8 @@ import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.util.FileUtils;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -45,15 +29,11 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.ListModel;
-import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -89,7 +69,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
      */
     protected JMenuBar menuBar; 
     
-    public SendMessageDialog(ICPController icpController, ContactListController contactListController)//ConnectionWrapper aConnection, String connectedStringKey) throws Exception
+    public SendMessageDialog(ICPController icpController, ContactListController contactListController)
     {
         this.icpController = icpController;
         this.contactListController = contactListController;
@@ -371,8 +351,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
 		    	  System.out.println("send");
-		    	  if (getSelectedGroupNames().length != 0 &&
-		    		  getMessageContent() != null) {
+		    	  if (getSelectedGroupNames().length != 0 && getMessageContent() != null) {
 		    		  System.out.println("send 2");
 		    		  getSelectedGroupsMembers();
 		    		  
@@ -437,20 +416,35 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		
 		List<Buddy> selectedGroupMembers = new ArrayList<Buddy>();
 		
+		List<Group> selectedGroups = new ArrayList<Group>();
+		
 		for (int i = 0; i < selectedGroupNames.length; i++) {
 			for (Group g : allGroup) {
-				System.out.println(g.getDisplayName() + " : " + selectedGroupNames[i]);
 				if (g.getDisplayName().equals(selectedGroupNames[i]))  {
-					selectedGroupMembers.addAll((Collection)g.getBuddies());
+					selectedGroups.add(g);
 					break;
 				}
 			}
 		}
 		
-		for (Buddy b : selectedGroupMembers) {
-			System.out.println(b.getDisplayName());
+		for (Group g : selectedGroups) {
+			for (Buddy b : g.getBuddies()) {
+				boolean isRedundant = false;
+				for (Buddy sb : selectedGroupMembers) {
+					if (b.getContact().equals(sb.getContact())) {
+						isRedundant = true;
+						break;
+					}
+				}
+				if (!isRedundant) {
+					selectedGroupMembers.add(b);
+				}
+			}
 		}
 		
+		for (Buddy sb : selectedGroupMembers) {
+			System.out.println(sb.getContact());
+		}
 		return selectedGroupMembers;
 	}
 }
