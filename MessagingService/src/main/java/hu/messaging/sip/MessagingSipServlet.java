@@ -18,6 +18,7 @@ import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 import javax.servlet.sip.SipURI;
+import javax.servlet.sip.URI;
 
 import hu.messaging.*;
 import hu.messaging.dao.MessagingDAO;
@@ -91,17 +92,23 @@ public class MessagingSipServlet extends SipServlet {
 		req.createResponse(200).send();
 		
 		if ("TESTINVITE".equals(req.getContent())) {
+			System.out.println("keres from: " + req.getFrom());
+			System.out.println("keres to: " + req.getTo());
 			SipServletRequest messageRequest = sipFactory.createRequest(req, false);
-			/*SipServletRequest messageRequest = sipFactory.createRequest(req.getApplicationSession(),
+			
+			/*
+			SipServletRequest messageRequest = sipFactory.createRequest(req.getSession().getApplicationSession(),
 																		"MESSAGE",
 																		"sip:weblogic@ericsson.com",
-																		"sip:alice@ericsson.com");
-			*/
+																		"sip:alice@ericsson.com"); 
+			 */
 			messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
 			//messageRequest.pushRoute(sipFactory.createSipURI(null, "192.168.1.102:5082"));
             messageRequest.setContent("Hello " + req.getContent(), "text/plain");
             messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
-
+                       
+            System.out.println("valasz from: " + messageRequest.getFrom());
+            System.out.println("valasz to: " + messageRequest.getTo());
             messageRequest.send();
 		}
 		if ("UPDATESTATUS".equals(req.getContent())) {

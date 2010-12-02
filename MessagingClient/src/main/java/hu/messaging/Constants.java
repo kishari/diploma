@@ -17,6 +17,7 @@ public class Constants {
 	public static final int receiverBufferSize = 1000000;	
 	public static final int onlineUserTimeOut = 60000;
 	public static final String updateStatusMessage = "UPDATESTATUS";
+	public static final String serverSipURI = "sip:weblogic@ericsson.com";
 	
     public static final Map<Integer, String> methods = new HashMap<Integer, String>(){
 		{

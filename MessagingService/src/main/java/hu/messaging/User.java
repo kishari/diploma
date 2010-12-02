@@ -11,6 +11,7 @@ public class User extends Observable{
 	private Timer timer;
 	
 	public User(String sipURI) {
+		System.out.println("new User:" + sipURI);
 		this.sipURI = sipURI;
 		this.timer = new Timer();
 		this.timer.schedule(new TimeOutTask(), Constants.onlineUserTimeOut);

@@ -58,6 +58,7 @@ public class GroupAndBuddyTree extends JTree {
     {
         super(model);
         setOpaque(false);
+/*
         imsIcon = ImageUtil.createImage("ericsson.gif");
         // Wait for the image to be loaded
         MediaTracker mt = new MediaTracker(this);
@@ -71,7 +72,7 @@ public class GroupAndBuddyTree extends JTree {
         // Get the image size
         logoWidth = imsIcon.getWidth(null);
         logoHeigth = imsIcon.getHeight(null);
-        // Only single selection is allowed.
+*/        // Only single selection is allowed.
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setCellRenderer(new CustomTreeCellRenderer());
         setRootVisible(false);
@@ -149,7 +150,6 @@ public class GroupAndBuddyTree extends JTree {
 
         CustomTreeCellRenderer()
         {
-            //folderClosed = ImageUtil.createImageIcon("folder-closed.gif");
         	folderClosed = ImageUtil.createImageIcon("closed.png");
             folderOpened = ImageUtil.createImageIcon("opened.png");
             setOpaque(false);

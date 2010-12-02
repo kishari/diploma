@@ -1,10 +1,9 @@
 package hu.messaging.client.gui.controller;
 
-import hu.messaging.client.gui.util.Resources;
+import hu.messaging.Constants;
 
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Handle the communications in the client. This class interacs with the ICP controler to create the appropriate data object, and delegate the
@@ -13,39 +12,55 @@ import javax.swing.JOptionPane;
 public class CommunicationController
 {
 
-    public CommunicationController()
-    {
-
-    }
-
-
+	private Timer timer = null;
+	private ICPController icpController;
+	
+	public CommunicationController(ICPController icpController) { 
+		this.icpController = icpController;
+		this.timer = new Timer();
+		this.timer.scheduleAtFixedRate(new UpdateStatusTask(), 
+									   3000, 
+									   Constants.onlineUserTimeOut - 10000);
+	}
+	
     /**
-     * Display the instant message windows
+     * Send a text instant message to a remote party
      * 
-     * @param to The callee
+     * @param to The sip address were send the message (ex: sip:user@ericsson.com)
+     * @param message The text message to send.
+     */
+	public void sendSIPMessage(String to, String message) {
+	   	System.out.println(getClass().getSimpleName() + " sendSIPMessage(String to, String message)");
+        try
+        {
+           // Send the message
+            byte[] messageBytes = message.getBytes("UTF-8");
+            icpController.getService().sendMessage(icpController.getProfile().getIdentity(), to, "text/plain", messageBytes, messageBytes.length);
+        }
+        catch (Exception e)
+        {            
+        }
+	}
+	
+	
+    /**
+     * 
+     * @param remote The callee
      * @param message The minstant message
      */
-    public static void incomingInstantMessage(String to, String message)
+    public void incomingSIPMessage(String to, String message)
     {
-       System.out.println("CommunicationController.incomingInstantMessage()");
+       System.out.println("CommunicationController.incomingInstantMessage(): to: " + to + ". \nMessage: " + message);
     }
-
-    /**
-     * Prompt the user to accept an incoming communication
-     * 
-     * @param communicationTypeKey The key containing the text describing the incoming communication type
-     * @return <code>true</code> if the user accepts the communication, false otherwise
-     */
-    private static boolean acceptIncomingCommunication(String communicationTypeKey, String from)
-    {
-        String communicationType = hu.messaging.client.Resources.resources.get(communicationTypeKey);
-        String label = Resources.getInstance().get("dialog.communication.incoming.label", new Object[] { communicationType, from });
-        JOptionPane optionPane = new JOptionPane(label, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
-        JDialog dialog = optionPane.createDialog(null, hu.messaging.client.Resources.resources.get("dialog.communication.incoming.title"));
-        dialog.setAlwaysOnTop(true);
-        dialog.setVisible(true);
-        int returnValue = (Integer) optionPane.getValue();
-        return (returnValue == JOptionPane.YES_OPTION);
-    }
+    
+    private void update() {
+		this.sendSIPMessage(Constants.serverSipURI, Constants.updateStatusMessage);
+	}
+    
+    private class UpdateStatusTask extends TimerTask {
+		public void run() {
+			update();
+		}		
+	}
 
 }

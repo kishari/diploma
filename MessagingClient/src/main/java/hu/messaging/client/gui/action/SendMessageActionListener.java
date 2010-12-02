@@ -18,9 +18,9 @@ public class SendMessageActionListener extends BuddyActionListener
 
 	public void actionPerformed(ActionEvent e)
 	{
-		System.out.println(getClass().getSimpleName() + "actionPerformed...");
-		//SendInstantMessageDialog dialog = new SendInstantMessageDialog(SwingUtil.getFrame(parent), icpController, controller.getSelectedBuddy());
-		//dialog.setVisible(true);
+		System.out.println(getClass().getSimpleName() + " actionPerformed...");
+		this.icpController.getCommunicationController().sendSIPMessage("sip:weblogic@ericsson.com", "TESTINVITE");
+		
 	}
 
 }

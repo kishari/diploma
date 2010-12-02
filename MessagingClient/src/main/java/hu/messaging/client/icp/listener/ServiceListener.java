@@ -1,12 +1,17 @@
 package hu.messaging.client.icp.listener;
 
+import hu.messaging.client.gui.controller.ICPController;
+
 import com.ericsson.icp.IServiceListener;
 import com.ericsson.icp.ISession;
 
 public class ServiceListener extends BaseListener implements IServiceListener {
 
-	public ServiceListener() {
+	private ICPController icpController;
+	
+	public ServiceListener(ICPController icpController) {
 		super();
+		this.icpController = icpController;
 	}
 
 	public void processIncomingSession(ISession session) {
@@ -14,8 +19,9 @@ public class ServiceListener extends BaseListener implements IServiceListener {
 
 	}
 
-	public void processMessage(String remote, String msgType, byte[] message, int length) {
-		log(getClass().getSimpleName() + ": processMessage: "  + new String(message));
+	public void processMessage(String to, String msgType, byte[] message, int length) {
+		log(getClass().getSimpleName() + ": processMessage");
+		icpController.processIncomingSIPMessage(to, new String(message));
 	}
 
 	public void processOptions(String preferedContact, String remote,

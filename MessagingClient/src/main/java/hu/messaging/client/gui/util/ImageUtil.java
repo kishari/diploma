@@ -20,7 +20,6 @@ public class ImageUtil
         ImageIcon icon = null;
         try
         {
-        	//System.out.println(path);
             InputStream stream = Main.class.getResourceAsStream(path);
             byte[] bytes = new byte[stream.available()];
             stream.read(bytes);

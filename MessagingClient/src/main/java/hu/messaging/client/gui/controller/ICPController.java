@@ -7,10 +7,6 @@ import hu.messaging.client.icp.listener.ServiceListener;
 import hu.messaging.client.icp.controller.ICPGroupListController;
 import hu.messaging.client.gui.util.IcpUtils;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.ericsson.icp.ICPFactory;
 import com.ericsson.icp.IPlatform;
 import com.ericsson.icp.IProfile;
@@ -100,7 +96,7 @@ public class ICPController {
         
         icpGroupListController = new ICPGroupListController(profile, contactListController);
 
-        communicationController = new CommunicationController();
+        communicationController = new CommunicationController(this);
 
         createService();
 
@@ -115,30 +111,7 @@ public class ICPController {
     {
         // Create the service and add a listener on it to be notified on incoming calls
         service = profile.createService(SERVICE_ID, APPLICATION_ID);
-        ServiceListener serviceListener = new ServiceListener();
-        service.addListener(serviceListener);
-    }
-
-    /**
-     * Send a text instant message to a remote party
-     * 
-     * @param to The sip address were send the message (ex: sip:user@ericsson.com)
-     * @param message The text message to send.
-     */
-    public void sendTextInstantMessage(String to, String message)
-    {
-    	System.out.println(getClass().getSimpleName() + " sendTextInstantMessage(String to, String message)");
-
-        try
-        {
-            // Send the message
-            byte[] messageBytes = message.getBytes("UTF-8");
-            service.sendMessage(profile.getIdentity(), to, "text/plain", messageBytes, messageBytes.length);
-        }
-        catch (Exception e)
-        {
-            
-        }
+        service.addListener(new ServiceListener(this));
     }
 
     /**
@@ -230,10 +203,10 @@ public class ICPController {
      * @param to The calle
      * @param message The message
      */
-    public void processIncomingInstantMessage(String to, String message)
+    public void processIncomingSIPMessage(String to, String message)
     {
         // Delegate to the communication controller
-        CommunicationController.incomingInstantMessage(to, message);
+    	communicationController.incomingSIPMessage(to, message);
     }
 
     /**
@@ -245,4 +218,18 @@ public class ICPController {
     {
         return contactListController;
     }
+
+	public IService getService() {
+		return service;
+	}
+
+	public IProfile getProfile() {
+		return profile;
+	}
+
+	public CommunicationController getCommunicationController() {
+		return communicationController;
+	}
+	
+	
 }
