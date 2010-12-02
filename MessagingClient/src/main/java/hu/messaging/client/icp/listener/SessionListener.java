@@ -18,12 +18,14 @@ import com.ericsson.icp.util.ISessionDescription;
 
 public class SessionListener extends BaseListener implements ISessionListener{
 	
+	private List<ConnectionListener> connectionListeners = Collections.synchronizedList(new ArrayList<ConnectionListener>());
+	
 	public void processSessionStarted(ISessionDescription sdpBody) {
 		log(getClass().getSimpleName() + ": processSessionStarted");
 		try {
         	int mCount = sdpBody.getMediaDescriptionCount();
         	//log(Integer.toString(mCount));
-        	log(sdpBody.format());
+        	//log(sdpBody.format());
             for (int i = 0; i < mCount; i++) {
             	SessionDescription remoteSdp = SDPUtil.parseSessionDescription(sdpBody.format());
             	
@@ -31,8 +33,6 @@ public class SessionListener extends BaseListener implements ISessionListener{
             											remoteSdp.getPort(), 
             											Constants.serverSipURI);
             	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(Constants.serverSipURI);
-
-            	//System.out.println(s.getRemotePort() + " " + s.getSipUri());
             	SessionDescription localSdp = SDPUtil.parseSessionDescription(MessagingService.getLocalSDP(Constants.serverSipURI));
             	
             	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);
@@ -40,23 +40,24 @@ public class SessionListener extends BaseListener implements ISessionListener{
             }
         }
         catch(Exception e) {}
-        		
+        	
+        notifyListeners(ConnectionState.Connected);
 	}
 	
 	public void processSessionAlerting() {
 		log(getClass().getSimpleName() + ": processSessionAlerting");
+		notifyListeners(ConnectionState.Connecting);
 	}
 
 	
 	public void processSessionCancelled() {
 		log(getClass().getSimpleName() + ": processSessionCancelled");
-		
 	}
 
 	
 	public void processSessionEnded() {
 		log(getClass().getSimpleName() + ": processSessionEnded");
-		
+		notifyListeners(ConnectionState.ConnectionFinished);
 	}
 
 	
@@ -104,13 +105,14 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	
 	public void processSessionMessageFailed(ErrorReason reason, long retryAfter) {
 		log(getClass().getSimpleName() + ": processSessionMessageFailed");
-		
+		notifyListeners(ConnectionState.RecipientsSendFailed);		
 	}
 
 	
 	public void processSessionMessageSuccessful(String contentType,
 			byte[] body, int length) {
 		log(getClass().getSimpleName() + ": processSessionMessageSuccessful");
+		notifyListeners(ConnectionState.RecipientsSentSuccessful);
 		
 	}
 
@@ -209,6 +211,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	public void processSessionStartFailed(ErrorReason reasonCode,
 			long retryAfter) {
 		log(getClass().getSimpleName() + ": processSessionStartFailed");
+		notifyListeners(ConnectionState.ConnectionFailed);
 		
 	}
 
@@ -254,6 +257,26 @@ public class SessionListener extends BaseListener implements ISessionListener{
 
 	public void processSessionUpdateSuccessful(ISessionDescription sdpBody) {
 		log(getClass().getSimpleName() + ": processSessionUpdateSuccessful");		
+	}
+	
+	public void addConnectionListener(ConnectionListener listener) {
+		this.connectionListeners.add(listener);
+	}
+	
+	public void removeConnectionListener(ConnectionListener listener) {
+		this.connectionListeners.remove(listener);
+	}
+	
+	public synchronized void notifyListeners(ConnectionState event) {
+		List<ConnectionListener> temp = new ArrayList<ConnectionListener>();
+		synchronized(this.connectionListeners) {
+			for (ConnectionListener l : this.connectionListeners ) {
+				temp.add(l);
+			}
+		}
+		for (ConnectionListener listener : temp) {
+			listener.connectionChanged(event);
+		}
 	}
 
 }

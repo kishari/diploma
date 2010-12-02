@@ -47,7 +47,7 @@ public class MSRPUtil {
 	}
 	
 	public static Message createMessage(String msg) {
-		System.out.println("create message from: " + msg);
+		//System.out.println("create message from: " + msg);
 		
 		Matcher matcher = methodPattern.matcher(msg);
 		
@@ -55,7 +55,6 @@ public class MSRPUtil {
 		if (matcher.find()) {
 			method = matcher.group(3);
 		}
-		System.out.println("method: " + method);
 		if ("SEND".equals(method)) {
 			System.out.println("SEND");
 			Request req = new Request();
@@ -118,7 +117,6 @@ public class MSRPUtil {
 				req.setEndToken(matcher.group(3).charAt(0));
 			}	
 			
-			System.out.println(req.toString());
 			return req;
 		}
 		else if("200 OK".equals(method)) {

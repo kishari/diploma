@@ -1,5 +1,6 @@
 package hu.messaging.client.gui.action;
 
+import hu.messaging.Constants;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.dialog.AboutDialog;
 import hu.messaging.client.gui.dialog.BaseDialog;
@@ -19,8 +20,9 @@ public class AboutActionListener extends BuddyActionListener
 
     public void actionPerformed(ActionEvent e)
     {
-        BaseDialog dialog = new AboutDialog(SwingUtil.getFrame(parent));
-        dialog.setVisible(true);
+        //BaseDialog dialog = new AboutDialog(SwingUtil.getFrame(parent));
+        //dialog.setVisible(true);
+    	icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, "TESTINVITE");
         
     }
 

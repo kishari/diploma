@@ -6,6 +6,7 @@ import hu.messaging.client.gui.action.AboutActionListener;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.data.Group;
+import hu.messaging.client.gui.dialog.MessageListDialog;
 import hu.messaging.client.gui.listener.ui.ContactSelectionListener;
 import hu.messaging.client.gui.util.SwingUtil;
 
@@ -94,8 +95,8 @@ public class MenuBar implements ContactSelectionListener
     	itemBlackList.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
-				//BlackListDialog dialog = new BlackListDialog(SwingUtil.getFrame(viewMenu), icpController.getContactListController());
-				//dialog.setVisible(true);
+				MessageListDialog dialog = new MessageListDialog(SwingUtil.getFrame(viewMenu), icpController.getContactListController());
+				dialog.setVisible(true);
 			}});
     	viewMenu.add(itemBlackList);
     	

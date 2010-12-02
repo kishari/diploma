@@ -92,20 +92,12 @@ public class MessagingSipServlet extends SipServlet {
 		req.createResponse(200).send();
 		
 		if ("TESTINVITE".equals(req.getContent())) {
-			//System.out.println(req);
 			SipServletRequest messageRequest = sipFactory.createRequest(req, false);
 			
-			/*
-			SipServletRequest messageRequest = sipFactory.createRequest(req.getSession().getApplicationSession(),
-																		"MESSAGE",
-																		"sip:weblogic@ericsson.com",
-																		"sip:alice@ericsson.com"); 
-			 */
 			messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
 			//messageRequest.pushRoute(sipFactory.createSipURI(null, "192.168.1.102:5082"));
             messageRequest.setContent("Hello " + req.getContent(), "text/plain");
-            messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
-            System.out.println(messageRequest);                       
+            messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");                   
             messageRequest.send();
 		}
 		if ("UPDATESTATUS".equals(req.getContent())) {
@@ -133,21 +125,6 @@ public class MessagingSipServlet extends SipServlet {
 			dao.insertRecipients(messageId, recipients);
 			notifyOnlineRecipients(req, recipients);
 		}
-
-		
-
-/*		SipServletRequest messageRequest = sipFactory.createRequest(req, false);
-		messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
-			
-		messageRequest.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-	    messageRequest.addHeader("Accept-Contact", req.getHeader("Accept-Contact"));
-	    messageRequest.addHeader("User-Agent", req.getHeader("User-Agent"));
-
-        messageRequest.setContent("Hello " + req.getContent(), "text/plain");	        
-        messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");
-
-	    messageRequest.send();
-	    */
 	}
 
 	private void notifyOnlineRecipients(SipServletRequest req, 
@@ -156,18 +133,14 @@ public class MessagingSipServlet extends SipServlet {
 		System.out.println("notifyOnlineRecipients");
 		for (Recipient recipient : recipients) {
 			for (User user : this.messagingService.onlineUsers ) {
-				System.out.println(recipient.getSipURI() + "--" + user.getSipURI() );
-				if (recipient.getSipURI().equals(user.getSipURI())) {
-					System.out.println("send notify message");
-					
+				if (recipient.getSipURI().equals(user.getSipURI())) {					
 					SipServletRequest r = sipFactory.createRequest(req, false);
-					r.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
-					//r.setRequestURI(sipFactory.createURI(user.getSipURI()));
+					//r.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
+					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
 					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-					r.setContent("Uzeneted jott basszameg ", "text/plain");	        
+					r.setContent("MESSAGENOTIFY\n\nFrom:" + getCleanSipUri(req.getFrom().toString()), "text/plain");	        
 					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
 					
-					System.out.println(r);
 					r.send();
 				}
 			}			

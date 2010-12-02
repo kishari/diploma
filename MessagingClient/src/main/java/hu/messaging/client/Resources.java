@@ -38,7 +38,7 @@ public class Resources {
             put("menu.session.start.chat", "Start chat session...");
             put("menu.session.start.voice", "Start voice session...");
             put("menu.view", "View");
-            put("menu.view.blacklist", "Black list...");
+            put("menu.view.blacklist", "Inbox...");
             put("dialog.group.add.title", "New Group");
             put("dialog.group.name.label", "Group name:");
             put("dialog.group.edit.title", "Modify Group");
@@ -50,10 +50,9 @@ public class Resources {
             put("dialog.buddy.edit.title", "Modify Buddy");
             put("dialog.contact.move.title", "Move to group");
             put("dialog.contact.move.label", "Select new group:");
-            put("dialog.blacklist.title", "Black List");
-            put("dialog.blacklist.label", "Select the buddies to put on the black list");
+            put("dialog.messagelist.title", "Inbox");
             put("dialog.blacklist.buddy", "Buddy:");
-            put("dialog.help.about.title", "About Windows Client");
+            put("dialog.help.about.title", "About Messaging Client");
             put("dialog.instant.message.send.title", "Message to send");
             put("dialog.instant.message.send.message", "Type the message to send:");
             put("dialog.instant.message.receive.title", "Message received from {0}");

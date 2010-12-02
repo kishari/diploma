@@ -7,7 +7,7 @@ import com.ericsson.icp.util.ErrorReason;
 
 public class BaseListener {
 
-	protected boolean logEnabled = true;
+	protected boolean logEnabled = false;
 	
     protected BaseListener(){
 

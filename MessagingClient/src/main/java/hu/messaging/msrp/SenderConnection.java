@@ -44,7 +44,7 @@ public class SenderConnection implements Runnable {
 	}
 
 	public void sendChunk(byte[] chunk) throws IOException {
-		System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
+		//System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
 		synchronized(this.pendingChanges) {
 			this.pendingChanges.add( new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE) );
 			ByteBuffer b = ByteBuffer.allocate(chunk.length);
@@ -79,11 +79,8 @@ public class SenderConnection implements Runnable {
 						ChangeRequest change = (ChangeRequest) changes.next();
 						switch (change.type) {
 						case ChangeRequest.CHANGEOPS:
-							try {
-								System.out.println(change.socket);
+							try {							
 								SelectionKey key = change.socket.keyFor(this.selector);
-								System.out.println("checkpoint");
-								System.out.println(key);
 								key.interestOps(change.ops);							
 							}
 							catch (Exception e) {
@@ -217,7 +214,7 @@ public class SenderConnection implements Runnable {
 	private void write(SelectionKey key) throws IOException {
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		System.out.println("sender write");
+		//System.out.println("sender write");
 		synchronized (this.pendingData) {
 			List<ByteBuffer> queue = this.pendingData.get(socketChannel);
 

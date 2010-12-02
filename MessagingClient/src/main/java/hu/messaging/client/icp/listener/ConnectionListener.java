@@ -8,7 +8,7 @@ public interface ConnectionListener
     /**
      * The possible connection events
      */
-    public enum ConnectionState {Connecting, Connected, Refused, ConnectionFailed, Disconnected};
+    public enum ConnectionState {Connecting, Connected, Refused, ConnectionFailed, Disconnected, RecipientsSentSuccessful, RecipientsSendFailed, ConnectionFinished};
     /**
      * A connection event occured con 
      */

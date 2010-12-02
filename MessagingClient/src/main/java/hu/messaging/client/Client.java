@@ -129,8 +129,7 @@ public class Client {//implements MSRPListener {
 		try {
 			session.end();
 		}
-		catch(Exception e) { }
-		
+		catch(Exception e) { }		
 	}
 
 	public void sendMessage(byte[] completeMessage, String sipUri) {

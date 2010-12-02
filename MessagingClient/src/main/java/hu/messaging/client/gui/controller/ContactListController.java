@@ -458,4 +458,22 @@ public class ContactListController
         this.icpGroupListController = icpGroupListController;
     }
     
+  //----------------------------------
+  //----------------------------------
+  //----------------------------------
+    public boolean isBlackListed(String buddyUri)
+    {
+        return true;
+    }
+    
+    public String[] getBlackList() {
+    	String[] bl = new String[4];
+    	bl[0] = "Hahaha11";
+    	bl[1] = "Hahaha22";
+    	bl[2] = "Hahaha33";
+    	bl[3] = "Hahaha44";
+    	return bl;
+    }
+    
+    
 }

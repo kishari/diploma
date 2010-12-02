@@ -34,7 +34,6 @@ public class CommunicationController
      * @param message The text message to send.
      */
 	public void sendSIPMessage(String to, String message) {
-	   	//System.out.println(getClass().getSimpleName() + " sendSIPMessage(String to, String message)");
         try
         {
            // Send the message
@@ -62,6 +61,13 @@ public class CommunicationController
     									 SdpFactory.createIMSContentContainer());
 	}
      
+	public void sendBye() {
+		try {
+			icpController.getSession().end();
+		}
+		catch(Exception e) { }		
+	}
+	
     private void update() {
 		this.sendSIPMessage(Constants.serverSipURI, Constants.updateStatusMessage);
 	}

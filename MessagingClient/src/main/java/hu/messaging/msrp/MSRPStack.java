@@ -31,26 +31,26 @@ public class MSRPStack {
 		if ( findSession( session.getId() ) != null ) {
 			return;
 		}
-		System.out.println("MSRPStack putNewSession to: " + session.getSenderConnection().getSipUri());
+		//System.out.println("MSRPStack putNewSession to: " + session.getSenderConnection().getSipUri());
 		getActiveSessions().put(session.getId(), session);
 	}
 	
 	public Session findSession(String sessionId) {
-		System.out.println("MSRPRstack findSession: " + sessionId);
+		//System.out.println("MSRPRstack findSession: " + sessionId);
 				
 		if ( getActiveSessions().containsKey( sessionId ) ) {
-			System.out.println("MSRPRstack findSession: van talalat");
+			//System.out.println("MSRPRstack findSession: van talalat");
 			return getActiveSessions().get(sessionId);
 		} 
 		return null;
 	}
 	
 	public void removeSession(String sessionId) {
-		System.out.println("MSRPStack removeSession: " + sessionId);
+		//System.out.println("MSRPStack removeSession: " + sessionId);
 		
 		Session s = getActiveSessions().remove(sessionId);
 		
-		System.out.println("MSRPStack: session torolve: " + s.getId());
+		//System.out.println("MSRPStack: session torolve: " + s.getId());
 	}
 	
 	public void sendMessage(byte[] completeMessage, String sipUri) {
