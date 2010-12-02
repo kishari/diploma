@@ -2,6 +2,8 @@ package hu.messaging.client.gui.action;
 
 import hu.messaging.Constants;
 import hu.messaging.client.gui.controller.ICPController;
+import hu.messaging.client.gui.data.Group;
+import hu.messaging.client.gui.dialog.SendMessageDialog;
 import hu.messaging.client.gui.util.SwingUtil;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.util.SDPUtil;
@@ -32,8 +34,14 @@ public class SendMessageActionListener extends BuddyActionListener
 		}
 		catch(Exception e1) {}
 		*/
+		
+		
 		List<String> groupsNames = controller.getGroupDisplayNames();
-		icpController.getCommunicationController().openSendMessageDialog(groupsNames.toArray(new String[groupsNames.size()]));
+		List<Group> groups = controller.getGroups();
+		SendMessageDialog dialog = new SendMessageDialog(icpController, controller);
+    	dialog.setVisible(true);
+    	
+    	
 	}
 
 }

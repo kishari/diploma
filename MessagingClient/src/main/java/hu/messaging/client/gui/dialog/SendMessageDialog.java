@@ -14,13 +14,24 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import hu.messaging.client.gui.controller.ContactListController;
+import hu.messaging.client.gui.controller.ICPController;
+import hu.messaging.client.gui.data.Group;
+import hu.messaging.client.gui.data.Buddy;
+import hu.messaging.client.gui.util.FileUtils;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
 import javax.swing.BorderFactory;
@@ -41,6 +52,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -53,6 +65,9 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JList availableGroupList;
 	private JList selectedGroupList;
 
+	private ICPController icpController;
+	private ContactListController contactListController;
+	
 	private DefaultListModel availableGroupListModel = new DefaultListModel();
 	private DefaultListModel selectedGroupListModel = new DefaultListModel();
 	
@@ -60,6 +75,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JButton selectButton;
 	private JButton deselectAllButton;
 	private JButton deselectButton;
+	
+	private byte[] messageContent = null;
 	
 	private JFileChooser fileChooser;
 	/**
@@ -72,9 +89,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
      */
     protected JMenuBar menuBar; 
     
-    public SendMessageDialog(String[] aGroupList)//ConnectionWrapper aConnection, String connectedStringKey) throws Exception
+    public SendMessageDialog(ICPController icpController, ContactListController contactListController)//ConnectionWrapper aConnection, String connectedStringKey) throws Exception
     {
-        super();
+        this.icpController = icpController;
+        this.contactListController = contactListController;
+        
         //setPreferredSize(new Dimension(500, 300));
         setTitle(Resources.resources.get("dialog.communication.sendMessage"));
         setLayout(new BorderLayout());
@@ -85,7 +104,10 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    content.add(BorderLayout.NORTH, createGroupSelectionPanel());
 	    content.add(BorderLayout.CENTER, createCenterPanel());
 	    content.add(BorderLayout.SOUTH, createButtonsPanel());
-	    initAvailableGroupList(aGroupList);
+	    
+	    List<String> groupNames = contactListController.getGroupDisplayNames();
+	    String[] groups = groupNames.toArray(new String[groupNames.size()]);
+	    initAvailableGroupList(groups);
 	    
 	    
 		pack();
@@ -324,34 +346,13 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    
 	    JButton openFileButton = new JButton("Open file");
 	    openFileButton.addActionListener(new ActionListener() {
-	      public void actionPerformed(ActionEvent e) {
+	      public void actionPerformed(ActionEvent event) {
 	    	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
 	    	  if (retVal == JFileChooser.APPROVE_OPTION) {
 	    		  File selectedFile = fileChooser.getSelectedFile();
-	    		  StringBuffer contents = new StringBuffer();
-	    		  BufferedReader reader = null;
+	    		  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
 	    		  
-	    		  try  {
-	    			  reader = new BufferedReader(new FileReader(selectedFile));	    		  
-	    			  String text = null;
-	    			  while ((text = reader.readLine()) != null)  {
-	    				  contents.append(text).append(System.getProperty("line.separator"));
-	    			  }
-	    		  } catch (FileNotFoundException e1){
-	    			  e1.printStackTrace();
-	    		  } catch (IOException e3) {
-	    			  e3.printStackTrace();
-	    		  } finally {
-	    			  try {
-	    				  if (reader != null) {
-	    					  reader.close();
-	    				  }
-	    			  } catch (IOException e2) {
-	    				  e2.printStackTrace();
-	    			  }
-	    		  }
-	    		  // show file contents here
-	    		  System.out.println(contents.toString());
+	    		  //System.out.println(new String(FileUtils.readFileToByteArray(selectedFile)));	    		  
 	    	  }
 	      }
 	    });
@@ -366,18 +367,24 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    JPanel subPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		    buttonsPanel.add(BorderLayout.CENTER, subPanel);
 
-		    JButton okButton = new JButton("OK");
-		    okButton.addActionListener(new ActionListener() {
+		    JButton sendButton = new JButton("Send");
+		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		        //performOK();
+		    	  System.out.println("send");
+		    	  if (getSelectedGroupNames().length != 0 &&
+		    		  getMessageContent() != null) {
+		    		  System.out.println("send 2");
+		    		  getSelectedGroupsMembers();
+		    		  
+		    	  }
 		      }
 		    });
-		    subPanel.add(okButton);
+		    subPanel.add(sendButton);
 
 		    JButton cancelButton = new JButton("Cancel");
 		    cancelButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		        //performCancel();
+		        System.out.println("cancel");
 		      }
 		    });
 		    subPanel.add(cancelButton);
@@ -404,4 +411,46 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	      updateButtonsState();
 	    }
 	  }
+	  
+	  public String[] getSelectedGroupNames() {
+		  ListModel model = selectedGroupList.getModel();		  
+		  String[] chosenGroups = new String[model.getSize()];
+		  
+		  for (int i = 0; i < model.getSize(); i++) {
+			  chosenGroups[i] = model.getElementAt(i).toString();
+		  }
+		  
+		  return chosenGroups;
+	  }
+
+	public byte[] getMessageContent() {
+		return messageContent;
+	}
+
+	public void setMessageContent(byte[] messageContent) {
+		this.messageContent = messageContent;
+	}
+	
+	private List<Buddy> getSelectedGroupsMembers() {
+		String[] selectedGroupNames = getSelectedGroupNames();		
+		List<Group> allGroup = contactListController.getGroups();
+		
+		List<Buddy> selectedGroupMembers = new ArrayList<Buddy>();
+		
+		for (int i = 0; i < selectedGroupNames.length; i++) {
+			for (Group g : allGroup) {
+				System.out.println(g.getDisplayName() + " : " + selectedGroupNames[i]);
+				if (g.getDisplayName().equals(selectedGroupNames[i]))  {
+					selectedGroupMembers.addAll((Collection)g.getBuddies());
+					break;
+				}
+			}
+		}
+		
+		for (Buddy b : selectedGroupMembers) {
+			System.out.println(b.getDisplayName());
+		}
+		
+		return selectedGroupMembers;
+	}
 }

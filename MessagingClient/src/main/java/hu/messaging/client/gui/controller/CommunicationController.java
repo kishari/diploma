@@ -61,12 +61,7 @@ public class CommunicationController
     									 icpController.getProfile().getIdentity(), 
     									 SdpFactory.createIMSContentContainer());
 	}
-    
-    public void openSendMessageDialog(String[] groupList) {
-    	SendMessageDialog dialog = new SendMessageDialog(groupList);
-    	dialog.setVisible(true);
-    }
-    
+     
     private void update() {
 		this.sendSIPMessage(Constants.serverSipURI, Constants.updateStatusMessage);
 	}
