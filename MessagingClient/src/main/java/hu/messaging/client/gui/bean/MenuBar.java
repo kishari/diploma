@@ -95,7 +95,7 @@ public class MenuBar implements ContactSelectionListener
     	itemBlackList.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
-				MessageListDialog dialog = new MessageListDialog(icpController.getContactListController());
+				MessageListDialog dialog = new MessageListDialog(icpController);
 				dialog.setVisible(true);
 			}});
     	viewMenu.add(itemBlackList);

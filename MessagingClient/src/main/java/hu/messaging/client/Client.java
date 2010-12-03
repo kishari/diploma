@@ -10,7 +10,6 @@ import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
-import hu.messaging.service.MessagingService;
 
 import com.ericsson.icp.ICPFactory;
 import com.ericsson.icp.IPlatform;

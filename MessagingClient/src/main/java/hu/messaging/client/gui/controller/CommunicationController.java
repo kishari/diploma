@@ -1,21 +1,31 @@
 package hu.messaging.client.gui.controller;
 
 import hu.messaging.Constants;
-import hu.messaging.client.gui.dialog.SendMessageDialog;
+import hu.messaging.msrp.CompleteMessage;
+import hu.messaging.msrp.MSRPStack;
+import hu.messaging.msrp.SenderConnection;
+import hu.messaging.msrp.Session;
+import hu.messaging.msrp.event.MSRPListener;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import com.ericsson.icp.util.ISessionDescription;
 import com.ericsson.icp.util.SdpFactory;
 
-/**
- * Handle the communications in the client. This class interacs with the ICP controler to create the appropriate data object, and delegate the
- * functionality to a GUI class to interact with the user
- */
 public class CommunicationController
 {
-
+	private List<String> incomingNewMessageDescriptors = new ArrayList<String>();
+	
+	private Map<String, String> localSDPs = new HashMap<String, String>();	
+	private MSRPStack msrpStack = new MSRPStack();
 	private Timer timer = null;
 	private ICPController icpController;
 	
@@ -25,6 +35,85 @@ public class CommunicationController
 		this.timer.scheduleAtFixedRate(new UpdateStatusTask(), 
 									   3000, 
 									   Constants.onlineUserTimeOut - 10000);
+	}
+	
+	public void createSenderConnection(InetAddress host, int port, String sipUri) {
+		try {
+			System.out.println("CommunicationController createSenderConnection");
+			getMsrpStack().createSenderConnection(host, port, sipUri);	
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void createReceiverConnection(InetAddress host) {
+		try {
+			getMsrpStack().createReceiverConnection(host);
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendMessagesInMSRPSession(List<CompleteMessage> messages, String sipUri) {
+		for (CompleteMessage m : messages) {
+			sendMessageInMSRPSession(m, sipUri);
+		}
+	}
+	
+	public void sendMessageInMSRPSession(CompleteMessage completeMessage, String sipUri) {
+		getMsrpStack().sendMessage(completeMessage, sipUri);
+	}
+	
+	public boolean isRunningReceiverConnection() {
+		return getMsrpStack().getConnections().isRunningReceiverConnection();
+	}
+	
+	public boolean isReceiverConnection() {
+		return getMsrpStack().getConnections().isReceiverConnection();
+	}
+
+	public MSRPStack getMsrpStack() {
+		return msrpStack;
+	}
+	
+	public void addLocalSDP(String sessionId, String sdp) {
+		localSDPs.put(sessionId, sdp);
+	}
+	
+	public String getLocalSDP(String sessionId) {
+		System.out.println("CommunicationController.getLocalSDP: " + sessionId);
+		String sdp = localSDPs.get(sessionId);
+		System.out.println("sdp: " + sdp );
+		return sdp;
+	}
+	
+	public Session createNewMSRPSession(URI localURI, URI remoteURI, String sipUri) {
+		SenderConnection s = getMsrpStack().getConnections().findSenderConnection(sipUri);
+		System.out.println("CommunicationController createNewMSRPSession");
+		
+		if (s == null) {
+			System.out.println("nem találtunk a sessionhoz sendert");
+			return null;
+		}
+		
+		System.out.println(localURI);
+		System.out.println(remoteURI);
+		Session newSession = new Session(localURI, remoteURI, s, msrpStack);
+		getMsrpStack().putNewSession(newSession);
+		
+		s.setSession(newSession);
+		
+		return newSession;
+	}
+	
+	public void addMSRPListener(MSRPListener listener) {
+		getMsrpStack().addMSRPListener(listener);
+	}
+	
+	public void removeMSRPListener(MSRPListener listener) {
+		getMsrpStack().removeMSRPListener(listener);
 	}
 	
     /**
@@ -52,6 +141,9 @@ public class CommunicationController
      */
     public void incomingSIPMessage(String to, String message)
     {
+    	if (message.startsWith("MESSAGENOTIFY")) {
+    		incomingNewMessageDescriptors.add(message);
+    	}
        System.out.println("CommunicationController.incomingInstantMessage(): to: " + to + ". \nMessage: " + message);
     }
     

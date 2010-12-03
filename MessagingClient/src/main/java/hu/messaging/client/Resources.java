@@ -51,7 +51,7 @@ public class Resources {
             put("dialog.contact.move.title", "Move to group");
             put("dialog.contact.move.label", "Select new group:");
             put("dialog.messagelist.title", "Inbox");
-            put("dialog.blacklist.buddy", "Buddy:");
+            put("dialog.message.sender", "Sender:");
             put("dialog.help.about.title", "About Messaging Client");
             put("dialog.instant.message.send.title", "Message to send");
             put("dialog.instant.message.send.message", "Type the message to send:");
@@ -95,7 +95,7 @@ public class Resources {
             put("chat.save","Choose a file in which the chat will be saved");
             put("status.online","Online");
             put("status.offline","Offline");
-            put("status.blacklisted","Black Listed");
+            put("status.blacklisted","");
             put("message.remove.group.default.title","Cannot remove group");
             put("message.remove.group.default","Default group cannot be deleted");
             put("message.communication.failed","Unable to initiate the communication with the remote party");

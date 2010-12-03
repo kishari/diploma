@@ -1,5 +1,7 @@
 package hu.messaging.client.icp.listener;
 
+import hu.messaging.client.gui.controller.ICPController;
+
 import com.ericsson.icp.services.PGM.IRLSMListener;
 
 
@@ -15,6 +17,10 @@ public class GroupListManagerListener extends BaseListener implements IRLSMListe
      */
     private boolean called = false;
 
+	public GroupListManagerListener(ICPController icpController) {
+		super(icpController);
+	}
+	
 	public void processAddGroupResult(boolean success, String name) {
 		called = true;
 		log(getClass().getSimpleName() + ": processAddGroupResult");

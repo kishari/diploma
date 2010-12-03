@@ -6,12 +6,9 @@ import com.ericsson.icp.IServiceListener;
 import com.ericsson.icp.ISession;
 
 public class ServiceListener extends BaseListener implements IServiceListener {
-
-	private ICPController icpController;
 	
 	public ServiceListener(ICPController icpController) {
-		super();
-		this.icpController = icpController;
+		super(icpController);
 	}
 
 	public void processIncomingSession(ISession session) {

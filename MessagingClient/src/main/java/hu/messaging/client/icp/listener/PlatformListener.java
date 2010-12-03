@@ -1,12 +1,14 @@
 package hu.messaging.client.icp.listener;
 
+import hu.messaging.client.gui.controller.ICPController;
+
 import com.ericsson.icp.IPlatformListener;
 import com.ericsson.icp.util.ErrorReason;
 
 public class PlatformListener extends BaseListener implements IPlatformListener {
 	
-	public PlatformListener() {
-		super();
+	public PlatformListener(ICPController icpController) {
+		super(icpController);
 	}
 
 	public void processApplicationData(String application, byte[] data,	int length) {

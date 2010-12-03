@@ -4,18 +4,17 @@ import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.data.ContactList;
 import hu.messaging.client.gui.data.Group;
-import hu.messaging.client.gui.listener.ui.ContactListEvent;
 import hu.messaging.client.gui.util.IcpUtils;
 import hu.messaging.client.gui.util.StringUtil;
 import hu.messaging.client.icp.listener.GroupListManagerListener;
 
-import com.ericsson.icp.IProfile;
 import com.ericsson.icp.services.PGM.IRLSGroup;
 import com.ericsson.icp.services.PGM.IRLSMListener;
 import com.ericsson.icp.services.PGM.IRLSManager;
 import com.ericsson.icp.services.PGM.PGMFactory;
 import com.ericsson.icp.util.IBuddy;
 import com.ericsson.icp.util.IIterator;
+import hu.messaging.client.gui.controller.ICPController;
 
 
 /**
@@ -45,13 +44,13 @@ public class ICPGroupListController
      */
     private GroupListManagerListener glmListener;
 
-    public ICPGroupListController(IProfile profile, ContactListController contactListController) throws Exception
+    public ICPGroupListController(ICPController icpController, ContactListController contactListController) throws Exception
     {
         contactListController.setIcpGroupListController(this);
-        groupListManager = PGMFactory.createRLSManager(profile);
+        groupListManager = PGMFactory.createRLSManager(icpController.getProfile());
 
-        identity = profile.getIdentity();
-        glmListener = new GroupListManagerListener();
+        identity = icpController.getProfile().getIdentity();
+        glmListener = new GroupListManagerListener(icpController);
 
         groupListManager.addListener((IRLSMListener) glmListener);
         this.contactListController = contactListController;

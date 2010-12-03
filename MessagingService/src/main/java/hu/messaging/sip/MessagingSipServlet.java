@@ -144,27 +144,27 @@ public class MessagingSipServlet extends SipServlet {
 			MessagingDAO dao = new MessagingDAO();
 			dao.insertRecipients(messageId, recipients);
 			dao.updateMessage(messageId, extension, sender);
-			notifyOnlineRecipients(req, recipients);
+			notifyOnlineRecipients(req, recipients, messageId, sender);
 		}
 	}
 
 	private void notifyUserFromItsNewMessages(SipServletRequest req) {
-		System.out.println("notifyUserFromItsNewMessages");
-		
+		System.out.println("notifyUserFromItsNewMessages");		
 	}
 	
 	private void notifyOnlineRecipients(SipServletRequest req, 
-										List<Recipient> recipients) throws ServletParseException, IOException {
+									    List<Recipient> recipients,	
+										String messageId,
+										String sender) throws ServletParseException, IOException {
 
 		System.out.println("notifyOnlineRecipients");
 		for (Recipient recipient : recipients) {
 			for (User user : this.messagingService.onlineUsers ) {
 				if (recipient.getSipURI().equals(user.getSipURI())) {					
 					SipServletRequest r = sipFactory.createRequest(req, false);
-					//r.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
 					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
 					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-					r.setContent("MESSAGENOTIFY\n\nFrom:" + getCleanSipUri(req.getFrom().toString()), "text/plain");	        
+					r.setContent(messagingService.createNotifyMessageContent(sender, messageId), "text/plain");	        
 					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
 					
 					r.send();

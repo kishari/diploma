@@ -84,7 +84,7 @@ public class ICPController {
     	
         icpPlatform = ICPFactory.createPlatform();
         icpPlatform.registerClient(CLIENT_NAME);
-        icpPlatform.addListener(new PlatformListener());
+        icpPlatform.addListener(new PlatformListener(this));
 
         profile = icpPlatform.createProfile(PLATFORM_ID);
 
@@ -93,9 +93,9 @@ public class ICPController {
         contactListController = new ContactListController();
         contactListController.setUser(localUser);
         
-        profile.addListener(new ProfileListener());
+        profile.addListener(new ProfileListener(this));
         
-        icpGroupListController = new ICPGroupListController(profile, contactListController);
+        icpGroupListController = new ICPGroupListController(this, contactListController);
 
         communicationController = new CommunicationController(this);
 
@@ -115,7 +115,7 @@ public class ICPController {
     
     private void createSession() throws Exception {
     	session = service.createSession();
-    	sessionListener = new SessionListener();
+    	sessionListener = new SessionListener(this);
     	session.addListener(sessionListener);
     }
 

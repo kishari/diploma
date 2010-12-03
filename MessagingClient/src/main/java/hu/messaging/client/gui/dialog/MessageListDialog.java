@@ -2,6 +2,7 @@ package hu.messaging.client.gui.dialog;
 
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ContactListController;
+import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Buddy;
 
 import java.awt.Dimension;
@@ -11,10 +12,8 @@ import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -35,8 +34,12 @@ public class MessageListDialog extends JFrame
     
     private JTable messageTable;
 
-    public MessageListDialog(final ContactListController controller)
+    private ICPController icpController;
+    
+    public MessageListDialog(final ICPController icpController)
     {
+    	this.icpController = icpController;
+    	
         setTitle(Resources.resources.get("dialog.messagelist.title"));
         setLocation(100, 100);
         setPreferredSize(new Dimension(400, 300));
@@ -55,17 +58,13 @@ public class MessageListDialog extends JFrame
         });
         // Create a custom model
         tableModel = new DefaultTableModel() {
-
-            /**
-             * 
-             */
+        	
             private static final long serialVersionUID = 8238285502929367774L;
 
             @Override
             public boolean isCellEditable(int row, int column)
             {
-                // Buddy name not editable
-                return column != 1;
+                return false;
             }
 
             @Override
@@ -88,14 +87,15 @@ public class MessageListDialog extends JFrame
         listScroller.setPreferredSize(new Dimension(300, 200));
 
         tableModel.addColumn(Resources.resources.get("status.blacklisted"));
-        tableModel.addColumn(Resources.resources.get("dialog.buddy.name"));
+        tableModel.addColumn(Resources.resources.get("dialog.message.sender"));
         messageTable.setCellSelectionEnabled(false);
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.setAutoCreateColumnsFromModel(true);
         JTableHeader header = messageTable.getTableHeader();
         header.getColumnModel().getColumn(0).setPreferredWidth(0);
-        
+       
+        /*
         // Fill the table
         List<Buddy> buddies = controller.getContactList().getBuddies();
         for (Buddy buddy : buddies)
@@ -111,7 +111,7 @@ public class MessageListDialog extends JFrame
                 tableModel.addRow(new Object[] { true, new Buddy(blackListedBuddies[count])});
             }
         }
-
+*/
         GridBagConstraints constraint = new GridBagConstraints();
         constraint.gridx = 0;
         constraint.gridy = 0;

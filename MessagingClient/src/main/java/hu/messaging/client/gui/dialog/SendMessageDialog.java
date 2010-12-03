@@ -20,6 +20,7 @@ import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.util.FileUtils;
+import hu.messaging.client.gui.util.MessageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
 import javax.swing.DefaultListModel;
@@ -46,7 +47,6 @@ import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
-import hu.messaging.service.MessagingService;
 import hu.messaging.util.SDPUtil;
 
 public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
@@ -66,6 +66,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JButton selectButton;
 	private JButton deselectAllButton;
 	private JButton deselectButton;
+	private JButton sendButton;
 	
 	private CompleteMessage message = new CompleteMessage();
 	
@@ -145,14 +146,15 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
             }
             case RecipientsSentSuccessful:
             {
-        		icpController.getCommunicationController().sendBye();        		        		
+        		icpController.getCommunicationController().sendBye();
+        		MessageUtil.createMessageFile(message);
             	break;
             }
             case ConnectionFinished:
             {
-            	MessagingService.removeMSRPListener(this);
+            	icpController.getCommunicationController().removeMSRPListener(this);
             	icpController.getSessionListener().removeConnectionListener(this);
-        		MessagingService.getMsrpStack().disposeResources();
+        		icpController.getCommunicationController().getMsrpStack().disposeResources();        		
         		//JOptionPane.showMessageDialog(this, Resources.resources.get("message.communication.end"));
             }
         }
@@ -325,18 +327,19 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    JPanel subPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		    buttonsPanel.add(BorderLayout.CENTER, subPanel);
 
-		    JButton sendButton = new JButton("Send");
+		    sendButton = new JButton("Send");
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
 		    	  message.setSender(getLocalUserSipURI());
 		    	  if (message.isReady()) {		    		  
 		    		  try {
+		    			  sendButton.setEnabled(false);
 		    			  ISessionDescription sdp = getLocalSDP();
-		    			  MessagingService.addMSRPListener(SendMessageDialog.this);
+		    			  icpController.getCommunicationController().addMSRPListener(SendMessageDialog.this);
 		    			  
 		    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
 		    			  icpController.getCommunicationController().sendInvite(sdp);
-		    			  MessagingService.addLocalSDP(Constants.serverSipURI, sdp.format());
+		    			  icpController.getCommunicationController().addLocalSDP(Constants.serverSipURI, sdp.format());
 		    		  }
 		    		  catch(Exception e1) {
 		    			  
@@ -346,18 +349,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    });
 		    subPanel.add(sendButton);
 
-		    JButton cancelButton = new JButton("getTestMessage");
+		    JButton cancelButton = new JButton("Cancel");
 		    cancelButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		    	  try {
-	    			  ISessionDescription sdp = getLocalSDP();
-	    			  MessagingService.addMSRPListener(SendMessageDialog.this);
-	    			  
-	    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
-	    			  icpController.getCommunicationController().sendInvite(sdp);
-	    			  MessagingService.addLocalSDP(Constants.serverSipURI, sdp.format());
-	    		  }
-	    		  catch(Exception e1) { }		    
+		    	  SendMessageDialog.this.setVisible(false);
+		    	  SendMessageDialog.this.dispose();
 		      }
 		    });
 		    subPanel.add(cancelButton);
@@ -440,16 +436,16 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	
 	private ISessionDescription getLocalSDP() throws IOException {
 		
-		if (!MessagingService.getMsrpStack().getConnections().isReceiverConnection()) {
-			MessagingService.getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
-			MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+		if (!icpController.getCommunicationController().getMsrpStack().getConnections().isReceiverConnection()) {
+			icpController.getCommunicationController().getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
+			icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().start();
 		}
-		else if (!MessagingService.getMsrpStack().getConnections().isRunningReceiverConnection()) {
-			MessagingService.getMsrpStack().getConnections().getReceiverConnection().start();
+		else if (!icpController.getCommunicationController().getMsrpStack().getConnections().isRunningReceiverConnection()) {
+			icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().start();
 		}
 		
-		InetAddress localhost = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
-		int port = MessagingService.getMsrpStack().getConnections().getReceiverConnection().getPort();
+		InetAddress localhost = icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
+		int port = icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().getPort();
 		String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
 		
 		return SDPUtil.createSDP(localhost, port, sessionId);
@@ -462,7 +458,6 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	public void messageSentSuccess(MSRPEvent event) {
 		String message = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
 		//icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, message);
-		System.out.println("send recipients");
 		try {
 			icpController.getSession().sendMessage("text/plain", message.getBytes(), message.length());
 		}
@@ -472,7 +467,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	public void sessionStarted(MSRPEvent event) {
     	try {
     		if (true) {
-    			MessagingService.sendMessage(message, Constants.serverSipURI);
+    			icpController.getCommunicationController().sendMessageInMSRPSession(message, Constants.serverSipURI);
     		}
     		else {
     			String message = "GETMESSAGES\r\n" + 
@@ -492,8 +487,9 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	}
 	
 	private String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
+		message.setMessageId(messageId);
 		String msg = "RECIPIENTS\r\n";
-		msg += "Message-ID: " + messageId + "\r\n" + 
+		msg += "Message-ID: " + message.getMessageId() + "\r\n" + 
 			   "Extension: " + message.getExtension() + "\r\n" +
 			   "Sender: " + message.getSender() + "\r\n\r\n"; 
 		

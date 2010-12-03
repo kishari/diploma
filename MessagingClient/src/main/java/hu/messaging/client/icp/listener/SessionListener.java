@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.List;
 
 import hu.messaging.Constants;
+import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.icp.listener.ConnectionListener.ConnectionState;
 import hu.messaging.msrp.SenderConnection;
-import hu.messaging.service.MessagingService;
 import hu.messaging.util.SessionDescription;
 import hu.messaging.util.SDPUtil;
 
@@ -20,6 +20,9 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	
 	private List<ConnectionListener> connectionListeners = Collections.synchronizedList(new ArrayList<ConnectionListener>());
 	
+	public SessionListener(ICPController icpController) {
+		super(icpController);
+	}
 	public void processSessionStarted(ISessionDescription sdpBody) {
 		log(getClass().getSimpleName() + ": processSessionStarted");
 		try {
@@ -29,13 +32,13 @@ public class SessionListener extends BaseListener implements ISessionListener{
             for (int i = 0; i < mCount; i++) {
             	SessionDescription remoteSdp = SDPUtil.parseSessionDescription(sdpBody.format());
             	
-            	MessagingService.createSenderConnection(remoteSdp.getHost(), 
+            	icpController.getCommunicationController().createSenderConnection(remoteSdp.getHost(), 
             											remoteSdp.getPort(), 
             											Constants.serverSipURI);
-            	SenderConnection s = MessagingService.getMsrpStack().getConnections().findSenderConnection(Constants.serverSipURI);
-            	SessionDescription localSdp = SDPUtil.parseSessionDescription(MessagingService.getLocalSDP(Constants.serverSipURI));
+            	SenderConnection s = icpController.getCommunicationController().getMsrpStack().getConnections().findSenderConnection(Constants.serverSipURI);
+            	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Constants.serverSipURI));
             	
-            	MessagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);
+            	icpController.getCommunicationController().createNewMSRPSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);
             	s.start();
             }
         }
