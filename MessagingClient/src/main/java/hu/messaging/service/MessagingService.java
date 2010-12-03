@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MessagingService {
@@ -34,7 +35,13 @@ public class MessagingService {
 		}
 	}
 	
-	public static void sendMessage(byte[] completeMessage, String sipUri) throws IOException {
+	public static void sendMessages(List<CompleteMessage> messages, String sipUri) {
+		for (CompleteMessage m : messages) {
+			sendMessage(m, sipUri);
+		}
+	}
+	
+	public static void sendMessage(CompleteMessage completeMessage, String sipUri) {
 		getMsrpStack().sendMessage(completeMessage, sipUri);
 	}
 	

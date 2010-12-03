@@ -40,7 +40,13 @@ public class MessagingService implements Observer{
 		}
 	}
 	
-	public void sendMessage(byte[] completeMessage, String sipUri) {
+	public void sendMessages(List<CompleteMessage> messages, String sipUri) {
+		for (CompleteMessage m : messages) {
+			sendMessage(m, sipUri);
+		}
+	}
+	
+	public void sendMessage(CompleteMessage completeMessage, String sipUri) {
 		getMsrpStack().sendMessage(completeMessage, sipUri);
 	}
 	

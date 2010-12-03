@@ -28,7 +28,7 @@ public class TransactionManager implements Observer {
 	
 	
 	public TransactionManager(BlockingQueue<Message> incomingMessageQueue, 
-			  				  BlockingQueue<byte[]> outgoingMessageQueue,
+			  				  BlockingQueue<CompleteMessage> outgoingMessageQueue,
 			  				  Session session) {
 		
 			this.session = session;
@@ -90,6 +90,7 @@ public class TransactionManager implements Observer {
 				this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
 				
 				if (isAckedTotalSentMessage()) {
+					System.out.println("minden csomag nyugtazva");
 					this.isSentMessageChunk = false;
 					MSRPEvent event = new MSRPEvent("sentSuccess", MSRPEvent.messageSentSuccessCode);
 					event.setMessageId(ackedReq.getMessageId());

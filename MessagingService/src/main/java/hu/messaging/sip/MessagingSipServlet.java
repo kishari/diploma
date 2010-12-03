@@ -22,6 +22,7 @@ import javax.servlet.sip.URI;
 
 import hu.messaging.*;
 import hu.messaging.dao.MessagingDAO;
+import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
 import hu.messaging.util.*;
@@ -35,6 +36,28 @@ public class MessagingSipServlet extends SipServlet {
 																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n\r\n" + 
 																	   "(.*)" + 
 																	   "\r\n\r\n-----END", Pattern.DOTALL);
+	
+	private static Pattern getMessageMessageIdsPattern =  Pattern.compile("^GETMESSAGES\r\n" + 
+			   															 	"Message-IDs:\r\n(.*)" + 
+			   															 	"\r\n\r\n-----END", Pattern.DOTALL);
+
+	
+	private String[] getMessageIds(String incomingSIPMessage) {
+		System.out.println("getMessageIds");
+		List<String> ids = new ArrayList<String>();
+		Matcher m = getMessageMessageIdsPattern.matcher(incomingSIPMessage);
+		m.find();
+		String temp = m.group(1);
+		
+		String[] mIds = temp.split("\r\n");
+		
+		for (int i = 0; i < mIds.length; i++) {
+			ids.add(mIds[i]);
+			System.out.println(mIds[i]);
+		}
+		
+		return mIds;
+	}
 	
 	private String getCleanSipUri(String incomingUri) {
 		Matcher m = sipUriPattern.matcher(incomingUri);
@@ -72,12 +95,6 @@ public class MessagingSipServlet extends SipServlet {
 		req.createResponse(200).send();
 		System.out.println(getCleanSipUri(req.getFrom().toString()));
 		this.messagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
-		
-		
-//TESZT
-		MessagingDAO dao = new MessagingDAO();
-		//dao.getMessages();
-//TESZT
 	}
 
 	protected void doAck(SipServletRequest req)	throws ServletException, IOException {
@@ -88,18 +105,17 @@ public class MessagingSipServlet extends SipServlet {
 	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
 		
 		System.out.println("doMessage calling...");
-		System.out.println("Incoming message: " + req.getContent() );
+		//System.out.println("Incoming message: " + req.getContent() );
 		req.createResponse(200).send();
 		
-		if ("TESTINVITE".equals(req.getContent())) {
-			SipServletRequest messageRequest = sipFactory.createRequest(req, false);
-			
-			messageRequest.setRequestURI(sipFactory.createSipURI("alice", "ericsson.com"));
-			//messageRequest.pushRoute(sipFactory.createSipURI(null, "192.168.1.102:5082"));
-            messageRequest.setContent("Hello " + req.getContent(), "text/plain");
-            messageRequest.addHeader("p-asserted-identity", "sip:helloworld@ericsson.com");                   
-            messageRequest.send();
+		if (req.getContent().toString().startsWith("GETMESSAGES")) {
+			//System.out.println(req.getContent().toString());
+			MessagingDAO dao = new MessagingDAO();
+			List<CompleteMessage> messages = dao.getMessagesToMessageIds(getMessageIds(req.getContent().toString()));
+			String sipURI = this.getCleanSipUri(req.getFrom().toString());
+			this.messagingService.sendMessages(messages, sipURI);
 		}
+		
 		if ("UPDATESTATUS".equals(req.getContent())) {
 			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
 			user.addObserver(this.messagingService);
@@ -150,10 +166,6 @@ public class MessagingSipServlet extends SipServlet {
 	protected void doInvite(SipServletRequest req) throws ServletException, IOException {
 		System.out.println("doInvite!...");
 		System.out.println("Invite from: " + req.getFrom() );
-		System.out.println("Invite from (regex): " + getCleanSipUri(req.getFrom().toString()) );
-		
-//		System.out.println("content Type: " + req.getContentType());
-//		System.out.println("content: " + req.getContent());
 		
 		if (req.isInitial()) {
 			SipServletResponse resp = req.createResponse(200);

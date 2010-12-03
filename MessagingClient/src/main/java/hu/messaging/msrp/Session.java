@@ -13,7 +13,7 @@ public class Session {
 	private MSRPStack msrpStack;
 	
 	private BlockingQueue<Message> incomingMessageQueue = new LinkedBlockingQueue<Message>();
-	private BlockingQueue<byte[]> outgoingMessageQueue = new LinkedBlockingQueue<byte[]>();
+	private BlockingQueue<CompleteMessage> outgoingMessageQueue = new LinkedBlockingQueue<CompleteMessage>();
 
 	private TransactionManager transactionManager = null;
 
@@ -26,7 +26,7 @@ public class Session {
 		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, this);
 	}
 	
-	public void sendMessage(byte[] completeMessage) {		
+	public void sendMessage(CompleteMessage completeMessage) {		
 		try {
 			putMessageIntoOutgoingMessageQueue(completeMessage);
 		} catch (InterruptedException e) {
@@ -39,7 +39,7 @@ public class Session {
 		this.incomingMessageQueue.put(message);
 	}
 	
-	public void putMessageIntoOutgoingMessageQueue(byte[] message) throws InterruptedException {
+	public void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
 		System.out.println("Session.putMessageIntoOutgoingMessageQueue");
 		this.outgoingMessageQueue.put(message);
 	}

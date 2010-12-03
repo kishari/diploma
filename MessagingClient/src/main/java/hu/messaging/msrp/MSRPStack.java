@@ -53,7 +53,7 @@ public class MSRPStack {
 		//System.out.println("MSRPStack: session torolve: " + s.getId());
 	}
 	
-	public void sendMessage(byte[] completeMessage, String sipUri) {
+	public void sendMessage(CompleteMessage completeMessage, String sipUri) {
 		SenderConnection s = getConnections().findSenderConnection(sipUri);
 		Session session = s.getSession();
 		session.sendMessage(completeMessage);

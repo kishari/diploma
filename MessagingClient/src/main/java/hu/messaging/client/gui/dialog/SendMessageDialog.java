@@ -42,6 +42,7 @@ import javax.swing.event.ListSelectionListener;
 import com.ericsson.icp.util.ISessionDescription;
 
 import hu.messaging.client.Resources;
+import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
@@ -152,6 +153,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
             	MessagingService.removeMSRPListener(this);
             	icpController.getSessionListener().removeConnectionListener(this);
         		MessagingService.getMsrpStack().disposeResources();
+        		//JOptionPane.showMessageDialog(this, Resources.resources.get("message.communication.end"));
             }
         }
     }
@@ -343,10 +345,18 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    });
 		    subPanel.add(sendButton);
 
-		    JButton cancelButton = new JButton("Cancel");
+		    JButton cancelButton = new JButton("getTestMessage");
 		    cancelButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		        System.out.println("cancel");
+		    	  try {
+	    			  ISessionDescription sdp = getLocalSDP();
+	    			  MessagingService.addMSRPListener(SendMessageDialog.this);
+	    			  
+	    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
+	    			  icpController.getCommunicationController().sendInvite(sdp);
+	    			  MessagingService.addLocalSDP(Constants.serverSipURI, sdp.format());
+	    		  }
+	    		  catch(Exception e1) { }		    
 		      }
 		    });
 		    subPanel.add(cancelButton);
@@ -460,7 +470,17 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	
 	public void sessionStarted(MSRPEvent event) {
     	try {
-    		MessagingService.sendMessage(messageContent, Constants.serverSipURI);
+    		if (true) {
+    			MessagingService.sendMessage(new CompleteMessage(messageContent), Constants.serverSipURI);
+    		}
+    		else {
+    			String message = "GETMESSAGES\r\n" + 
+    							 "Message-IDs:\r\n" +
+    							 "a0147afc88\r\n" +
+    							 "6887b5824e" + 
+    							 "\r\n\r\n-----END";
+    			icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, message);
+    		}
     	}
     	catch (Exception e) { 
     		

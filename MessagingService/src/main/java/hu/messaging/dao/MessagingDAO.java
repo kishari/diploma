@@ -1,13 +1,16 @@
 package hu.messaging.dao;
 
 import hu.messaging.Recipient;
+import hu.messaging.msrp.CompleteMessage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,17 +19,20 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 
 public class MessagingDAO {
 	 private DataSource dataSource = null;
 	 public static final String DATA_SOURCE_NAME = "jdbc/messagingDataSource";
 	 private static final String INSERT_MESSAGE = "insert into  messages(messageId, content) values (?, ?)";
 	 private static final String INSERT_RECIPIENT = "insert into  recipients(messageId, name, address) values (?, ?, ?)";
-	 private static final String SELECT_MESSAGE = "SELECT messageId, content FROM messagingdb.messages " + 
+	 private static final String SELECT_MESSAGES_TO_SIPURI = "SELECT messageId, content FROM messagingdb.messages " + 
 	 															"WHERE messageId IN(" + 
 	 																	"SELECT messageId " +
 	 																	"FROM messagingdb.recipients " + 
 	 																	"WHERE address = ?)";
+	 private static final String SELECT_MESSAGES_TO_MESSAGEIDS = "SELECT content FROM messagingdb.messages " + 
+																 "WHERE messageId IN (?)";																
 	 
 	 public MessagingDAO() {
 		 init();
@@ -75,7 +81,7 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	        	closeAll(null, pstmt, conn);
+	        	closeAll(null, pstmt, null, conn);
 	        }
 	    }
 	 
@@ -92,10 +98,55 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	        	closeAll(null, pstmt, conn);
+	        	closeAll(null, pstmt, null, conn);
 	        }
 	    }
 	 
+	 	public List<CompleteMessage> getMessagesToMessageIds( String[] messageIds ) {	    	
+
+	 		String sql = "SELECT messageId, content FROM messagingdb.messages " + 
+			 "WHERE messageId IN (";
+	 		System.out.println("MessagingDao getMessagesToMessageIds");
+	 		for (int i = 0; i < messageIds.length - 1; i++) {
+	 			sql += "'" + StringEscapeUtils.escapeSql(messageIds[i]) + "',";
+	 		}
+	 		
+	 		sql += "'" + StringEscapeUtils.escapeSql(messageIds[messageIds.length - 1]) + "')";
+	 		
+	 		System.out.println(sql);
+	    	Connection conn = null;
+	        Statement stmt = null;
+	        ResultSet rs = null;
+	        
+	        List<CompleteMessage> result = new ArrayList<CompleteMessage>();
+	        	        
+	        try {
+	        	conn = getConnection();
+	        	stmt = conn.createStatement();
+		        rs = stmt.executeQuery(sql);
+		            while (rs.next()) {  
+		            	String messageId = rs.getString(1);
+		            	System.out.println("blobok kiszedese");
+		            	InputStream is = rs.getBlob(2).getBinaryStream();
+	            	
+		            	try {
+		            		byte[] content = IOUtils.toByteArray(is);
+		            		CompleteMessage msg = new CompleteMessage(content, messageId);
+		            		result.add(msg);
+		            	} catch (IOException e) {
+		            		e.printStackTrace();
+		            	}
+		            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        } finally {
+	        	closeAll(rs, null, stmt, conn);
+			}
+	        
+	        return result;
+	    }
+	
+
 	    public List<byte[]> getMessagesToSipURI( String sipURI ) {
 	    	
 	    	Connection conn = null;
@@ -106,12 +157,13 @@ public class MessagingDAO {
 	        	        
 	        try {
 	        	conn = getConnection();
-	            pstmt = conn.prepareStatement(SELECT_MESSAGE);
+	            pstmt = conn.prepareStatement(SELECT_MESSAGES_TO_SIPURI);
 	            pstmt.setString(1, sipURI);
 	            rs = pstmt.executeQuery();	        
 	            
 	            while (rs.next()) {            	
-	            	InputStream is = rs.getBlob(3).getBinaryStream();
+	            	//InputStream is = rs.getBlob(3).getBinaryStream();
+	            	InputStream is = rs.getBlob(1).getBinaryStream();
 	            	
 	            	try {
 						byte[] content = IOUtils.toByteArray(is);
@@ -123,13 +175,13 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	        	closeAll(rs, pstmt, conn);
+	        	closeAll(rs, pstmt, null, conn);
 			}
 	        
 	        return result;
 	    }
 	
-	    private void closeAll(ResultSet rs, PreparedStatement pstmt, Connection conn) {	    	
+	    private void closeAll(ResultSet rs, PreparedStatement pstmt, Statement stmt, Connection conn) {	    	
 	    	if (rs != null) {
 	            try {
 	                rs.close();
@@ -140,6 +192,14 @@ public class MessagingDAO {
 	       if (pstmt != null) {
 	            try {
 	                pstmt.close();
+	            } catch (SQLException ignore) {
+	            	ignore.printStackTrace();
+	            }
+	       }
+	       
+	       if (stmt != null) {
+	            try {
+	                stmt.close();
 	            } catch (SQLException ignore) {
 	            	ignore.printStackTrace();
 	            }

@@ -24,7 +24,7 @@ public class TransactionManager implements Observer {
 	
 	
 	public TransactionManager(BlockingQueue<Message> incomingMessageQueue, 
-			  				  BlockingQueue<byte[]> outgoingMessageQueue,
+			  				  BlockingQueue<CompleteMessage> outgoingMessageQueue,
 			  				  Session session) {
 		
 			this.session = session;

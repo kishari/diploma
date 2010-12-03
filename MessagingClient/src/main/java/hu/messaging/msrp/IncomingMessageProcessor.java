@@ -40,7 +40,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 		//System.out.println("IncomingMessageProcessor processIncomingMessage... ");
 		
 		if (chunk.getMethod() == Constants.methodSEND) {
-			System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message!");
+			//System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message!");
 			Request req = (Request) chunk;
 			//System.out.println(req.toString());
 			Response ack = createAcknowledgement(req);

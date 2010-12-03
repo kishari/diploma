@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 public class OutgoingMessageProcessor extends Observable implements Runnable {
 
 	private boolean running = false;
-	private BlockingQueue<byte[]> outgoingMessageQueue;
+	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
 	private Session session;
 	
-	public OutgoingMessageProcessor(BlockingQueue<byte[]> outgoingMessageQueue, 
+	public OutgoingMessageProcessor(BlockingQueue<CompleteMessage> outgoingMessageQueue, 
 									Session session,
 									TransactionManager transactionManager ) {
 		this.outgoingMessageQueue = outgoingMessageQueue;
@@ -29,7 +29,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			try {
 				//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
 				//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
-				byte[] data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+				CompleteMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 				if (data != null) {
 					processOutgoingMessage(data);
 				}				
@@ -39,7 +39,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		}
 	}
 	
-	private void processOutgoingMessage(byte[] completeMessage) {
+	private void processOutgoingMessage(CompleteMessage completeMessage) {
 		System.out.println("OutgoingProcessor processOutgoingMessage... ");
 		//System.out.println(new String(completeMessage));
 		//System.out.println(new String(completeMessage).length());
@@ -65,7 +65,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			
 			Request mOut = MSRPUtil.createRequest(chunk, session.getLocalUri(), session.getRemoteUri(),
 												  tId, messageId, 
-												  offset, chunk.length, completeMessage.length, 
+												  offset, chunk.length, completeMessage.getContent().length, 
 												  endToken);
 			offset += chunk.length;
 			//System.out.println("OutgoingProcessor: after message create: \n" + mOut.toString());
@@ -79,25 +79,25 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		}				
 	}
 	
-	private List<byte[]> splitMessageToChunks(byte[] message, int chunkSize) {
+	private List<byte[]> splitMessageToChunks(CompleteMessage message, int chunkSize) {
 		List<byte[]> chunks = new ArrayList<byte[]>();
 		
-		double div = message.length / (double) chunkSize;
+		double div = message.getContent().length / (double) chunkSize;
 		int numOfChunks = (int)Math.floor(div);
 		
 		int i = 0;
 		int index = 0;
 		while( i < numOfChunks ) {
 			byte[] c = new byte[chunkSize];
-			System.arraycopy(message, index, c, 0, chunkSize);
+			System.arraycopy(message.getContent(), index, c, 0, chunkSize);
 			chunks.add(c);
 			index += chunkSize;
 			i++;
 		}
 		
-		int lastChunkSize = message.length - index;
+		int lastChunkSize = message.getContent().length - index;
 		byte[] c = new byte[lastChunkSize];
-		System.arraycopy(message, index, c, 0, lastChunkSize);
+		System.arraycopy(message.getContent(), index, c, 0, lastChunkSize);
 		chunks.add(c);		
 		
 		return chunks;
