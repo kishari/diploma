@@ -136,6 +136,8 @@ public class MessagingService implements Observer{
 		msg += "Sender: " + sender + "\r\n";
 		msg += "Subject: "; 
 		
+		System.out.println("createNotifyMessageContent:");
+		System.out.println(msg);
 		return msg;
 	}
 }

@@ -16,12 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.ericsson.icp.util.ISessionDescription;
 import com.ericsson.icp.util.SdpFactory;
 
 public class CommunicationController
 {
+	private static Pattern notifyMessagesPattern =  Pattern.compile("^MESSAGENOTIFY\r\n\r\n" + 
+			   														"Message-ID: ([\\p{Alnum}]{10,50})\r\n" +
+			   														"Sender: (sip:[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}" +
+			   														"@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n" +
+			   														"Subject: (.*)", Pattern.DOTALL);
 	private List<String> incomingNewMessageDescriptors = new ArrayList<String>();
 	
 	private Map<String, String> localSDPs = new HashMap<String, String>();	
@@ -169,5 +176,21 @@ public class CommunicationController
 			update();
 		}		
 	}
+    
+    public List<CompleteMessage> getIncomingNewMessages() {
+    	List<CompleteMessage> newMessages = new ArrayList<CompleteMessage>();
+    	for (String descr : this.incomingNewMessageDescriptors) {
+    		Matcher m = notifyMessagesPattern.matcher(descr);
+    		m.find();
+    		CompleteMessage cm = new CompleteMessage(m.group(1), null, null, m.group(2));
+    		newMessages.add(cm);
+    	}
+    	
+    	for (CompleteMessage m : newMessages) {
+    		System.out.println(m.getMessageId());
+    		System.out.println(m.getSender());
+    	}
+    	return newMessages;
+    }
 
 }

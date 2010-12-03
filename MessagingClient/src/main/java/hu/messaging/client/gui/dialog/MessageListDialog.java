@@ -3,7 +3,7 @@ package hu.messaging.client.gui.dialog;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
-import hu.messaging.client.gui.data.Buddy;
+import hu.messaging.msrp.CompleteMessage;
 
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -95,13 +95,14 @@ public class MessageListDialog extends JFrame
         JTableHeader header = messageTable.getTableHeader();
         header.getColumnModel().getColumn(0).setPreferredWidth(0);
        
-        /*
+        
         // Fill the table
-        List<Buddy> buddies = controller.getContactList().getBuddies();
-        for (Buddy buddy : buddies)
+        List<CompleteMessage> inboxMessages = icpController.getCommunicationController().getIncomingNewMessages();
+        for (CompleteMessage m : inboxMessages)
         {
-            tableModel.addRow(new Object[] { controller.isBlackListed(buddy.getContact()), buddy});
+            tableModel.addRow(new Object[] { false, m.getSender()});
         }
+       /* 
         // Add black listed buddies not in our contact list
         String[] blackListedBuddies = controller.getBlackList();
         for (int count = 0; count < blackListedBuddies.length; count++)
@@ -111,7 +112,7 @@ public class MessageListDialog extends JFrame
                 tableModel.addRow(new Object[] { true, new Buddy(blackListedBuddies[count])});
             }
         }
-*/
+        */
         GridBagConstraints constraint = new GridBagConstraints();
         constraint.gridx = 0;
         constraint.gridy = 0;
