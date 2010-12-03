@@ -79,7 +79,7 @@ public class MessagingService implements Observer{
 		return msrpStack;
 	}
 
-	public synchronized void removeUser(User user) {
+	public synchronized void removeUserFromOnlineList(User user) {
 		int index = 0;
 		for (User u : this.onlineUsers) {
 			if (user.getSipURI().equals(u.getSipURI())) {
@@ -92,7 +92,7 @@ public class MessagingService implements Observer{
 		}
 	}
 	
-	public synchronized User findUser(String sipURI) {
+	public synchronized User findUserInOnlineList(String sipURI) {
 		for (User u : this.onlineUsers) {
 			if (sipURI.equals(u.getSipURI())) {
 				return u;
@@ -101,21 +101,25 @@ public class MessagingService implements Observer{
 		return null;
 	}
 	
-	public synchronized void addUser(User user) {
-		if(findUser(user.getSipURI()) == null) {
+	public synchronized boolean addUserToOnlineList(User user) {
+		boolean userIsAddedFirst = false;
+		if(findUserInOnlineList(user.getSipURI()) == null) {
 			this.onlineUsers.add(user);	
+			userIsAddedFirst = true;
 		}
 		else {
-			removeUser(user);
-			this.onlineUsers.add(user);
+			removeUserFromOnlineList(user);
+			this.onlineUsers.add(user);			
 		}
+		
+		return userIsAddedFirst;
 	}
 	
 	public void update(Observable o, Object arg) {
 		User user = (User)o;
 		System.out.println("User timeOut. Removing from online list: " + user.getSipURI());
 		
-		removeUser(user);		
+		removeUserFromOnlineList(user);		
 	}
 	
 	public void addMSRPListener(MSRPListener listener) {

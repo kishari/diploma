@@ -1,9 +1,7 @@
 package hu.messaging.sip;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -17,8 +15,6 @@ import javax.servlet.sip.SipFactory;
 import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
-import javax.servlet.sip.SipURI;
-import javax.servlet.sip.URI;
 
 import hu.messaging.*;
 import hu.messaging.dao.MessagingDAO;
@@ -33,7 +29,10 @@ public class MessagingSipServlet extends SipServlet {
 	private static Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
 															"[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");
 	private static Pattern recipientsMessagePattern =  Pattern.compile("^RECIPIENTS\r\n" + 
-																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n\r\n" + 
+																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n" +
+																	   "Extension: ([\\p{Alnum}]{2,10})\r\n" +
+																	   "Sender: (sip:[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}" +
+																	   "@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n\r\n" +
 																	   "(.*)" + 
 																	   "\r\n\r\n-----END", Pattern.DOTALL);
 	
@@ -119,15 +118,20 @@ public class MessagingSipServlet extends SipServlet {
 		if ("UPDATESTATUS".equals(req.getContent())) {
 			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
 			user.addObserver(this.messagingService);
-			this.messagingService.addUser(user);
+			if (this.messagingService.addUserToOnlineList(user)) {
+				notifyUserFromItsNewMessages(req);
+			}
 		}
 		
 		if (req.getContent().toString().startsWith("RECIPIENTS")) {
 			Matcher m = recipientsMessagePattern.matcher(req.getContent().toString());
 			m.find();
 			
+			System.out.println(req.getContent().toString());
 			String messageId = m.group(1);
-			String[] rTemp = m.group(2).split("\r\n");
+			String extension = m.group(2);
+			String sender = m.group(3);
+			String[] rTemp = m.group(4).split("\r\n");
 			
 			List<Recipient> recipients = new ArrayList<Recipient>();
 			
@@ -139,10 +143,16 @@ public class MessagingSipServlet extends SipServlet {
 			
 			MessagingDAO dao = new MessagingDAO();
 			dao.insertRecipients(messageId, recipients);
+			dao.updateMessage(messageId, extension, sender);
 			notifyOnlineRecipients(req, recipients);
 		}
 	}
 
+	private void notifyUserFromItsNewMessages(SipServletRequest req) {
+		System.out.println("notifyUserFromItsNewMessages");
+		
+	}
+	
 	private void notifyOnlineRecipients(SipServletRequest req, 
 										List<Recipient> recipients) throws ServletParseException, IOException {
 

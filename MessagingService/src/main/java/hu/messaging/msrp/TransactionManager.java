@@ -73,15 +73,18 @@ public class TransactionManager implements Observer {
 					
 					ByteBuffer b = ByteBuffer.allocate(byteCount);
 					b.clear();
-					byte[] message = new byte[byteCount];
+					byte[] content = new byte[byteCount];
 					
 					for (Request r : chunks) {
 						b.put(r.getContent());
 					}
 					
 					b.rewind();
-					b.get(message);
-					new MessagingDAO().insertMessage(req.getMessageId(), message);
+					b.get(content);
+					CompleteMessage msg = new CompleteMessage(req.getMessageId(), 
+															  content,
+															  null);
+					new MessagingDAO().insertMessage(msg);
 				}
 			}
 			else if (m.getMethod() == Constants.method200OK) {

@@ -38,7 +38,7 @@ public class Resources {
             put("menu.session.start.chat", "Start chat session...");
             put("menu.session.start.voice", "Start voice session...");
             put("menu.view", "View");
-            put("menu.view.blacklist", "Inbox...");
+            put("menu.view.inbox", "Inbox...");
             put("dialog.group.add.title", "New Group");
             put("dialog.group.name.label", "Group name:");
             put("dialog.group.edit.title", "Modify Group");

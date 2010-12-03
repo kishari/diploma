@@ -90,12 +90,12 @@ public class MenuBar implements ContactSelectionListener
 	private JMenu createViewMenu()
 	{
 		final JMenu viewMenu = createMenu("menu.view");
-		JMenuItem itemBlackList = new JMenuItem(Resources.resources.get("menu.view.blacklist"));
-    	itemBlackList.setName("menu.view.blacklist");
+		JMenuItem itemBlackList = new JMenuItem(Resources.resources.get("menu.view.inbox"));
+    	itemBlackList.setName("menu.view.inbox");
     	itemBlackList.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
-				MessageListDialog dialog = new MessageListDialog(SwingUtil.getFrame(viewMenu), icpController.getContactListController());
+				MessageListDialog dialog = new MessageListDialog(icpController.getContactListController());
 				dialog.setVisible(true);
 			}});
     	viewMenu.add(itemBlackList);

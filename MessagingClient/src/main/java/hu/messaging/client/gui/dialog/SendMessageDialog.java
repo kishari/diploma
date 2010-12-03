@@ -67,7 +67,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JButton deselectAllButton;
 	private JButton deselectButton;
 	
-	private byte[] messageContent = null;
+	private CompleteMessage message = new CompleteMessage();
 	
 	private JFileChooser fileChooser;
 	/**
@@ -309,7 +309,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    	  if (retVal == JFileChooser.APPROVE_OPTION) {
 	    		  File selectedFile = fileChooser.getSelectedFile();
 	    		  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
-	    		  
+	    		  message.setExtension(getFileExtension(selectedFile));
 	    		  //System.out.println(new String(FileUtils.readFileToByteArray(selectedFile)));	    		  
 	    	  }
 	      }
@@ -328,7 +328,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    JButton sendButton = new JButton("Send");
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		    	  if (getSelectedGroupNames().length != 0 && getMessageContent() != null) {		    		  
+		    	  message.setSender(getLocalUserSipURI());
+		    	  if (message.isReady()) {		    		  
 		    		  try {
 		    			  ISessionDescription sdp = getLocalSDP();
 		    			  MessagingService.addMSRPListener(SendMessageDialog.this);
@@ -396,11 +397,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	  }
 
 	public byte[] getMessageContent() {
-		return messageContent;
+		return message.getContent();
 	}
 
 	public void setMessageContent(byte[] messageContent) {
-		this.messageContent = messageContent;
+		this.message.setContent(messageContent);
 	}
 	
 	private List<Buddy> getSelectedGroupsMembers() {
@@ -471,7 +472,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	public void sessionStarted(MSRPEvent event) {
     	try {
     		if (true) {
-    			MessagingService.sendMessage(new CompleteMessage(messageContent), Constants.serverSipURI);
+    			MessagingService.sendMessage(message, Constants.serverSipURI);
     		}
     		else {
     			String message = "GETMESSAGES\r\n" + 
@@ -492,14 +493,33 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	
 	private String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
 		String msg = "RECIPIENTS\r\n";
-		msg += "Message-ID: " + messageId + "\r\n\r\n"; 
+		msg += "Message-ID: " + messageId + "\r\n" + 
+			   "Extension: " + message.getExtension() + "\r\n" +
+			   "Sender: " + message.getSender() + "\r\n\r\n"; 
 		
 		for (Buddy r : recipients) {
 			msg += r.getDisplayName() + "#" + r.getContact() + "\r\n";
 		}
 		
 		msg += "\r\n-----END";
+		
+		System.out.println(msg);
 		return msg;
+	}
+	
+	private String getFileExtension(File file) {
+		String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
+		return extension;
+	}
+	
+	private String getLocalUserSipURI() {
+		String sipURI = null;
+		try {
+			sipURI = icpController.getProfile().getIdentity().toString();
+		}
+		catch(Exception e) { }
+		
+		return sipURI;
 	}
 }
 
