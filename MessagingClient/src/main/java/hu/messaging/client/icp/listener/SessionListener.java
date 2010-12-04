@@ -35,7 +35,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
             	icpController.getCommunicationController().createSenderConnection(remoteSdp.getHost(), 
             											remoteSdp.getPort(), 
             											Constants.serverSipURI);
-            	SenderConnection s = icpController.getCommunicationController().getMsrpStack().getConnections().findSenderConnection(Constants.serverSipURI);
+            	SenderConnection s = icpController.getCommunicationController().getMsrpStack().getConnections().getSenderConnection(Constants.serverSipURI);
             	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Constants.serverSipURI));
             	
             	icpController.getCommunicationController().createNewMSRPSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);

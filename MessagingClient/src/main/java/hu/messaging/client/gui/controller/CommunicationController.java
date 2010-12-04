@@ -97,16 +97,15 @@ public class CommunicationController
 	}
 	
 	public Session createNewMSRPSession(URI localURI, URI remoteURI, String sipUri) {
-		SenderConnection s = getMsrpStack().getConnections().findSenderConnection(sipUri);
-		System.out.println("CommunicationController createNewMSRPSession");
-		
+		SenderConnection s = getMsrpStack().getConnections().getSenderConnection(sipUri);
+		//System.out.println("CommunicationController createNewMSRPSession");		
 		if (s == null) {
 			System.out.println("nem találtunk a sessionhoz sendert");
 			return null;
 		}
 		
-		System.out.println(localURI);
-		System.out.println(remoteURI);
+		//System.out.println(localURI);
+		//System.out.println(remoteURI);
 		Session newSession = new Session(localURI, remoteURI, s, msrpStack);
 		getMsrpStack().putNewSession(newSession);
 		
