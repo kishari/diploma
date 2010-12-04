@@ -73,6 +73,7 @@ public class MSRPStack {
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}
+		activeSessions.clear();
 	}
 	
 	public synchronized void addMSRPListener(MSRPListener listener) {

@@ -6,6 +6,7 @@ public class CompleteMessage {
 	private String messageId = null;
 	private String extension;
 	private String sender;
+	private String subject;
 	
 	public CompleteMessage() { }
 	
@@ -20,11 +21,12 @@ public class CompleteMessage {
 		this.messageId = messageId;
 	}
 	
-	public CompleteMessage(String messageId, byte[] content, String extension, String sender) {
+	public CompleteMessage(String messageId, byte[] content, String extension, String sender, String subject) {
 		this.extension = extension;
 		this.content = content;
 		this.messageId = messageId;
 		this.sender = sender;
+		this.subject = subject;
 	}
 
 
@@ -69,6 +71,14 @@ public class CompleteMessage {
 		
 		System.out.println(ready);
 		return ready;
+	}
+
+	public String getSubject() {
+		return subject;
+	}
+
+	public void setSubject(String subject) {
+		this.subject = subject;
 	}
 
 }

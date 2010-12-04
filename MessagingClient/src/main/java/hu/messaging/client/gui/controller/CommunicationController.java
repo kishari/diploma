@@ -151,7 +151,7 @@ public class CommunicationController
     	if (message.startsWith("MESSAGENOTIFY")) {
     		incomingNewMessageDescriptors.add(message);
     	}
-       System.out.println("CommunicationController.incomingInstantMessage(): to: " + to + ". \nMessage: " + message);
+      // System.out.println("CommunicationController.incomingInstantMessage(): to: " + to + ". \nMessage: " + message);
     }
     
     public void sendInvite(ISessionDescription localSdp) throws Exception {        
@@ -182,13 +182,13 @@ public class CommunicationController
     	for (String descr : this.incomingNewMessageDescriptors) {
     		Matcher m = notifyMessagesPattern.matcher(descr);
     		m.find();
-    		CompleteMessage cm = new CompleteMessage(m.group(1), null, null, m.group(2));
+    		CompleteMessage cm = new CompleteMessage(m.group(1), null, null, m.group(2), m.group(3));
     		newMessages.add(cm);
     	}
     	
     	for (CompleteMessage m : newMessages) {
-    		System.out.println(m.getMessageId());
-    		System.out.println(m.getSender());
+    		//System.out.println(m.getMessageId());
+    		//System.out.println(m.getSender());
     	}
     	return newMessages;
     }

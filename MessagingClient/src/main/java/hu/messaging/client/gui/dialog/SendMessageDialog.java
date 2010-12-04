@@ -441,6 +441,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 			icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().start();
 		}
 		else if (!icpController.getCommunicationController().getMsrpStack().getConnections().isRunningReceiverConnection()) {
+			icpController.getCommunicationController().getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
 			icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().start();
 		}
 		

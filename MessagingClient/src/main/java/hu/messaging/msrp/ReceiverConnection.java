@@ -43,6 +43,7 @@ public class ReceiverConnection implements Runnable {
 		setRunning(true);
 		
 		while (isRunning()) {
+			System.out.println("receivercon run eleje");
 			try {
 				// Wait for an event one of the registered channels
 				this.selector.select();
@@ -73,6 +74,8 @@ public class ReceiverConnection implements Runnable {
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println("receiverConnection stopped");
 	}
 	
 	private synchronized int getUnboundPort() throws IOException {

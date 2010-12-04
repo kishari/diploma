@@ -18,7 +18,7 @@ public class Connections {
 	
 	public void createReceiverConnection(InetAddress localhost) throws IOException {
 		System.out.println("MessagingService.createReceiverConnection");
-		if (this.receiverConnection == null) {
+		if (this.receiverConnection == null || !this.receiverConnection.isRunning()) {
 			this.setReceiverConnection(new ReceiverConnection(localhost, msrpStack));
 		}
 	}
