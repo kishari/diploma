@@ -10,11 +10,6 @@ public class CompleteMessage {
 	
 	public CompleteMessage() { }
 	
-	public CompleteMessage(byte[] content, String extension) {
-		this.extension = extension;
-		this.content = content;
-	}
-	
 	public CompleteMessage(String messageId, byte[] content, String extension) {
 		this.extension = extension;
 		this.content = content;

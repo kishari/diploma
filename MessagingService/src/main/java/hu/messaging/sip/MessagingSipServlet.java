@@ -32,7 +32,8 @@ public class MessagingSipServlet extends SipServlet {
 																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n" +
 																	   "Extension: ([\\p{Alnum}]{2,10})\r\n" +
 																	   "Sender: (sip:[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}" +
-																	   "@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n\r\n" +
+																	   "@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n" +
+																	   "Subject: (.*)\r\n\r\n" +
 																	   "(.*)" + 
 																	   "\r\n\r\n-----END", Pattern.DOTALL);
 	
@@ -131,7 +132,7 @@ public class MessagingSipServlet extends SipServlet {
 			String messageId = m.group(1);
 			String extension = m.group(2);
 			String sender = m.group(3);
-			String[] rTemp = m.group(4).split("\r\n");
+			String[] rTemp = m.group(5).split("\r\n");
 			
 			List<Recipient> recipients = new ArrayList<Recipient>();
 			

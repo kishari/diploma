@@ -68,7 +68,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JButton deselectButton;
 	private JButton sendButton;
 	
-	private CompleteMessage message = new CompleteMessage();
+	private CompleteMessage completeMessage = new CompleteMessage();
 	
 	private JFileChooser fileChooser;
 	/**
@@ -147,7 +147,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
             case RecipientsSentSuccessful:
             {
         		icpController.getCommunicationController().sendBye();
-        		MessageUtil.createMessageFile(message);
+        		MessageUtil.createMessageFile(completeMessage);
             	break;
             }
             case ConnectionFinished:
@@ -311,7 +311,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    	  if (retVal == JFileChooser.APPROVE_OPTION) {
 	    		  File selectedFile = fileChooser.getSelectedFile();
 	    		  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
-	    		  message.setExtension(getFileExtension(selectedFile));
+	    		  completeMessage.setExtension(getFileExtension(selectedFile));
 	    		  //System.out.println(new String(FileUtils.readFileToByteArray(selectedFile)));	    		  
 	    	  }
 	      }
@@ -330,8 +330,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    sendButton = new JButton("Send");
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		    	  message.setSender(getLocalUserSipURI());
-		    	  if (message.isReady()) {		    		  
+		    	  completeMessage.setSender(getLocalUserSipURI());
+		    	  if (completeMessage.isReady()) {		    		  
 		    		  try {
 		    			  sendButton.setEnabled(false);
 		    			  ISessionDescription sdp = getLocalSDP();
@@ -393,11 +393,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	  }
 
 	public byte[] getMessageContent() {
-		return message.getContent();
+		return completeMessage.getContent();
 	}
 
 	public void setMessageContent(byte[] messageContent) {
-		this.message.setContent(messageContent);
+		completeMessage.setContent(messageContent);
 	}
 	
 	private List<Buddy> getSelectedGroupsMembers() {
@@ -452,48 +452,34 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		return SDPUtil.createSDP(localhost, port, sessionId);
 	}
 	
-	public void brokenTrasmission(MSRPEvent event) {
-		
-	}
-	
-	public void messageSentSuccess(MSRPEvent event) {
-		String message = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
-		//icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, message);
+	public void fireMsrpEvent(MSRPEvent event) {
 		try {
-			icpController.getSession().sendMessage("text/plain", message.getBytes(), message.length());
+			switch(event.getCode()) {
+				case MSRPEvent.sessionStarted :  
+					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Constants.serverSipURI);
+					break;
+				case MSRPEvent.brokenTrasmission :
+					break;
+				case MSRPEvent.messageSentSuccess :
+					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
+					icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
+					break;
+				case MSRPEvent.messageReceivingSuccess :
+					break;
+			}
 		}
-		catch(Exception e) {}
-	}
-	
-	public void sessionStarted(MSRPEvent event) {
-    	try {
-    		System.out.println("Session started EVENT");
-    		if (true) {
-    			icpController.getCommunicationController().sendMessageInMSRPSession(message, Constants.serverSipURI);
-    		}
-    		else {
-    			String message = "GETMESSAGES\r\n" + 
-    							 "Message-IDs:\r\n" +
-    							 "a0147afc88\r\n" +
-    							 "6887b5824e" + 
-    							 "\r\n\r\n-----END";
-    			icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, message);
-    		}
-    	}
-    	catch (Exception e) { 
-    		
-    	} 
-	}
-	public void startTrasmission(MSRPEvent event) {
-		
+		catch (Exception e) { 
+    		e.printStackTrace();
+    	}	 
 	}
 	
 	private String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
-		message.setMessageId(messageId);
+		completeMessage.setMessageId(messageId);
 		String msg = "RECIPIENTS\r\n";
-		msg += "Message-ID: " + message.getMessageId() + "\r\n" + 
-			   "Extension: " + message.getExtension() + "\r\n" +
-			   "Sender: " + message.getSender() + "\r\n\r\n"; 
+		msg += "Message-ID: " + completeMessage.getMessageId() + "\r\n" + 
+			   "Extension: " + completeMessage.getExtension() + "\r\n" +
+			   "Sender: " + completeMessage.getSender() + "\r\n" +
+			   "Subject: " + completeMessage.getSubject() + "\r\n\r\n"; 
 		
 		for (Buddy r : recipients) {
 			msg += r.getDisplayName() + "#" + r.getContact() + "\r\n";

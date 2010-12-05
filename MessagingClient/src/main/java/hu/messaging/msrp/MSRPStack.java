@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observer;
 
 public class MSRPStack {
 
@@ -93,23 +92,8 @@ public class MSRPStack {
 				temp.add(l);
 			}
 		}
-		switch (event.getCode()) {
-		case MSRPEvent.messageSentSuccessCode :	for (MSRPListener listener : temp) {					
-														listener.messageSentSuccess(event);
-												}			
-												break;
-		case MSRPEvent.startTrasmissionCode :	for (MSRPListener listener : temp) {					
-													listener.startTrasmission(event);
-												}	
-												break;					
-		case MSRPEvent.brokenTrasmissionCode :	for (MSRPListener listener : temp) {					
-													listener.brokenTrasmission(event);
-												}	
-												break;
-		case MSRPEvent.sessionStartedCode :			for (MSRPListener listener : temp) {					
-													listener.sessionStarted(event);
-												}	
-												break;												
+		for (MSRPListener listener : temp) {					
+			listener.fireMsrpEvent(event);
 		}
 	}
 	

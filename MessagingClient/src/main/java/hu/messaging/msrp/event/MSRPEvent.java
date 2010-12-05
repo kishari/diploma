@@ -1,19 +1,32 @@
 package hu.messaging.msrp.event;
 
+import hu.messaging.msrp.CompleteMessage;
+
 public class MSRPEvent {
 
-	public static final int messageSentSuccessCode = 1;
-	public static final int startTrasmissionCode = 2;
-	public static final int brokenTrasmissionCode = 3;
-	public static final int sessionStartedCode = 4;
+	public static final int messageSentSuccess = 1;
+	public static final int brokenTrasmission = 2;
+	public static final int sessionStarted = 3;
+	public static final int messageReceivingSuccess = 4;
 	
 	private String description;
 	private String messageId;
+	private CompleteMessage completeMessage;
 	private int code;
+
+	public MSRPEvent(int code) {
+		this.code = code;		
+	}
 	
-	public MSRPEvent(String description, int code) {
-		this.description = description;
+	public MSRPEvent(int code, String description) {
 		this.code = code;
+		this.description = description;		
+	}
+	
+	public MSRPEvent(int code, String description, CompleteMessage completeMessage) {
+		this.code = code;
+		this.description = description;
+		this.completeMessage = completeMessage;
 	}
 
 	public String getDescription() {
@@ -38,5 +51,13 @@ public class MSRPEvent {
 
 	public void setMessageId(String messageId) {
 		this.messageId = messageId;
+	}
+
+	public CompleteMessage getCompleteMessage() {
+		return completeMessage;
+	}
+
+	public void setCompleteMessage(CompleteMessage completeMessage) {
+		this.completeMessage = completeMessage;
 	}
 }

@@ -66,7 +66,7 @@ public class TransactionManager implements Observer {
 				
 				if (isAckedTotalSentMessage()) {
 					this.isSentMessageChunk = false;
-					MSRPEvent event = new MSRPEvent("sentSuccess", MSRPEvent.messageSentSuccessCode);
+					MSRPEvent event = new MSRPEvent(MSRPEvent.messageSentSuccess);
 					event.setMessageId(ackedReq.getMessageId());
 					this.session.getMsrpStack().notifyListeners(event);
 					this.acknowledgedMessages.clear();
