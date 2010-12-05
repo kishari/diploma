@@ -63,8 +63,8 @@ public class CompleteMessage {
 		ready = ready && (getContent() != null);
 		ready = ready && (getExtension() != null && !"".equals(getExtension()));
 		ready = ready && (getSender() != null && !"".equals(getSender()));
+		ready = ready && (getSubject() != null && !"".equals(getSubject()));
 		
-		System.out.println(ready);
 		return ready;
 	}
 

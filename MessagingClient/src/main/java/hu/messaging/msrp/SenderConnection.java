@@ -11,8 +11,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
+import java.util.Observable;
 
-public class SenderConnection implements Runnable {
+public class SenderConnection extends Observable implements Runnable {
 
 	private MSRPStack msrpStack;
 	private Session session = null;
@@ -28,11 +29,12 @@ public class SenderConnection implements Runnable {
 	public SenderConnection(InetAddress remoteAddress, int remotePort, 
 							String sipUri, MSRPStack msrpStack) throws IOException {
 		
-		//System.out.println("SenderConnection constuctor");
-		this.msrpStack = msrpStack;
+		this.msrpStack = msrpStack;		
 		this.remoteAddress = remoteAddress;
 		this.remotePort = remotePort;
 		this.sipUri = sipUri;
+		
+		addObserver(msrpStack.getConnections());
 		this.selector = initSelector();
 	}
 
@@ -50,9 +52,7 @@ public class SenderConnection implements Runnable {
 		while (isRunning()) {
 			try {
 				// Wait for an event one of the registered channels
-				this.selector.select();
-				//System.out.println("senderConnection run");
-				
+				this.selector.select();				
 
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
@@ -63,7 +63,6 @@ public class SenderConnection implements Runnable {
 					if (!key.isValid()) {
 						continue;
 					}
-					// Check what event is available and deal with it
 					if (key.isConnectable()) {
 						this.finishConnection(key);
 					} else if (key.isReadable()) {
@@ -84,6 +83,8 @@ public class SenderConnection implements Runnable {
 		setConnected(false);
 		
 		System.out.println("senderConnection closed: " + this.sipUri);
+		this.setChanged();
+		notifyObservers(this);
 			
 	}
 	
@@ -160,6 +161,7 @@ public class SenderConnection implements Runnable {
 	}
 	
 	private synchronized void write(byte[] data) throws IOException {
+		//System.out.println("write");
 		ByteBuffer b = ByteBuffer.allocate(data.length);
 		b.clear();
 		b = ByteBuffer.wrap(data);

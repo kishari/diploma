@@ -79,9 +79,7 @@ public class ICPController {
      * Build an ICP controller
      */
     public ICPController() throws Exception
-    {
-    	System.out.println("ICPController konstruktor");
-    	
+    {    
         icpPlatform = ICPFactory.createPlatform();
         icpPlatform.registerClient(CLIENT_NAME);
         icpPlatform.addListener(new PlatformListener(this));
@@ -126,7 +124,6 @@ public class ICPController {
     {
         try
         {
-
             // Release all sessions
             releaseSessions();
             icpGroupListController.release();

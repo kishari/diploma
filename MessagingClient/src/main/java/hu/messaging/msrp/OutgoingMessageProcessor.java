@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public class OutgoingMessageProcessor extends Observable implements Runnable {
 
+	private static int counter = 0;
 	private boolean running = false;
 	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
 	private Session session;
@@ -47,18 +48,16 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		int chunkSize = Constants.chunkSize;
 		
 		List<byte[]> chunks = splitMessageToChunks(completeMessage, chunkSize);
+		System.out.println("num of chunks: " + chunks.size());
 		
 		int offset = 1;
 		char endToken = '+';
 		String tId = "";
 		String messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
-		int i = 0;
 		for (byte[] chunk : chunks) {
-			//tId += Integer.toString(i);
-			//i++;
+			counter++;
 			tId = MSRPUtil.generateRandomString(Constants.transactionIdLength);
 			
-			//tId = MSRPUtil.generateRandomString(10);
 			if (chunk.length < chunkSize) {
 				endToken = '$';
 			}
@@ -68,12 +67,21 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 												  offset, chunk.length, completeMessage.getContent().length, 
 												  endToken);
 			offset += chunk.length;
-			//System.out.println("OutgoingProcessor: after message create: \n" + mOut.toString());
 			
 			try {
+				if (counter == 50) {
+					System.out.println("sleep 3000");
+					Thread.sleep(3000);
+					counter = 0;
+				}
 				this.session.getSenderConnection().sendChunk(mOut.toString().getBytes());
 			}
-			catch (IOException e) {}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			this.setChanged();
 			this.notifyObservers(mOut);
 		}				

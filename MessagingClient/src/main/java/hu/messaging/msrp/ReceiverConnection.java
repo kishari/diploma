@@ -18,9 +18,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Random;
 
-public class ReceiverConnection implements Runnable {
+public class ReceiverConnection extends Observable implements Runnable {
 	private boolean running = false;	
 	private ByteBuffer buff = null;
 	private MSRPStack msrpStack = null;
@@ -37,18 +38,17 @@ public class ReceiverConnection implements Runnable {
 		this.selector = initSelector();
 		buff = ByteBuffer.allocate(Constants.receiverBufferSize);
 		buff.clear();
+		this.addObserver(msrpStack.getConnections());
 	}
 
 	public void run() {
 		setRunning(true);
 		
 		while (isRunning()) {
-			System.out.println("receivercon run eleje");
 			try {
 				// Wait for an event one of the registered channels
 				this.selector.select();
 
-				//System.out.println("receiverconnection run");
 				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
@@ -76,6 +76,8 @@ public class ReceiverConnection implements Runnable {
 		}
 		
 		System.out.println("receiverConnection stopped");
+		this.setChanged();
+		notifyObservers(this);
 	}
 	
 	private synchronized int getUnboundPort() throws IOException {

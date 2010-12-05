@@ -6,6 +6,8 @@ import hu.messaging.msrp.MSRPStack;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.msrp.Session;
 import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.msrp.util.MSRPUtil;
+import hu.messaging.util.SDPUtil;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -25,10 +27,12 @@ import com.ericsson.icp.util.SdpFactory;
 public class CommunicationController
 {
 	private static Pattern notifyMessagesPattern =  Pattern.compile("^MESSAGENOTIFY\r\n\r\n" + 
-			   														"Message-ID: ([\\p{Alnum}]{10,50})\r\n" +
+			   														"Message-ID: ([\\p{Alnum}]{10,})\r\n" +
+			   														"Extension: (.*)\r\n" +
 			   														"Sender: (sip:[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}" +
 			   														"@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n" +
 			   														"Subject: (.*)", Pattern.DOTALL);
+
 	private List<String> incomingNewMessageDescriptors = new ArrayList<String>();
 	
 	private Map<String, String> localSDPs = new HashMap<String, String>();	
@@ -46,7 +50,6 @@ public class CommunicationController
 	
 	public void createSenderConnection(InetAddress host, int port, String sipUri) {
 		try {
-			System.out.println("CommunicationController createSenderConnection");
 			getMsrpStack().createSenderConnection(host, port, sipUri);	
 		}
 		catch(IOException e) {
@@ -85,27 +88,30 @@ public class CommunicationController
 		return msrpStack;
 	}
 	
-	public void addLocalSDP(String sessionId, String sdp) {
-		localSDPs.put(sessionId, sdp);
+	public void addLocalSDP(String remoteId, String sdp) {
+		localSDPs.put(remoteId, sdp);
 	}
 	
-	public String getLocalSDP(String sessionId) {
-		System.out.println("CommunicationController.getLocalSDP: " + sessionId);
-		String sdp = localSDPs.get(sessionId);
-		System.out.println("sdp: " + sdp );
+	public void removeLocalSDP(String remoteId) {
+		localSDPs.remove(remoteId);
+	}
+	
+	public String getLocalSDP(String remoteId) {
+		System.out.println("CommunicationController.getLocalSDP to: " + remoteId);
+		String sdp = localSDPs.get(remoteId);
+		//System.out.println("sdp: " + sdp );
 		return sdp;
 	}
 	
 	public Session createNewMSRPSession(URI localURI, URI remoteURI, String sipUri) {
 		SenderConnection s = getMsrpStack().getConnections().getSenderConnection(sipUri);
-		//System.out.println("CommunicationController createNewMSRPSession");		
+		System.out.println("CommunicationController createNewMSRPSession");
+		
 		if (s == null) {
 			System.out.println("nem találtunk a sessionhoz sendert");
 			return null;
 		}
 		
-		//System.out.println(localURI);
-		//System.out.println(remoteURI);
 		Session newSession = new Session(localURI, remoteURI, s, msrpStack);
 		getMsrpStack().putNewSession(newSession);
 		
@@ -150,7 +156,6 @@ public class CommunicationController
     	if (message.startsWith("MESSAGENOTIFY")) {
     		incomingNewMessageDescriptors.add(message);
     	}
-      // System.out.println("CommunicationController.incomingInstantMessage(): to: " + to + ". \nMessage: " + message);
     }
     
     public void sendInvite(ISessionDescription localSdp) throws Exception {        
@@ -185,11 +190,22 @@ public class CommunicationController
     		newMessages.add(cm);
     	}
     	
-    	for (CompleteMessage m : newMessages) {
-    		//System.out.println(m.getMessageId());
-    		//System.out.println(m.getSender());
-    	}
     	return newMessages;
     }
+    
+	public ISessionDescription getLocalSDP() throws IOException {
+		if (!icpController.getCommunicationController().getMsrpStack().getConnections().isReceiverConnection() ||
+			!icpController.getCommunicationController().getMsrpStack().getConnections().isRunningReceiverConnection()) {
+			
+			icpController.getCommunicationController().getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
+			icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().start();
+		}
+		
+		InetAddress localhost = icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
+		int port = icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().getPort();
+		String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
+		
+		return SDPUtil.createSDP(localhost, port, sessionId);
+	}
 
 }

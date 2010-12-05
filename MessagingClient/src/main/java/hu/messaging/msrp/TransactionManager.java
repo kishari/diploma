@@ -62,9 +62,19 @@ public class TransactionManager implements Observer {
 			else if (m.getMethod() == Constants.method200OK) {
 				Response resp = (Response) m;
 				Request ackedReq = this.sentMessages.remove(resp.getTransactionId());
+				if ( ackedReq == null) {
+					System.out.println("ackedReq null");
+				}
+				if ( ackedReq.getTransactionId() == null) {
+					System.out.println("ackedReq.getTransactionId() null");
+				}
+				if ( acknowledgedMessages == null) {
+					System.out.println("acknowledgedMessages null");
+				}
 				this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
 				
 				if (isAckedTotalSentMessage()) {
+					System.out.println("minden nyugtazva");
 					this.isSentMessageChunk = false;
 					MSRPEvent event = new MSRPEvent(MSRPEvent.messageSentSuccess);
 					event.setMessageId(ackedReq.getMessageId());

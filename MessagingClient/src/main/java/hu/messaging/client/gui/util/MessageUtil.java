@@ -9,22 +9,35 @@ import hu.messaging.msrp.CompleteMessage;
 
 public class MessageUtil {
 
-	public static void createMessageFile(CompleteMessage message) {
+	public static void createMessageFile(CompleteMessage message, boolean sentMessage) {
 		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter("c:\\" + message.getMessageId() + ".message"));
+			String path = "c:\\";
+			if (sentMessage) {
+				path += "message\\sent";
+				
+			}
+			else {
+				path += "message\\inbox";
+			}
+			
+			File dir = new File(path);
+			dir.mkdirs();
+			File messageFile = new File(dir, message.getMessageId() + ".message");
+			BufferedWriter out = new BufferedWriter(new FileWriter(messageFile));
 			out.write("Sender:\n" + message.getSender() + "\n");
 			out.write("Extension:\n" + message.getExtension() + "\n");
 			out.write("Content:\n " + new String(message.getContent()));
+			
 			out.flush();			
 			out.close();			
 		}
 		catch(IOException e) { 
 			e.printStackTrace();
-		}
-		
+		}		
 	}
 	
-	public static void readMessageFile(String messageId) {
+	public static CompleteMessage readMessageFile(String messageId) {
 		
+		return null;
 	}
 }

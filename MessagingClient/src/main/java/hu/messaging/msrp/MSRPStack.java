@@ -46,11 +46,7 @@ public class MSRPStack {
 	}
 	
 	public void removeSession(String sessionId) {
-		//System.out.println("MSRPStack removeSession: " + sessionId);
-		
-		Session s = getActiveSessions().remove(sessionId);
-		
-		//System.out.println("MSRPStack: session torolve: " + s.getId());
+		getActiveSessions().remove(sessionId);
 	}
 	
 	public void sendMessage(CompleteMessage completeMessage, String sipUri) {
@@ -74,7 +70,6 @@ public class MSRPStack {
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}
-		//activeSessions.clear();
 	}
 	
 	public synchronized void addMSRPListener(MSRPListener listener) {

@@ -3,7 +3,6 @@ package hu.messaging.client.gui;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.bean.BuddyListPanel;
 import hu.messaging.client.gui.bean.MenuBar;
-import hu.messaging.client.gui.controller.CommunicationController;
 import hu.messaging.client.gui.controller.ICPController;
 
 import java.awt.Container;
