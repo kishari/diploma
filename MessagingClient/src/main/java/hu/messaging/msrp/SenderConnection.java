@@ -44,7 +44,9 @@ public class SenderConnection implements Runnable {
 	}
 
 	public void sendChunk(byte[] chunk) throws IOException {
+		this.write(chunk);
 		//System.out.println("SenderConnection (to: " + this.sipUri + ") sendChunk!");
+		/*
 		synchronized(this.pendingChanges) {
 			this.pendingChanges.add( new ChangeRequest(this.senderChannel, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE) );
 			ByteBuffer b = ByteBuffer.allocate(chunk.length);
@@ -61,6 +63,7 @@ public class SenderConnection implements Runnable {
 			}
 		}
 		this.selector.wakeup();
+		*/
 	}
 	
 	public void run() {
@@ -70,9 +73,9 @@ public class SenderConnection implements Runnable {
 			e.printStackTrace();
 		}
 		
-		this.msrpStack.notifyListeners(new MSRPEvent("", MSRPEvent.sessionStartedCode));
 		while (isRunning()) {
 			try {
+				/*
 				synchronized (this.pendingChanges) {
 					Iterator<ChangeRequest> changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
@@ -95,9 +98,10 @@ public class SenderConnection implements Runnable {
 					}
 					this.pendingChanges.clear();
 				}
+				*/
 				// Wait for an event one of the registered channels
 				this.selector.select();
-				//System.out.println("senderConnection run");
+				System.out.println("senderConnection run");
 				
 
 				// Iterate over the set of keys for which events are available
@@ -160,16 +164,18 @@ public class SenderConnection implements Runnable {
 		System.out.println("sender initiateConnection: " + addr.getAddress().getHostAddress() + " : " + addr.getPort());
 		socketChannel.connect(new InetSocketAddress(this.remoteAddress, this.remotePort));
 		
-		synchronized(this.pendingChanges) {
+/*		synchronized(this.pendingChanges) {
 		      this.pendingChanges.add( new ChangeRequest( socketChannel, 
 		    		  				  					 ChangeRequest.REGISTER, 
 		    		  				  					 SelectionKey.OP_CONNECT ) );
 		    }
-		
+*/		
+		socketChannel.register(this.selector, SelectionKey.OP_CONNECT);
 		return socketChannel;
 	}
 	
 	private void finishConnection(SelectionKey key) throws IOException {
+		System.out.println("finish");
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		try {
 			socketChannel.finishConnect();
@@ -180,6 +186,7 @@ public class SenderConnection implements Runnable {
 		}		
 		socketChannel.register(this.selector, SelectionKey.OP_READ);
 		setConnected(true);
+		this.msrpStack.notifyListeners(new MSRPEvent("", MSRPEvent.sessionStartedCode));
 	}
 	
 	private Selector initSelector() throws IOException {
@@ -213,8 +220,8 @@ public class SenderConnection implements Runnable {
 	
 	private void write(SelectionKey key) throws IOException {
 		SocketChannel socketChannel = (SocketChannel) key.channel();
-
-		//System.out.println("sender write");
+		
+		System.out.println("sender write");
 		synchronized (this.pendingData) {
 			List<ByteBuffer> queue = this.pendingData.get(socketChannel);
 
@@ -235,6 +242,14 @@ public class SenderConnection implements Runnable {
 				socketChannel.register(this.selector, SelectionKey.OP_READ);
 			}
 		}
+	}
+	
+	private synchronized void write(byte[] data) throws IOException {
+		ByteBuffer b = ByteBuffer.allocate(data.length);
+		b.clear();
+		b = ByteBuffer.wrap(data);
+		senderChannel.write(b);
+		senderChannel.register(this.selector, SelectionKey.OP_READ);
 	}
 	
 	public Session getSession() {

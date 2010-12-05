@@ -19,18 +19,18 @@ public class Connections {
 	
 	public void createReceiverConnection(InetAddress localhost) throws IOException {
 		System.out.println("MessagingService.createReceiverConnection");
-		if (this.receiverConnection == null || !this.receiverConnection.isRunning()) {
+		//if (this.receiverConnection == null || !this.receiverConnection.isRunning()) {
 			this.setReceiverConnection(new ReceiverConnection(localhost, msrpStack));
-		}
+		//}
 	}
 	
 	public SenderConnection createSenderConnection(InetAddress addr, int port, 
 													String sipUri, MSRPStack msrpStack) throws IOException {
-		
+/*		
 		if (senderConnections.containsKey(sipUri)) {
 			return senderConnections.get(sipUri);
 		}
-		
+*/		
 		SenderConnection c = new SenderConnection(addr, port, sipUri, msrpStack);
 		this.senderConnections.put(sipUri, c);
 		
@@ -41,6 +41,7 @@ public class Connections {
 		SenderConnection c = getSenderConnection(sipUri);
 		if (c != null) {
 			c.stop();
+			senderConnections.remove(sipUri);
 			/*
 			this.senderConnections.remove(c);
 			System.out.println("Connections deleteSenderConnection finished");

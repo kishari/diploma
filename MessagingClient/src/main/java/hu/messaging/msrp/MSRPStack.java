@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 
@@ -69,11 +70,12 @@ public class MSRPStack {
 	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		getConnections().deleteSenderConnections();
+		//getConnections().deleteSenderConnections();
+		getConnections().deleteSenderConnection(Constants.serverSipURI);
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}
-		activeSessions.clear();
+		//activeSessions.clear();
 	}
 	
 	public synchronized void addMSRPListener(MSRPListener listener) {

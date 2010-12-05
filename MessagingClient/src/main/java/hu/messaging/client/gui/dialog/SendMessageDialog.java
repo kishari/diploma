@@ -467,6 +467,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	
 	public void sessionStarted(MSRPEvent event) {
     	try {
+    		System.out.println("Session started EVENT");
     		if (true) {
     			icpController.getCommunicationController().sendMessageInMSRPSession(message, Constants.serverSipURI);
     		}
