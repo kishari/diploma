@@ -5,10 +5,8 @@ import hu.messaging.msrp.Message;
 import hu.messaging.msrp.Request;
 import hu.messaging.msrp.Response;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -45,47 +43,37 @@ public class MSRPUtil {
 		req.setLastByte(offset + chunkSize - 1);
 		req.setSumByte(completeMessageSize);
 		req.setContentType("text/plain");
-		req.setContent(Base64.encodeBase64String(content).getBytes());
-		/*try {
-			req.setContent(new String(content, "UTF8").getBytes());
-		}
-		catch(UnsupportedEncodingException e) {}
-		*/
+		req.setContent(content);
 
 		req.setEndToken(endToken);
 
 		return req;
 	}
 	
-	public static Message createMessage(String msg) {
-		//System.out.println("create message from: " + msg);
+	public static Message createMessageFromString(String message) {
 		
-		Matcher matcher = methodPattern.matcher(msg);
+		Matcher matcher = methodPattern.matcher(message);
 		
 		String method = null;
 		if (matcher.find()) {
 			method = matcher.group(3);
 		}
 		if ("SEND".equals(method)) {
-			//System.out.println("SEND");
 			Request req = new Request();
 			
 			req.setMethod(Constants.methodSEND);			
 			req.setTransactionId(matcher.group(2));
-			//System.out.println("tId: " + matcher.group(2));
 			
-			matcher = toPathPattern.matcher(msg);
+			matcher = toPathPattern.matcher(message);
 			String toPath = null;
 			if (matcher.find()) {
 				toPath = matcher.group(2);
-				//System.out.println("toPath: " + toPath);
 			}
 									
-			matcher = fromPathPattern.matcher(msg);
+			matcher = fromPathPattern.matcher(message);
 			String fromPath = null;
 			if (matcher.find()) {
 				fromPath = matcher.group(2);
-				//System.out.println("fromPath: " + fromPath);
 			}
 						
 			try {
@@ -99,26 +87,25 @@ public class MSRPUtil {
 				e.printStackTrace();
 			}
 			
-			matcher = messageIdPattern.matcher(msg);
+			matcher = messageIdPattern.matcher(message);
 			if (matcher.find()) {
 				req.setMessageId(matcher.group(2));
-				//System.out.println("messageId: " + req.getMessageId());
 			}				
 			
-			matcher = byteRangePattern.matcher(msg);
+			matcher = byteRangePattern.matcher(message);
 			if (matcher.find()) {
 				req.setFirstByte(Integer.valueOf(matcher.group(2)));
 				req.setLastByte(Integer.valueOf(matcher.group(3)));
 				req.setSumByte(Integer.valueOf(matcher.group(4)));				
 			}
 			
-			matcher = contentPattern.matcher(msg);
+			matcher = contentPattern.matcher(message);
 			if (matcher.find()) {
 				req.setContentType(matcher.group(2));
-				req.setContent(Base64.decodeBase64(matcher.group(3)));
+				req.setContent(matcher.group(3).getBytes());
 			}
 						
-			matcher = endLinePattern.matcher(msg);
+			matcher = endLinePattern.matcher(message);
 			if (matcher.find()) {
 				String tId = matcher.group(2);
 				if (!req.getTransactionId().equals(tId)) {
@@ -136,13 +123,13 @@ public class MSRPUtil {
 			resp.setMethod(Constants.method200OK);			
 			resp.setTransactionId(matcher.group(2));
 			
-			matcher = toPathPattern.matcher(msg);
+			matcher = toPathPattern.matcher(message);
 			String toPath = null;
 			if (matcher.find()) {
 				toPath = matcher.group(2);
 			}
 									
-			matcher = fromPathPattern.matcher(msg);
+			matcher = fromPathPattern.matcher(message);
 			String fromPath = null;
 			if (matcher.find()) {
 				fromPath = matcher.group(2);
@@ -159,7 +146,7 @@ public class MSRPUtil {
 				e.printStackTrace();
 			}
 			
-			matcher = endLinePattern.matcher(msg);
+			matcher = endLinePattern.matcher(message);
 			if (matcher.find()) {
 				String tId = matcher.group(2);
 				if (!resp.getTransactionId().equals(tId)) {
@@ -190,20 +177,14 @@ public class MSRPUtil {
 	
 	public static byte[] createMessageContentFromChunks(List<Request> chunks) {
 		Collections.sort(chunks);
-		ByteBuffer buff = ByteBuffer.allocate(1000000);
-		buff.clear();
-		byte[] content = new byte[chunks.get(chunks.size() - 1).getLastByte() + 100];
+		byte[] content = new byte[chunks.get(chunks.size() - 1).getLastByte()];
 		int offset = 0;
 		System.out.println("createMessageContentFromChunks: " + (chunks.get(chunks.size() - 1).getLastByte()));
 		for (Request chunk : chunks) {
-			buff.put(chunk.getContent());
-			//System.arraycopy(chunk.getContent(), 0, content, offset, chunk.getContent().length);
+			System.arraycopy(chunk.getContent(), 0, content, offset, chunk.getContent().length);
 			offset += chunk.getContent().length;
 		}
-		//System.out.println(new String(content));
-		System.out.println("offset: "  + offset);
-		System.out.println("size: " + buff.array().length);
-		return buff.array();
-		//return content;
+
+		return content;
 	}
 }

@@ -2,13 +2,18 @@ package hu.messaging.msrp;
 
 public class CompleteMessage {
 
-	private byte[] content;
+	private byte[] content = null;
 	private String messageId = null;
-	private String extension;
-	private String sender;
-	private String subject;
+	private String extension = null;
+	private String sender = null;
+	private String subject = null;
 	
 	public CompleteMessage() { }
+	
+	public CompleteMessage(String messageId, byte[] content) {
+		this.messageId = messageId;
+		this.content = content;
+	}
 	
 	public CompleteMessage(String messageId, byte[] content, String extension) {
 		this.extension = extension;
@@ -57,6 +62,14 @@ public class CompleteMessage {
 		this.extension = extension;
 	}
 
+	public String getSubject() {
+		return subject;
+	}
+
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
+	
 	public boolean isReady() {
 		boolean ready = true;
 		
@@ -66,14 +79,6 @@ public class CompleteMessage {
 		ready = ready && (getSubject() != null && !"".equals(getSubject()));
 		
 		return ready;
-	}
-
-	public String getSubject() {
-		return subject;
-	}
-
-	public void setSubject(String subject) {
-		this.subject = subject;
 	}
 
 }

@@ -150,7 +150,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 		    
 		List<String> messages = preParse(data, socketChannel);
 		for (String m : messages) {
-		  	Message msg = MSRPUtil.createMessage(m);
+		  	Message msg = MSRPUtil.createMessageFromString(m);
 		 	try {
 		 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
 		 		if (s != null) {

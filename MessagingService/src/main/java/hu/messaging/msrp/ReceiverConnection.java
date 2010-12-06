@@ -167,7 +167,7 @@ public class ReceiverConnection implements Runnable {
 			for (String m : messages) {
 				reqCounter++;
 				//System.out.println("receiverConnection reqCounter: " + reqCounter);
-				Message msg = MSRPUtil.createMessage(m);
+				Message msg = MSRPUtil.createMessageFromString(m);
 				try {
 					//printToFile(msg.toString() + "\r\n************************************\r\n");
 					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoIncomingMessageQueue(msg);

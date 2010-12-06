@@ -1,30 +1,39 @@
 package hu.messaging.msrp;
 
+import org.apache.commons.codec.binary.Base64;
+
 public class CompleteMessage {
 
-	private byte[] content;
+	private byte[] content = null;
 	private String messageId = null;
-	private String extension;
-	private String sender;
+	private String extension = null;
+	private String sender = null;
+	private String subject = null;
 	
 	public CompleteMessage() { }
 	
-	public CompleteMessage(byte[] content, String extension) {
-		this.extension = extension;
+	public CompleteMessage(String messageId, byte[] content) {
+		this.messageId = messageId;
 		this.content = content;
 	}
 	
 	public CompleteMessage(String messageId, byte[] content, String extension) {
-		this.extension = extension;
-		this.content = content;
+		if (Base64.isArrayByteBase64(content)) {
+			this.content = Base64.decodeBase64(content);
+		}
+		else {
+			this.content = content;
+		}
+		this.extension = extension;		
 		this.messageId = messageId;
 	}
 	
-	public CompleteMessage(String messageId, byte[] content, String extension, String sender) {
+	public CompleteMessage(String messageId, byte[] content, String extension, String sender, String subject) {
 		this.extension = extension;
 		this.content = content;
 		this.messageId = messageId;
 		this.sender = sender;
+		this.subject = subject;
 	}
 
 
@@ -60,15 +69,22 @@ public class CompleteMessage {
 		this.extension = extension;
 	}
 
+	public String getSubject() {
+		return subject;
+	}
+
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
+	
 	public boolean isReady() {
 		boolean ready = true;
 		
 		ready = ready && (getContent() != null);
 		ready = ready && (getExtension() != null && !"".equals(getExtension()));
 		ready = ready && (getSender() != null && !"".equals(getSender()));
+		ready = ready && (getSubject() != null && !"".equals(getSubject()));
 		
-		System.out.println(ready);
 		return ready;
 	}
-
 }

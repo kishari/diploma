@@ -6,7 +6,6 @@ import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -18,15 +17,12 @@ import java.util.concurrent.TimeUnit;
 
 public class TransactionManager implements Observer {
 
-	private static int ackCounter = 0;
-	private static int reqCounter = 0;
-	private int reqNumber = 0;
-	private int ackedRequestNumber = 0;
-	private Map<String, Request> requests;
-	private List<Request> l;
+	private int ackCounter = 0;
+	private int numOfRequest = 0;
+	private int sentRequestNumber = 0;
+	private Map<String, Request> requestMap;
+	private List<Request> requestList;
 	private Session session;
-	private Map<String, Request> acknowledgedMessages = Collections.synchronizedMap(new HashMap<String, Request>());
-	private Map<String, Request> sentMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 	private Map<String, Request> incomingMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 
 	private SenderThread sender;
@@ -57,24 +53,19 @@ public class TransactionManager implements Observer {
 	}
 
 	public void update(Observable o, Object obj) {
-		//System.out.println("TManager Update");
 		if (o.toString().contains("OutgoingMessageProcessor")) {
-			requests = (Map<String, Request>) obj;
-			reqNumber = requests.size();
-			l = new ArrayList<Request>();
-			for (String key : requests.keySet()) {
-				l.add(requests.get(key));
-			}
-			Collections.sort(l);
+			requestList = (List<Request>) obj;
+			numOfRequest = requestList.size();
 			
-			if (reqNumber > 50) {				
-				this.sender.getSenderQueue().addAll(l.subList(0, 50));
-			}
-			else {
-				this.sender.getSenderQueue().addAll(l);
+			Collections.sort(requestList);
+			
+			requestMap = new HashMap<String, Request>();
+			
+			for (Request r : requestList) {
+				requestMap.put(r.getTransactionId(), r);
 			}
 			
-						
+			this.sender.getSenderQueue().add(requestList.get(0));
 		}
 		else if (o.toString().contains("IncomingMessageProcessor")) {
 			Message m = (Message) obj;
@@ -90,7 +81,9 @@ public class TransactionManager implements Observer {
 					for (String key : this.incomingMessages.keySet()) {
 						chunks.add(this.incomingMessages.get(key));
 					}
-					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks), null));
+					Collections.sort(chunks);
+					
+					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
@@ -98,44 +91,26 @@ public class TransactionManager implements Observer {
 				Response resp = (Response) m;
 				//System.out.println("200OK jött: " + resp.getTransactionId());
 				ackCounter++;
-				//System.out.println("ackCounter: " + ackCounter);
-				Request ackedReq = null;				
-				while (ackedReq == null) {
-					ackedReq = this.requests.remove(resp.getTransactionId());
-					boolean b = ackedReq != null;
-					//System.out.println("map remove: " + b);
-					if (ackedReq == null) {
-						try {
-							Thread.sleep(20);	
-						}
-						catch(InterruptedException e) { }						
-					}
-					else {
-						//System.out.println("ackedReq: " + ackedReq.getTransactionId() + " (" + ackedReq.getEndToken() + ")");
-						if ((49 + ackCounter) < l.size())
-							this.sender.getSenderQueue().add(l.get(49 + ackCounter));
-						
-					}
-				}
-				
-				//this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
+				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
+				if (ackCounter < requestList.size()) {
+					this.sender.getSenderQueue().add(requestList.get(ackCounter));
+				}												
 				
 				if (isAckedTotalSentMessage(ackedReq)) {
 					System.out.println("minden nyugtazva...");
 					MSRPEvent event = new MSRPEvent(MSRPEvent.messageSentSuccess);
 					event.setMessageId(ackedReq.getMessageId());
 					this.session.getMsrpStack().notifyListeners(event);
-					this.acknowledgedMessages.clear();
 				}
 			}
 		}		
 	}
 
 	private boolean isAckedTotalSentMessage(Request ackedReq) {
-		System.out.print("reqCounter: " + reqCounter);
+		System.out.print("sentRequestNumber / numOfRequest: " + sentRequestNumber + " / " + numOfRequest);
 		System.out.println(" ackCounter: " + ackCounter);
-		int mapSize = this.requests.size();
-		boolean empty = this.requests.isEmpty();
+		int mapSize = this.requestMap.size();
+		boolean empty = this.requestMap.isEmpty();
 		boolean lastChunk = (ackedReq.getEndToken() == '$');
 		boolean t = empty && lastChunk;
 		System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
@@ -155,7 +130,7 @@ public class TransactionManager implements Observer {
 					if (data != null) {
 						//System.out.println("send: " + data.getFirstByte() + " - " + data.getLastByte() + ":" + data.getEndToken());
 						session.getSenderConnection().sendChunk(data.toString().getBytes());
-						reqCounter++;
+						sentRequestNumber++;
 					}				
 				}
 				catch(IOException e) {}

@@ -149,28 +149,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
         super.processWindowEvent(e);
         if (e.getID() == WindowEvent.WINDOW_CLOSING) 
         {
-            stopCommunication();
         }        
-    }
-
-    /**
-     * Start the connection 
-     */
-    protected void startCommunication() throws Exception
-    {
-    	System.out.println("startCommunication");
-        //setGuiEnabled(false);
-        //connection.startConnection();
-    }
-    /**
-     * Stop the connecton
-     */
-    protected void stopCommunication() 
-    {
-        //cancelTask();
-        closing = true;
-        //setGuiEnabled(false);
-        //connection.stopConnection();
     }
 
     /**
@@ -240,7 +219,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	        for (int i = 0; i < selectedItems.length; i++) {
 	        	availableGroupListModel.addElement(selectedItems[i]);
 	        	selectedGroupListModel.removeElement(selectedItems[i]);
-	          updateButtonsState();
+	        	updateButtonsState();
 	        }
 	      }
 	    });
@@ -288,13 +267,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
 	    	  if (retVal == JFileChooser.APPROVE_OPTION) {
 	    		  File selectedFile = fileChooser.getSelectedFile();
-	    		  //setMessageContent(FileUtils.readFileToByteArray(selectedFile));
 	    		  try {
 	    			  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
 	    		  }
 	    		  catch(IOException e) { }	    		  
-	    		  completeMessage.setExtension(getFileExtension(selectedFile));
-	    		  //System.out.println(new String(FileUtils.readFileToByteArray(selectedFile)));	    		  
+	    		  completeMessage.setExtension(getFileExtension(selectedFile));    		  
 	    	  }
 	      }
 	    });
