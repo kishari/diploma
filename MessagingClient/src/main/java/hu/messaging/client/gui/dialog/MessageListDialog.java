@@ -1,7 +1,12 @@
 package hu.messaging.client.gui.dialog;
 
+import hu.messaging.Constants;
+import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
+import hu.messaging.client.icp.listener.ConnectionListener;
 import hu.messaging.msrp.CompleteMessage;
+import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.event.MSRPListener;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -9,6 +14,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -25,9 +31,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-//import javax.swing.table.TableCellRenderer;
 
-public class MessageListDialog extends JFrame {
+import com.ericsson.icp.util.ISessionDescription;
+
+public class MessageListDialog extends JFrame implements MSRPListener, ConnectionListener {
 
     private static final long serialVersionUID = -6048051912258339134L;
 
@@ -35,6 +42,8 @@ public class MessageListDialog extends JFrame {
     
     private JPanel inboxPanel;
     private JPanel sentPanel;
+    
+    private CompleteMessage selectedMessage = null;
     
     private DefaultTableModel inboxMessageTableModel;
     private DefaultTableModel sentMessageTableModel;
@@ -49,6 +58,8 @@ public class MessageListDialog extends JFrame {
     	this.icpController = icpController;
     	
         setLocation(100, 100);
+        setTitle(Resources.resources.get("dialog.messagelist.title"));
+        setIconImage(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("hu/messaging/client/gui/logo.gif")));
         setPreferredSize(new Dimension(500, 307));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -110,9 +121,16 @@ public class MessageListDialog extends JFrame {
     	    	 
          JTable messageTable = new JTable();
          messageTable.addMouseListener(new MouseAdapter() {
-         	public void mouseClicked(MouseEvent e) {
-         		if (e.getClickCount() == 2) {
-         			System.out.println(getSelectedMessage(((JTable)e.getComponent()).getSelectedRow(), messagePane.getSelectedIndex()).getSender());
+         	public void mouseClicked(MouseEvent event) {
+         		if (event.getClickCount() == 2) {
+         			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
+         			if (containsElement(inboxNewMessageList, selectedMessage)) {
+         				System.out.println("get message from server...");         				
+         				try {
+         					createMSRPSessionToRemote(Constants.serverSipURI);         					
+         				}
+         				catch(Exception e) { } 
+         			}
          		}         		
          	}
          });
@@ -169,13 +187,7 @@ public class MessageListDialog extends JFrame {
          messageTable.getTableHeader().getColumnModel().getColumn(checkboxIndex).setMaxWidth(30);
          messageTable.getTableHeader().getColumnModel().getColumn(checkboxIndex+1).setMaxWidth(0);
          messageTable.getTableHeader().getColumnModel().getColumn(checkboxIndex+1).setResizable(false);
-         
-         /*TableCellRenderer renderer = new MessageTableCellRenderer();
-         for (int i = 0; i < messageTable.getTableHeader().getColumnModel().getColumnCount(); i++) {
-        	 messageTable.getTableHeader().getColumnModel().getColumn(i).setCellRenderer(renderer);
-         }
-         */
-         
+              
          if (isInboxPanel) {
         	 inboxNewMessageList = icpController.getCommunicationController().getIncomingNewMessages();
              for (CompleteMessage m : inboxNewMessageList) {
@@ -223,18 +235,6 @@ public class MessageListDialog extends JFrame {
     		inboxMessageList.add(m);
     	}
     	return inboxMessageList;
-    }
-    
-    private List<CompleteMessage> getTestNewIncomingMessages() {    	
-    	for (int i = 0; i < 5; i++) {
-    		CompleteMessage m = new CompleteMessage("newmessageId " + i , 
-    												null, 
-    												null, 
-    												"newsender " + i,
-    												"newsubject " + i);    		
-    		inboxNewMessageList.add(m);
-    	}
-    	return inboxNewMessageList;
     }
     
     private List<CompleteMessage> getTestSentMessages() {    	
@@ -310,5 +310,61 @@ public class MessageListDialog extends JFrame {
     		}
     	}
     }
+    
+    public void fireMsrpEvent(MSRPEvent event) {
+		try {
+			switch(event.getCode()) {
+				case MSRPEvent.sessionStarted :  
+					break;
+				case MSRPEvent.brokenTrasmission :
+					break;
+				case MSRPEvent.messageSentSuccess :
+					break;
+				case MSRPEvent.messageReceivingSuccess :
+					break;
+			}
+		}
+		catch (Exception e) { 
+    		e.printStackTrace();
+    	}
+    }
 
+    public void connectionChanged(ConnectionState event) {
+    	switch (event) {
+            case Connecting:
+                break;
+            case Connected:      
+                break;
+            case Refused:
+                break;
+            case ConnectionFailed:           
+                break;
+            case Disconnected:
+                break;    
+            case ConnectionFinished:
+            	break;
+            case RecipientsSentSuccessful:
+            	break;            
+        }
+    }
+    
+    public boolean containsElement(List<CompleteMessage> list, CompleteMessage message) {
+		boolean contain = false;
+		for (CompleteMessage m : list) {
+			if (m.getMessageId().equals(message.getMessageId())) {
+				contain = true;
+				break;
+			}
+		}
+		return contain;
+	}
+    
+	private void createMSRPSessionToRemote(String sipURI) throws Exception {
+		ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
+		icpController.getCommunicationController().addMSRPListener(MessageListDialog.this);
+		  
+		icpController.getSessionListener().addConnectionListener(MessageListDialog.this);
+		icpController.getCommunicationController().sendInvite(sdp);
+		icpController.getCommunicationController().addLocalSDP(sipURI, sdp.format());
+	}
 }

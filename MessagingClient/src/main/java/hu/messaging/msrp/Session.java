@@ -19,6 +19,7 @@ public class Session {
 	private TransactionManager transactionManager = null;
 
 	public Session(URI localUri, URI remoteUri, SenderConnection senderConnection, MSRPStack msrpStack) {
+		System.out.println("Session konstruktor");
 		this.localUri = localUri;
 		this.remoteUri = remoteUri;
 		this.id = localUri.toString()+remoteUri.toString();

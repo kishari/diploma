@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class TransactionManager implements Observer {
 
+	private static int reqCounter = 0;
 	private boolean isSentMessageChunk = false;
 	private Session session;
 	private Map<String, Request> acknowledgedMessages = Collections.synchronizedMap(new HashMap<String, Request>());
@@ -58,7 +59,8 @@ public class TransactionManager implements Observer {
 			if (m.getMethod() == Constants.methodSEND) {
 				Request req = (Request) m;
 				this.incomingMessages.put(req.getTransactionId(), req);		
-				System.out.println(req.getEndToken());
+				reqCounter++;
+				//System.out.println("TManager reqCounter: " + reqCounter);
 				if (req.getEndToken() == '$') {
 					System.out.println("Utolso csomag is megjott");
 					List<Request> chunks = new ArrayList<Request>();

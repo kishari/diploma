@@ -9,6 +9,7 @@ import java.io.IOException;
 
 public class IncomingMessageProcessor extends Observable implements Runnable {
 	
+	private static int ackCounter = 0;
 	private BlockingQueue<Message> incomingMessageQueue;
 	private Session session;
 	private boolean running = false;
@@ -49,6 +50,8 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 			this.setChanged();
 			this.notifyObservers(req);
 			
+			ackCounter++;
+			//System.out.println("incomingMSgProcessor ackCounter: " + ackCounter);
 			this.session.getSenderConnection().sendChunk(ack.toString().getBytes());
 		}
 		else if ( chunk.getMethod() == Constants.method200OK ){

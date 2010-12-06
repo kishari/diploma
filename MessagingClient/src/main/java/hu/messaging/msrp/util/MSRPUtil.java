@@ -7,6 +7,8 @@ import hu.messaging.msrp.Response;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,25 +58,25 @@ public class MSRPUtil {
 			method = matcher.group(3);
 		}
 		if ("SEND".equals(method)) {
-			System.out.println("SEND");
+			//System.out.println("SEND");
 			Request req = new Request();
 			
 			req.setMethod(Constants.methodSEND);			
 			req.setTransactionId(matcher.group(2));
-			System.out.println("tId: " + matcher.group(2));
+			//System.out.println("tId: " + matcher.group(2));
 			
 			matcher = toPathPattern.matcher(msg);
 			String toPath = null;
 			if (matcher.find()) {
 				toPath = matcher.group(2);
-				System.out.println("toPath: " + toPath);
+				//System.out.println("toPath: " + toPath);
 			}
 									
 			matcher = fromPathPattern.matcher(msg);
 			String fromPath = null;
 			if (matcher.find()) {
 				fromPath = matcher.group(2);
-				System.out.println("fromPath: " + fromPath);
+				//System.out.println("fromPath: " + fromPath);
 			}
 						
 			try {
@@ -91,7 +93,7 @@ public class MSRPUtil {
 			matcher = messageIdPattern.matcher(msg);
 			if (matcher.find()) {
 				req.setMessageId(matcher.group(2));
-				System.out.println("messageId: " + req.getMessageId());
+				//System.out.println("messageId: " + req.getMessageId());
 			}				
 			
 			matcher = byteRangePattern.matcher(msg);
@@ -175,5 +177,18 @@ public class MSRPUtil {
 		}
 		
 		return random.substring(0, length);
+	}
+	
+	public static byte[] createMessageContentFromChunks(List<Request> chunks) {
+		Collections.sort(chunks);
+		byte[] content = new byte[chunks.get(chunks.size() - 1).getLastByte()];
+		int offset = 0;
+		for (Request chunk : chunks) {
+			System.arraycopy(chunk.getContent(), 0, content, offset, chunk.getContent().length);
+			offset += chunk.getContent().length;
+		}
+		System.out.println(new String(content));
+		
+		return content;
 	}
 }

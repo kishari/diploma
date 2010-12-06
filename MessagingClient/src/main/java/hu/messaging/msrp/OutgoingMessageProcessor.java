@@ -3,11 +3,17 @@ package hu.messaging.msrp;
 import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class OutgoingMessageProcessor extends Observable implements Runnable {
@@ -17,6 +23,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
 	private Session session;
 	
+	File file = new File("c:\\client.txt");	
 	public OutgoingMessageProcessor(BlockingQueue<CompleteMessage> outgoingMessageQueue, 
 									Session session,
 									TransactionManager transactionManager ) {
@@ -54,6 +61,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		char endToken = '+';
 		String tId = "";
 		String messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
+		Map<String, Request> requests = new HashMap<String, Request>();
 		for (byte[] chunk : chunks) {
 			counter++;
 			tId = MSRPUtil.generateRandomString(Constants.transactionIdLength);
@@ -67,24 +75,12 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 												  offset, chunk.length, completeMessage.getContent().length, 
 												  endToken);
 			offset += chunk.length;
-			
-			try {
-				if (counter == 50) {
-					System.out.println("sleep 3000");
-					Thread.sleep(3000);
-					counter = 0;
-				}
-				this.session.getSenderConnection().sendChunk(mOut.toString().getBytes());
-			}
-			catch (IOException e) {
-				e.printStackTrace();
-			}
-			catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			this.setChanged();
-			this.notifyObservers(mOut);
-		}				
+			printToFile(mOut.toString() + "\r\n************************************\r\n");
+			requests.put(mOut.getTransactionId(), mOut);
+									
+		}
+		this.setChanged();
+		this.notifyObservers(requests);
 	}
 	
 	private List<byte[]> splitMessageToChunks(CompleteMessage message, int chunkSize) {
@@ -119,4 +115,17 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	public void stop() {
 		this.running = false;
 	}	
+	
+	public void printToFile(String text) {
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(file, true));
+			out.append(text);
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
+	
 }

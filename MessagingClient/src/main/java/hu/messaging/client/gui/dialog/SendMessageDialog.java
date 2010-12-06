@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.gui.data.Buddy;
-import hu.messaging.client.gui.util.FileUtils;
+//import hu.messaging.client.gui.util.FileUtils;
 import hu.messaging.client.gui.util.MessageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
@@ -37,6 +38,8 @@ import javax.swing.JSeparator;
 import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import org.apache.commons.io.FileUtils;
 
 import com.ericsson.icp.util.ISessionDescription;
 
@@ -285,7 +288,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
 	    	  if (retVal == JFileChooser.APPROVE_OPTION) {
 	    		  File selectedFile = fileChooser.getSelectedFile();
-	    		  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
+	    		  //setMessageContent(FileUtils.readFileToByteArray(selectedFile));
+	    		  try {
+	    			  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
+	    		  }
+	    		  catch(IOException e) { }	    		  
 	    		  completeMessage.setExtension(getFileExtension(selectedFile));
 	    		  //System.out.println(new String(FileUtils.readFileToByteArray(selectedFile)));	    		  
 	    	  }
@@ -306,6 +313,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent event) {
 		    	  completeMessage.setSender(getLocalUserSipURI());
+		    	  completeMessage.setSubject("tesztSubject");
 		    	  if (completeMessage.isReady()) {		    		  
 		    		  try {
 		    			  sendButton.setEnabled(false);
@@ -409,6 +417,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	}
 	
 	public void fireMsrpEvent(MSRPEvent event) {
+		System.out.println(getClass().getSimpleName() + " fireMSRPEvent...");
 		try {
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :  
@@ -417,6 +426,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 				case MSRPEvent.brokenTrasmission :
 					break;
 				case MSRPEvent.messageSentSuccess :
+					System.out.println("message sent successful event");
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
 					icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
 					break;
