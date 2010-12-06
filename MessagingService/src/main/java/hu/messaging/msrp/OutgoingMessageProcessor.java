@@ -41,7 +41,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
 		System.out.println("OutgoingProcessor processOutgoingMessage... ");
-		System.out.println(new String(completeMessage.getContent()));
+		//System.out.println(new String(completeMessage.getContent()));
 
 		int chunkSize = Constants.chunkSize;
 		
@@ -112,4 +112,5 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	public void stop() {
 		this.running = false;
 	}	
+	
 }

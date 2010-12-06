@@ -130,9 +130,10 @@ public class MessagingService implements Observer{
 		getMsrpStack().removeMSRPListener(listener);
 	}
 	
-	public String createNotifyMessageContent(String sender, String messageId) {
+	public String createNotifyMessageContent(String sender, String messageId, String extension) {
 		String msg = "MESSAGENOTIFY\r\n\r\n";
 		msg += "Message-ID: " + messageId + "\r\n";
+		msg += "Extension: " + extension + "\r\n";
 		msg += "Sender: " + sender + "\r\n";
 		msg += "Subject: "; 
 		

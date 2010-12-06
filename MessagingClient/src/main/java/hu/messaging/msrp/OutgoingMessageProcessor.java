@@ -3,8 +3,10 @@ package hu.messaging.msrp;
 import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,7 +25,9 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
 	private Session session;
 	
-	File file = new File("c:\\client.txt");	
+	private File outTempBinFile = new File("c:\\clientoutTemp.mp3");
+	private File outTempBinFile2 = new File("c:\\clientoutTempFromChunks.mp3");
+	File outTemptxtFile = new File("c:\\clientOutTemp.txt");	
 	public OutgoingMessageProcessor(BlockingQueue<CompleteMessage> outgoingMessageQueue, 
 									Session session,
 									TransactionManager transactionManager ) {
@@ -48,6 +52,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	}
 	
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
+		this.printToFile(completeMessage.getContent(), false);
 		System.out.println("OutgoingProcessor processOutgoingMessage... ");
 		//System.out.println(new String(completeMessage));
 		//System.out.println(new String(completeMessage).length());
@@ -62,7 +67,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		String tId = "";
 		String messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
 		Map<String, Request> requests = new HashMap<String, Request>();
-		for (byte[] chunk : chunks) {
+		for (byte[] chunk : chunks) {			
 			counter++;
 			tId = MSRPUtil.generateRandomString(Constants.transactionIdLength);
 			
@@ -74,6 +79,12 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 												  tId, messageId, 
 												  offset, chunk.length, completeMessage.getContent().length, 
 												  endToken);
+			//this.printToFile(mOut.getContent(), true);
+			
+			Message mTest = MSRPUtil.createMessage(mOut.toString());
+			Request r = (Request)mTest;
+			this.printToFile(r.getContent(), true);
+			
 			offset += chunk.length;
 			printToFile(mOut.toString() + "\r\n************************************\r\n");
 			requests.put(mOut.getTransactionId(), mOut);
@@ -118,8 +129,27 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	
 	public void printToFile(String text) {
 		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter(file, true));
+			BufferedWriter out = new BufferedWriter(new FileWriter(outTemptxtFile, true));
 			out.append(text);
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
+	
+	public void printToFile(byte[] data, boolean fromChunks) {
+		try {
+			java.io.OutputStream out = null;
+			if (fromChunks) {
+				out = new BufferedOutputStream(new FileOutputStream(outTempBinFile2, true));
+			}
+			else {
+				out = new BufferedOutputStream(new FileOutputStream(outTempBinFile, true));
+			}
+			
+			out.write(data);
 			out.flush();					
 			out.close();
 		}

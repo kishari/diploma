@@ -5,13 +5,17 @@ import hu.messaging.msrp.Message;
 import hu.messaging.msrp.Request;
 import hu.messaging.msrp.Response;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.codec.binary.Base64;
 
 public class MSRPUtil {
 	private static Pattern methodPattern =  Pattern.compile("(^MSRP) ([\\p{Alnum}]{8,50}) ([\\p{Alnum}]{3,5}[\\p{Blank}]{0,1}[\\p{Alnum}]{0,2})\r\n(.*)", Pattern.DOTALL);
@@ -41,7 +45,12 @@ public class MSRPUtil {
 		req.setLastByte(offset + chunkSize - 1);
 		req.setSumByte(completeMessageSize);
 		req.setContentType("text/plain");
-		req.setContent(content);
+		req.setContent(Base64.encodeBase64String(content).getBytes());
+		/*try {
+			req.setContent(new String(content, "UTF8").getBytes());
+		}
+		catch(UnsupportedEncodingException e) {}
+		*/
 
 		req.setEndToken(endToken);
 
@@ -106,7 +115,7 @@ public class MSRPUtil {
 			matcher = contentPattern.matcher(msg);
 			if (matcher.find()) {
 				req.setContentType(matcher.group(2));
-				req.setContent(matcher.group(3).getBytes());
+				req.setContent(Base64.decodeBase64(matcher.group(3)));
 			}
 						
 			matcher = endLinePattern.matcher(msg);
@@ -181,14 +190,20 @@ public class MSRPUtil {
 	
 	public static byte[] createMessageContentFromChunks(List<Request> chunks) {
 		Collections.sort(chunks);
-		byte[] content = new byte[chunks.get(chunks.size() - 1).getLastByte()];
+		ByteBuffer buff = ByteBuffer.allocate(1000000);
+		buff.clear();
+		byte[] content = new byte[chunks.get(chunks.size() - 1).getLastByte() + 100];
 		int offset = 0;
+		System.out.println("createMessageContentFromChunks: " + (chunks.get(chunks.size() - 1).getLastByte()));
 		for (Request chunk : chunks) {
-			System.arraycopy(chunk.getContent(), 0, content, offset, chunk.getContent().length);
+			buff.put(chunk.getContent());
+			//System.arraycopy(chunk.getContent(), 0, content, offset, chunk.getContent().length);
 			offset += chunk.getContent().length;
 		}
-		System.out.println(new String(content));
-		
-		return content;
+		//System.out.println(new String(content));
+		System.out.println("offset: "  + offset);
+		System.out.println("size: " + buff.array().length);
+		return buff.array();
+		//return content;
 	}
 }

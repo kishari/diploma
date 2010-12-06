@@ -153,6 +153,8 @@ public class CommunicationController
      */
     public void incomingSIPMessage(String to, String message)
     {
+    	System.out.println(getClass().getSimpleName() + " incomingSIPMessage: ");
+    	System.out.println(message);
     	if (message.startsWith("MESSAGENOTIFY")) {
     		incomingNewMessageDescriptors.add(message);
     	}
@@ -185,9 +187,10 @@ public class CommunicationController
     	List<CompleteMessage> newMessages = new ArrayList<CompleteMessage>();
     	for (String descr : this.incomingNewMessageDescriptors) {
     		Matcher m = notifyMessagesPattern.matcher(descr);
-    		m.find();
-    		CompleteMessage cm = new CompleteMessage(m.group(1), null, null, m.group(2), m.group(3));
-    		newMessages.add(cm);
+    		if (m.find()) {
+        		CompleteMessage cm = new CompleteMessage(m.group(1), null, null, m.group(2), m.group(3));
+        		newMessages.add(cm);
+    		}
     	}
     	
     	return newMessages;

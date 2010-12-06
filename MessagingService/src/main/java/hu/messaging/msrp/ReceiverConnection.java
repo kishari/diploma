@@ -169,7 +169,7 @@ public class ReceiverConnection implements Runnable {
 				//System.out.println("receiverConnection reqCounter: " + reqCounter);
 				Message msg = MSRPUtil.createMessage(m);
 				try {
-					printToFile(msg.toString() + "\r\n************************************\r\n");
+					//printToFile(msg.toString() + "\r\n************************************\r\n");
 					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoIncomingMessageQueue(msg);
 				} catch (InterruptedException e) {
 					e.printStackTrace();

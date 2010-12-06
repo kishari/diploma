@@ -3,6 +3,7 @@ package hu.messaging.client.gui.dialog;
 import hu.messaging.Constants;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
+import hu.messaging.client.gui.util.MessageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
@@ -314,13 +315,22 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     public void fireMsrpEvent(MSRPEvent event) {
 		try {
 			switch(event.getCode()) {
-				case MSRPEvent.sessionStarted :  
+				case MSRPEvent.sessionStarted :
+					String msg = "GETMESSAGES\r\n" +
+			   		 			 "Message-IDs:\r\n" + selectedMessage.getMessageId() + 
+			   		 			 "\r\n\r\n-----END";
+					icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, msg);
 					break;
 				case MSRPEvent.brokenTrasmission :
 					break;
 				case MSRPEvent.messageSentSuccess :
 					break;
 				case MSRPEvent.messageReceivingSuccess :
+					CompleteMessage m = event.getCompleteMessage();
+					copyMessageFromNewMessageListToMessageList(m);
+					MessageUtil.createMessageFile(m, false);
+					icpController.getCommunicationController().sendBye();
+					this.selectedMessage = null;
 					break;
 			}
 		}
@@ -342,6 +352,9 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
             case Disconnected:
                 break;    
             case ConnectionFinished:
+            	icpController.getCommunicationController().removeMSRPListener(this);
+				icpController.getSessionListener().removeConnectionListener(this);
+				icpController.getCommunicationController().getMsrpStack().disposeResources();
             	break;
             case RecipientsSentSuccessful:
             	break;            
@@ -367,4 +380,16 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 		icpController.getCommunicationController().sendInvite(sdp);
 		icpController.getCommunicationController().addLocalSDP(sipURI, sdp.format());
 	}
+	
+	private void copyMessageFromNewMessageListToMessageList(CompleteMessage message) {
+		 int index = 0;
+		 for (CompleteMessage m : inboxNewMessageList) {
+			 if (m.getMessageId().equals(message.getMessageId())) {
+				 inboxNewMessageList.remove(index);
+				 break;
+			 }
+			 index++;
+		 }	
+		 inboxMessageList.add(message);		 
+	 }
 }

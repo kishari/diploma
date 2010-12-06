@@ -4,6 +4,13 @@ import hu.messaging.Constants;
 import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.event.MSRPEvent;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +31,9 @@ public class TransactionManager implements Observer {
 	private Map<String, Request> incomingMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 
 
+	private File outTempBinFile = new File("c:\\outTemp.png");
+	private File outTemptxtFile = new File("c:\\OutTemp.txt");	
+	
 	private OutgoingMessageProcessor outgoingMessageProcessor;
 	private IncomingMessageProcessor incomingMessageProcessor;
 	
@@ -71,7 +81,11 @@ public class TransactionManager implements Observer {
 						byteCount += this.incomingMessages.get(key).getContent().length;
 					}
 										
-					Collections.sort(chunks);				
+					Collections.sort(chunks);	
+					
+					for (Request r : chunks) {
+						printToFile(r.getFirstByte() + "-" + r.getLastByte() + "\r\n");
+					}
 					
 					ByteBuffer b = ByteBuffer.allocate(byteCount);
 					b.clear();
@@ -87,6 +101,10 @@ public class TransactionManager implements Observer {
 															  content,
 															  null);
 					new MessagingDAO().insertMessage(msg);
+					
+					printToFile(msg.getContent());
+					
+					
 				}
 			}
 			else if (m.getMethod() == Constants.method200OK) {
@@ -110,5 +128,29 @@ public class TransactionManager implements Observer {
 		boolean t = this.sentMessages.isEmpty() && this.isSentMessageChunk;
 		return t;
 	}
+	
+	public void printToFile(byte[] data) {
+		try {
+			OutputStream out = new BufferedOutputStream(new FileOutputStream(outTempBinFile, true));
+			out.write(data);
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
 
+	public void printToFile(String text) {
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(outTemptxtFile, true));
+			out.append(text);
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
+	
 }

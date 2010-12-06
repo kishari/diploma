@@ -6,6 +6,7 @@ import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +57,7 @@ public class TransactionManager implements Observer {
 	}
 
 	public void update(Observable o, Object obj) {
-		System.out.println("TManager Update");
+		//System.out.println("TManager Update");
 		if (o.toString().contains("OutgoingMessageProcessor")) {
 			requests = (Map<String, Request>) obj;
 			reqNumber = requests.size();
@@ -97,7 +98,7 @@ public class TransactionManager implements Observer {
 				Response resp = (Response) m;
 				//System.out.println("200OK jött: " + resp.getTransactionId());
 				ackCounter++;
-				System.out.println("ackCounter: " + ackCounter);
+				//System.out.println("ackCounter: " + ackCounter);
 				Request ackedReq = null;				
 				while (ackedReq == null) {
 					ackedReq = this.requests.remove(resp.getTransactionId());
@@ -152,7 +153,7 @@ public class TransactionManager implements Observer {
 					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
 					Request data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 					if (data != null) {
-						System.out.println("send: " + data.getFirstByte() + " - " + data.getLastByte() + ":" + data.getEndToken());
+						//System.out.println("send: " + data.getFirstByte() + " - " + data.getLastByte() + ":" + data.getEndToken());
 						session.getSenderConnection().sendChunk(data.toString().getBytes());
 						reqCounter++;
 					}				

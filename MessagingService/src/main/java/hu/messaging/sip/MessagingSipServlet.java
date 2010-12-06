@@ -145,7 +145,7 @@ public class MessagingSipServlet extends SipServlet {
 			MessagingDAO dao = new MessagingDAO();
 			dao.insertRecipients(messageId, recipients);
 			dao.updateMessage(messageId, extension, sender);
-			notifyOnlineRecipients(req, recipients, messageId, sender);
+			notifyOnlineRecipients(req, recipients, messageId, sender, extension);
 		}
 	}
 
@@ -156,7 +156,8 @@ public class MessagingSipServlet extends SipServlet {
 	private void notifyOnlineRecipients(SipServletRequest req, 
 									    List<Recipient> recipients,	
 										String messageId,
-										String sender) throws ServletParseException, IOException {
+										String sender,
+										String extension) throws ServletParseException, IOException {
 
 		System.out.println("notifyOnlineRecipients");
 		for (Recipient recipient : recipients) {
@@ -165,7 +166,8 @@ public class MessagingSipServlet extends SipServlet {
 					SipServletRequest r = sipFactory.createRequest(req, false);
 					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
 					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-					r.setContent(messagingService.createNotifyMessageContent(sender, messageId), "text/plain");	        
+					//r.pushRoute(sipFactory.createSipURI(null, "127.0.0.1:5082"));
+					r.setContent(messagingService.createNotifyMessageContent(sender, messageId, extension), "text/plain");	        
 					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
 					
 					r.send();
