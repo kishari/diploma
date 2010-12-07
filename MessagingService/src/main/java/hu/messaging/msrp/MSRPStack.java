@@ -29,35 +29,22 @@ public class MSRPStack {
 		if ( findSession( session.getId() ) != null ) {
 			return;
 		}
-		//System.out.println("MSRPStack putNewSession to: " + session.getSenderConnection().getSipUri());
 		getActiveSessions().put(session.getId(), session);
 	}
 	
 	public Session findSession(String sessionId) {
-		//System.out.println("MSRPRstack findSession: " + sessionId);
-		
-		//System.out.println("activeSessions mapben levo kulcsok lekerese: ");
-		for (String s : getActiveSessions().keySet()) {
-			//System.out.println(s);			
-		}
-		
 		if ( getActiveSessions().containsKey( sessionId ) ) {
-			//System.out.println("MSRPRstack findSession: van talalat");
 			return getActiveSessions().get(sessionId);
 		}
 		return null;
 	}
 	
 	public void removeSession(String sessionId) {
-		//System.out.println("MSRPStack removeSession: " + sessionId);
-		
-		Session s = getActiveSessions().remove(sessionId);
-		
-		//System.out.println("MSRPStack: session torolve: " + s.getId());
+		getActiveSessions().remove(sessionId);
 	}
 	
 	public void sendMessage(CompleteMessage completeMessage, String sipUri) {
-		SenderConnection s = getConnections().findSenderConnection(sipUri);
+		SenderConnection s = getConnections().getSenderConnection(sipUri);
 		Session session = s.getSession();
 		session.sendMessage(completeMessage);
 	}
@@ -93,19 +80,8 @@ public class MSRPStack {
 				temp.add(l);
 			}
 		}
-		switch (event.getCode()) {
-		case MSRPEvent.messageSentSuccessCode :	for (MSRPListener listener : temp) {					
-														listener.messageSentSuccess(event);
-												}			
-												break;
-		case MSRPEvent.startTrasmissionCode :	for (MSRPListener listener : temp) {					
-													listener.startTrasmission(event);
-												}	
-												break;					
-		case MSRPEvent.brokenTrasmissionCode :	for (MSRPListener listener : temp) {					
-													listener.brokenTrasmission(event);
-												}	
-												break;
+		for (MSRPListener listener : temp) {					
+			listener.fireMsrpEvent(event);
 		}
 	}
 	

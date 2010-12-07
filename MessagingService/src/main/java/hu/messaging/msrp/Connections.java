@@ -1,69 +1,55 @@
 package hu.messaging.msrp;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.io.IOException;
 import java.net.InetAddress;
 
-public class Connections {
+public class Connections implements Observer{
 
 	private MSRPStack msrpStack;
 	private ReceiverConnection receiverConnection = null;
-	private List<SenderConnection> senderConnections = new ArrayList<SenderConnection>();
-		
+	private Map<String, SenderConnection> senderConnections = new HashMap<String, SenderConnection>();
+	private boolean isFinishedAllSenderConnections = false;
 	
 	public Connections(MSRPStack msrpStack) {
 		this.msrpStack = msrpStack;
 	}
 	
 	public void createReceiverConnection(InetAddress localhost) throws IOException {
-		if (this.receiverConnection == null) {
-			this.setReceiverConnection(new ReceiverConnection(localhost, msrpStack));
-		}
+		System.out.println("MessagingService.createReceiverConnection");
+		this.setReceiverConnection(new ReceiverConnection(localhost, msrpStack));
 	}
 	
 	public SenderConnection createSenderConnection(InetAddress addr, int port, 
-												   String sipUri, MSRPStack msrpStack) throws IOException {	
-		for ( SenderConnection s : this.senderConnections ) {
-			if ( s.getRemoteAddress().equals(addr) && s.getRemotePort() == port ) {
-				return s;
-			}
-		}
+												   String sipUri, MSRPStack msrpStack) throws IOException {
+
 		SenderConnection c = new SenderConnection(addr, port, sipUri, msrpStack);
-		this.senderConnections.add(c);
+		senderConnections.put(sipUri, c);
+		
 		return c;
 	}
 	
-	public boolean deleteSenderConnection(String sipUri) {
-		SenderConnection c = findSenderConnection(sipUri);
+	public void deleteSenderConnection(String sipUri) {
+		SenderConnection c = senderConnections.get(sipUri);
 		if (c != null) {
 			c.stop();
-			this.senderConnections.remove(c);
-			System.out.println("Connections deleteSenderConnection finished");
-			for (SenderConnection s : this.senderConnections) {
-				System.out.println("Van meg senderConnection a listaban: " + s.getSipUri());
-			}
-			return true;
+			senderConnections.remove(sipUri);
 		}
-		return false;
 	}
 	
 	public void deleteSenderConnections() {
-		for (SenderConnection s : this.senderConnections) {
+		for (String key : this.senderConnections.keySet()) {
+			SenderConnection s = senderConnections.get(key);
 			s.stop();
 		}
-		this.senderConnections.clear();
+		isFinishedAllSenderConnections = true;
 	}
 	
-	public SenderConnection findSenderConnection(String sipUri) {
-		System.out.println("findSenderConn to sipUri: " + sipUri);
-		for ( SenderConnection c : senderConnections ) {
-			System.out.println(c.getSipUri());
-			if (sipUri.equals(c.getSipUri())) {
-				return c;
-			}
-		}
-		return null;
+	public SenderConnection getSenderConnection(String sipUri) {
+		return senderConnections.get(sipUri);
 	}
 
 	public void setReceiverConnection(ReceiverConnection receiverConnection) {
@@ -87,5 +73,29 @@ public class Connections {
 	
 	public MSRPStack getMsrpStack() {
 		return msrpStack;
+	}
+	
+	public void update(Observable o, Object obj) {
+		if (o.toString().contains(SenderConnection.class.getSimpleName())) {
+			System.out.println("SenderConnection dispose finished!");
+			SenderConnection conn = (SenderConnection) obj;
+			do {
+				if (isFinishedAllSenderConnections) {
+					senderConnections.remove(conn.getSipUri());
+				}
+				else {
+					try {
+						Thread.sleep(20);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}				
+			} while (!isFinishedAllSenderConnections);
+		}
+		
+		if (o.toString().contains(ReceiverConnection.class.getSimpleName())) {
+			System.out.println("ReceiverConnection dispose finished!");
+			this.receiverConnection = null;	
+		}
 	}
 }

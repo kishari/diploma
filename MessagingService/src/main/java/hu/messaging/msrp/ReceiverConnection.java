@@ -2,9 +2,6 @@ package hu.messaging.msrp;
 
 import hu.messaging.msrp.util.MSRPUtil;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -16,31 +13,19 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Random;
 
-import org.apache.commons.io.FileUtils;
-
-public class ReceiverConnection implements Runnable {
+public class ReceiverConnection extends Observable implements Runnable {
 	private boolean running = false;	
-	//private ByteBuffer buff = null;
 	private MSRPStack msrpStack = null;
 	private Map<SocketChannel, String> saveBuffers = new HashMap<SocketChannel, String>();
 	private InetAddress hostAddress;
-	private int port = 0;
-	
-	private File outTempFile = new File("c:\\outTemp.txt");
-	//BufferedWriter out = new BufferedWriter(new FileWriter(outTempFile));
-	private static boolean close = false;
-	private static int reqCounter = 0;
-	private static int preParceCount = 0;
-	private static int readCount = 0;
-	private static int messageListSize = 0;
-	
+	private int port = 0;	
 	private ServerSocketChannel serverSocketChannel = null;
 	private Selector selector = null;
 	
@@ -48,8 +33,7 @@ public class ReceiverConnection implements Runnable {
 		this.hostAddress = localHostAddress;
 		this.msrpStack = msrpStack;
 		this.selector = initSelector();
-		//buff = ByteBuffer.allocate(15000000);
-		//buff.clear();
+		this.addObserver(msrpStack.getConnections());
 	}
 
 	public void run() {
@@ -60,8 +44,6 @@ public class ReceiverConnection implements Runnable {
 				// Wait for an event one of the registered channels
 				this.selector.select();
 
-				//System.out.println("receiverconnection run");
-				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
 					SelectionKey key = (SelectionKey) selectedKeys.next();
@@ -81,11 +63,18 @@ public class ReceiverConnection implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		
+		System.out.println("receiverConnection stopped");
+		
 		try {
 			this.serverSocketChannel.close();
 		}catch(IOException e) {
 			e.printStackTrace();
-		}		
+		}
+		
+		System.out.println("receiverConnection closed");
+		this.setChanged();
+		notifyObservers(this);
 	}
 	
 	private synchronized int getUnboundPort() throws IOException {
@@ -128,54 +117,50 @@ public class ReceiverConnection implements Runnable {
 	}
 	
 	private void read(SelectionKey key) throws IOException {
-		readCount++;
-		//System.out.println("read: " + readCount);
-		ByteBuffer buff = ByteBuffer.allocate(15000000);
-		buff.clear();
-		synchronized(buff) {
-			SocketChannel socketChannel = (SocketChannel) key.channel();
-		    
-			int numRead;
-			try {			
-				//buff.clear();
-			    numRead = socketChannel.read(buff);
-			
-			} catch (IOException e) {
-				// The remote forcibly closed the connection, cancel
-				key.cancel();
-				socketChannel.close();
-				saveBuffers.remove(socketChannel);
-				return;
-			}
-
-			if (numRead == -1) {
-				// Remote entity shut the socket down cleanly. Do the
-				// same from our end and cancel the channel.
-				key.channel().close();
-				key.cancel();
-				saveBuffers.remove(socketChannel);
-				return;
-			}
-		    
-			byte[] data = new byte[numRead];
-		    
-			buff.rewind();
-			buff.get(data, 0, numRead);
-		    
-			List<String> messages = preParse(data, socketChannel);
-			//System.out.println("preparse utan a message length: " + messages.size());
-			for (String m : messages) {
-				reqCounter++;
-				//System.out.println("receiverConnection reqCounter: " + reqCounter);
-				Message msg = MSRPUtil.createMessageFromString(m);
-				try {
-					//printToFile(msg.toString() + "\r\n************************************\r\n");
-					getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString()).putMessageIntoIncomingMessageQueue(msg);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+	    SocketChannel socketChannel = (SocketChannel) key.channel();
+	    ByteBuffer buff = ByteBuffer.allocate(15000000);
+	    buff.clear();
+		int numRead;
+		try {
+		   buff.clear();
+		   numRead = socketChannel.read(buff);
+		} catch (IOException e) {
+		// The remote forcibly closed the connection, cancel
+		   key.cancel();
+		   socketChannel.close();
+		   saveBuffers.remove(socketChannel);
+		   return;
 		}
+
+		if (numRead == -1) {
+		// Remote entity shut the socket down cleanly. Do the
+		// same from our end and cancel the channel.
+		   key.channel().close();
+		   key.cancel();
+		   saveBuffers.remove(socketChannel);
+		   return;
+	    }
+		    
+		byte[] data = new byte[numRead];
+		    
+		buff.rewind();
+		buff.get(data, 0, numRead);
+		    
+		List<String> messages = preParse(data, socketChannel);
+		for (String m : messages) {
+		  	Message msg = MSRPUtil.createMessageFromString(m);
+		 	try {
+		 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
+		 		if (s != null) {
+		 			s.putMessageIntoIncomingMessageQueue(msg);
+		 		}
+		 		else {
+		 			System.out.println("session is null");
+		 		}		 		
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+	    }	    
 	}
 	  
 	private Selector initSelector() throws IOException {
@@ -193,9 +178,7 @@ public class ReceiverConnection implements Runnable {
 	    return socketSelector;
 	}
 	
-	//private synchronized List<String> preParse(byte[] data, SocketChannel channel) {
 	private List<String> preParse(byte[] data, SocketChannel channel) {
-		//List<String> messages = Collections.synchronizedList(new ArrayList<String>());
 		List<String> messages = new ArrayList<String>();
 		int successProcessedByteCount = 0;
 		String m = new String(data);
@@ -206,77 +189,70 @@ public class ReceiverConnection implements Runnable {
 			saveBuffers.put(channel, "");
 		}
 		
-		//System.out.println("preparse: " + new String(data));
 		ByteBuffer buffer = ByteBuffer.wrap(m.getBytes(), 0, m.length());
 		buffer.limit(buffer.capacity());
 		
-		int state = 2;
+		int state = 0;
 		int byteCounter = 0;
-		int messageCounter = 0;
 		while (buffer.hasRemaining()) {
 			byte b = buffer.get();			
 			byteCounter++;
 			switch(state) {
 				case 0 : 
-						//if (b == '\r') state = 1;
+						if (b == '\r') state = 1;
 				
 						break;
 				case 1 :
-						//if (b == '\n') state = 2;
-						//else state = 0;
+						if (b == '\n') state = 2;
+						else state = 0;
 				
 						break;
 				case 2 :
 						if (b == '-')	state = 3;
-						else state = 2;
+						else state = 0;
 
 				 		break;
 				case 3 :
 						if (b == '-')	state = 4;
-						else state = 2;
+						else state = 0;
 				
 		 		 		break;
 				case 4 :
 						if (b == '-')	state = 5;
-				 		else state = 2;
+				 		else state = 0;
 
  		 		 		break;
 				case 5 :
 						if (b == '-')	state = 6;
-				 		else state = 2;
+				 		else state = 0;
 				
  		 		 		break;
 				case 6 : 
 						if (b == '-') state = 7;
-				 		 else state = 2;
+				 		 else state = 0;
  		 		 		 
 						 break;
 				case 7 : 
 						if (b == '-')	state = 8;
-				 		 else state = 2;
+				 		 else state = 0;
  		 		 
 						 break;
 				case 8 : 
 						if (b == '-')	state = 9;
-				 		 else state = 2;
+				 		 else state = 0;
  		 		 
 						 break;
 				case 9 :
-						//System.out.println("state 9: " + (char)b);
 						if (b == '$' || b == '#' || b == '+') state = 10;
-					
+						
 				case 10 : 
 						if (state == 10) {
-							preParceCount++;
-							//System.out.println("preparse 10 state count: " + preParceCount);							
 							byte[] temp = new byte[byteCounter];
 							buffer.position(buffer.position() - byteCounter);
 							buffer.get(temp, 0, byteCounter);
 							String chunk = new String(temp);
-							//printToFile(chunk + "\r\n---------------------------------------\r\n", close);
 							messages.add(chunk);
-							state = 2;
-							messageCounter++;
+							state = 0;
 							successProcessedByteCount += byteCounter;
 							byteCounter = 0;
 						}
@@ -290,12 +266,7 @@ public class ReceiverConnection implements Runnable {
 			saveBuff = new String(save);
 			saveBuffers.put(channel, saveBuff);
 		}
-		//System.out.println("preparse return. Message size: " + messages.size());
-		messageListSize += messages.size();
-		//for (String c : messages) {
-			//printToFile(c + "\r\n************************************\r\n", false);
-		//}
-		//System.out.println("total message: " + messageListSize);
+		
 		return messages;
 	}
 	
@@ -342,18 +313,6 @@ public class ReceiverConnection implements Runnable {
 	
 	public Map<SocketChannel, String> getSaveBuffers() {
 		return saveBuffers;
-	}
-	
-	public void printToFile(String text) {
-		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter(outTempFile, true));
-			out.append(text);
-			out.flush();					
-			out.close();
-		}
-		catch(IOException e) { 
-			e.printStackTrace();
-		}		
 	}
 
 }

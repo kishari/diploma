@@ -31,15 +31,11 @@ public class MSRPStack {
 		if ( findSession( session.getId() ) != null ) {
 			return;
 		}
-		//System.out.println("MSRPStack putNewSession to: " + session.getSenderConnection().getSipUri());
 		getActiveSessions().put(session.getId(), session);
 	}
 	
 	public Session findSession(String sessionId) {
-		//System.out.println("MSRPRstack findSession: " + sessionId);
-				
 		if ( getActiveSessions().containsKey( sessionId ) ) {
-			//System.out.println("MSRPRstack findSession: van talalat");
 			return getActiveSessions().get(sessionId);
 		} 
 		return null;
@@ -63,9 +59,9 @@ public class MSRPStack {
 		return activeSessions;
 	}
 	
+	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		//getConnections().deleteSenderConnections();
 		getConnections().deleteSenderConnection(Constants.serverSipURI);
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();

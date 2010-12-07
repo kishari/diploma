@@ -12,7 +12,7 @@ public class Connections implements Observer{
 	private MSRPStack msrpStack;
 	private ReceiverConnection receiverConnection = null;
 	private Map<String, SenderConnection> senderConnections = new HashMap<String, SenderConnection>();
-		
+	private boolean isFinishedAllSenderConnections = false;	
 	
 	public Connections(MSRPStack msrpStack) {
 		this.msrpStack = msrpStack;
@@ -44,7 +44,8 @@ public class Connections implements Observer{
 		for (String key : this.senderConnections.keySet()) {
 			SenderConnection s = senderConnections.get(key);
 			s.stop();
-		}
+		}		
+		isFinishedAllSenderConnections = true;
 	}
 	
 	public SenderConnection getSenderConnection(String sipUri) {
@@ -78,7 +79,18 @@ public class Connections implements Observer{
 		if (o.toString().contains(SenderConnection.class.getSimpleName())) {
 			System.out.println("SenderConnection dispose finished!");
 			SenderConnection conn = (SenderConnection) obj;
-			senderConnections.remove(conn.getSipUri());
+			do {
+				if (isFinishedAllSenderConnections) {
+					senderConnections.remove(conn.getSipUri());
+				}
+				else {
+					try {
+						Thread.sleep(20);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}				
+			} while (!isFinishedAllSenderConnections);
 		}
 		
 		if (o.toString().contains(ReceiverConnection.class.getSimpleName())) {

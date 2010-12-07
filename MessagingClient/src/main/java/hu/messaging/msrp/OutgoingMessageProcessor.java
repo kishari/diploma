@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
@@ -21,13 +22,12 @@ import org.apache.commons.codec.binary.Base64;
 
 public class OutgoingMessageProcessor extends Observable implements Runnable {
 
-	//TESZTHEZ START
+//TESZTHEZ START
 	private File contentFile = null;
 	private File recreatedContentFile = null;
 	private String fileExtension = null;
-	//TESZTHEZ END
+//TESZTHEZ END
 	
-	private static int counter = 0;
 	private boolean running = false;
 	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
 	private Session session;
@@ -55,11 +55,12 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
 		fileExtension = completeMessage.getExtension();
 		
 		this.printToFile(completeMessage.getContent(), false);
-		System.out.println("OutgoingProcessor processOutgoingMessage... ");
+		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 
 		int chunkSize = Constants.chunkSize;
 		
@@ -68,8 +69,8 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		List<byte[]> chunks = (List<byte[]>)map.get(Keys.chunkList);
 		int totalContentLength = (Integer)map.get(Keys.contentLength);
 		
-		System.out.println("num of chunks: " + chunks.size());
-		System.out.println("total length: " + totalContentLength);
+		System.out.println(getClass().getSimpleName() + " num of chunks: " + chunks.size());
+		System.out.println(getClass().getSimpleName() + " content total length: " + totalContentLength);
 		
 		int offset = 1;
 		char endToken = '+';
@@ -89,19 +90,22 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 												  offset, chunk.length, totalContentLength,
 												  endToken);
 			
+//>>>> TESZT
 			Message mTest = MSRPUtil.createMessageFromString(req.toString());
 			Request r = (Request)mTest;
 			this.printToFile(Base64.decodeBase64(r.getContent()), true);
+//<<<< TESZT
 			
 			offset += chunk.length;
-			requestList.add(req);
-									
+			requestList.add(req);									
 		}
+		
+		Collections.sort(requestList);
 		this.setChanged();
-		this.notifyObservers(requestList);
+		this.notifyObservers(requestList); //Átküldjük a TransactionManagernek a requestList-et
 	}
 	
-	private java.util.Map<String, Object> splitMessageToChunks(CompleteMessage message, int chunkSize) {
+	private Map<String, Object> splitMessageToChunks(CompleteMessage message, int chunkSize) {
 		List<byte[]> chunks = new ArrayList<byte[]>();
 		
 		byte[] base64EncodedContent = Base64.encodeBase64(message.getContent());
@@ -140,7 +144,8 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		this.running = false;
 	}	
 	
-	//TESZT
+
+//>>>>>>>>>>>TESZT
 	public void printToFile(byte[] data, boolean recreated) {
 		try {
 			OutputStream out = null;
@@ -161,5 +166,5 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			e.printStackTrace();
 		}		
 	}
-	
+//<<<<<<<<<<<<<<TESZT	
 }

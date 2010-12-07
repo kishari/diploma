@@ -1,17 +1,10 @@
 package hu.messaging.msrp;
 
 import hu.messaging.Constants;
-import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.util.MSRPUtil;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,20 +13,19 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class TransactionManager implements Observer {
 
-	private static int reqCounter = 0;
-	private boolean isSentMessageChunk = false;
+	private int ackCounter = 0;
+	
+	private Map<String, Request> requestMap;
+	private List<Request> requestList;
 	private Session session;
-	private Map<String, Request> acknowledgedMessages = Collections.synchronizedMap(new HashMap<String, Request>());
-	private Map<String, Request> sentMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 	private Map<String, Request> incomingMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 
+	private SenderThread sender;
 
-	private File outTempBinFile = new File("c:\\outTemp.png");
-	private File outTemptxtFile = new File("c:\\OutTemp.txt");	
-	
 	private OutgoingMessageProcessor outgoingMessageProcessor;
 	private IncomingMessageProcessor incomingMessageProcessor;
 	
@@ -46,111 +38,122 @@ public class TransactionManager implements Observer {
 			outgoingMessageProcessor = new OutgoingMessageProcessor(outgoingMessageQueue, session, this);
 			outgoingMessageProcessor.start();
 			
-			incomingMessageProcessor = new IncomingMessageProcessor(incomingMessageQueue, session, this);
+			incomingMessageProcessor = new IncomingMessageProcessor(incomingMessageQueue, this);
 			incomingMessageProcessor.start();
+			
+			sender = new SenderThread();
+			sender.start();
 			
 	}
 	
 	public void stop() {
 		this.outgoingMessageProcessor.stop();
 		this.incomingMessageProcessor.stop();
+		this.sender.stop();
 	}
 
+	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object obj) {
-		//System.out.println("TManager update: " + o.toString());
-		//System.out.println(o.toString());
-		if (o.toString().contains("OutgoingMessageProcessor")) {
-			Request r = (Request) obj;
-			this.sentMessages.put(r.getTransactionId(), r);		
-			isSentMessageChunk = true;
+		if (o.toString().contains(OutgoingMessageProcessor.class.getSimpleName())) {
+			requestList = (List<Request>) obj;
+			
+			requestMap = new HashMap<String, Request>();
+			
+			for (Request r : requestList) {
+				requestMap.put(r.getTransactionId(), r);
+			}
+			
+			this.sender.getSenderQueue().add(requestList.get(0));
 		}
-		else if (o.toString().contains("IncomingMessageProcessor")) {
-			Message m = (Message) obj;
+		else if (o.toString().contains(IncomingMessageProcessor.class.getSimpleName())) {	
+			Map<String, Message> map = null;
+			Message m = null;
+			if (obj instanceof Map<?, ?>) {
+				map = (Map<String, Message>) obj;
+				m = map.get(Keys.incomingRequest);
+			}
+			else if (obj instanceof Message) {
+				m = (Message) obj;
+			}
 			if (m.getMethod() == Constants.methodSEND) {
 				Request req = (Request) m;
-				this.incomingMessages.put(req.getTransactionId(), req);		
-				reqCounter++;
-				//System.out.println("TManager reqCounter: " + reqCounter);
+				this.incomingMessages.put(req.getTransactionId(), req);
+				//Nyugtát küldünk
+				this.sender.getSenderQueue().add(map.get(Keys.createdAck));
+				
 				if (req.getEndToken() == '$') {
-					System.out.println("Utolso csomag is megjott");
-					List<Request> chunks = new ArrayList<Request>();
+					System.out.println("Utolso csomag is megjott...");
+					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, "complete message arrived", null);
+					event.setMessageId(req.getMessageId());
 					
-					int byteCount = 0;
+					List<Request> chunks = new ArrayList<Request>();
 					for (String key : this.incomingMessages.keySet()) {
 						chunks.add(this.incomingMessages.get(key));
-						byteCount += this.incomingMessages.get(key).getContent().length;
-					}
-										
-					Collections.sort(chunks);	
-					
-					for (Request r : chunks) {
-						printToFile(r.getFirstByte() + "-" + r.getLastByte() + "\r\n");
 					}
 					
-					ByteBuffer b = ByteBuffer.allocate(byteCount);
-					b.clear();
-					byte[] content = new byte[byteCount];
-					
-					for (Request r : chunks) {
-						b.put(r.getContent());
-					}
-					
-					b.rewind();
-					b.get(content);
-					CompleteMessage msg = new CompleteMessage(req.getMessageId(), 
-															  content,
-															  null);
-					new MessagingDAO().insertMessage(msg);
-					
-					printToFile(msg.getContent());
-					
-					
+					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
+					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
 			else if (m.getMethod() == Constants.method200OK) {
 				Response resp = (Response) m;
-				Request ackedReq = this.sentMessages.remove(resp.getTransactionId());
-				this.acknowledgedMessages.put(ackedReq.getTransactionId(), ackedReq);
+				ackCounter++;
+				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
+
+				//Ha van még küldendõ kérés, akkor elküldjük
+				if (ackCounter < requestList.size()) {
+					this.sender.getSenderQueue().add(requestList.get(ackCounter));
+				}												
 				
-				if (isAckedTotalSentMessage()) {
-					System.out.println("minden csomag nyugtazva");
-					this.isSentMessageChunk = false;
-					MSRPEvent event = new MSRPEvent("sentSuccess", MSRPEvent.messageSentSuccessCode);
+				if (isAckedTotalSentMessage(ackedReq)) {
+					System.out.println("minden nyugtazva...");
+					MSRPEvent event = new MSRPEvent(MSRPEvent.messageSentSuccess);
 					event.setMessageId(ackedReq.getMessageId());
 					this.session.getMsrpStack().notifyListeners(event);
-					this.acknowledgedMessages.clear();
 				}
 			}
 		}		
 	}
-	
-	private boolean isAckedTotalSentMessage() {
-		boolean t = this.sentMessages.isEmpty() && this.isSentMessageChunk;
+
+	private boolean isAckedTotalSentMessage(Request ackedReq) {
+		System.out.println(" ackCounter: " + ackCounter);
+		int mapSize = this.requestMap.size();
+		boolean empty = this.requestMap.isEmpty();
+		boolean lastChunk = (ackedReq.getEndToken() == '$');
+		boolean t = empty && lastChunk;
+		System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
 		return t;
 	}
 	
-	public void printToFile(byte[] data) {
-		try {
-			OutputStream out = new BufferedOutputStream(new FileOutputStream(outTempBinFile, true));
-			out.write(data);
-			out.flush();					
-			out.close();
+	private class SenderThread implements Runnable {
+		
+		private BlockingQueue<Message> senderQueue = new java.util.concurrent.LinkedBlockingQueue<Message>();
+		private boolean isRunning = false;
+		public void run() {
+			while (isRunning) {
+				try {
+					//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
+					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
+					Message data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+					if (data != null) {
+						session.getSenderConnection().send(data.toString().getBytes());
+					}				
+				}
+				catch(IOException e) {}
+				catch(InterruptedException e) {}				
+			}
 		}
-		catch(IOException e) { 
-			e.printStackTrace();
-		}		
-	}
 
-	public void printToFile(String text) {
-		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter(outTemptxtFile, true));
-			out.append(text);
-			out.flush();					
-			out.close();
+		public void start() {
+			isRunning = true;
+			new Thread(this).start();
 		}
-		catch(IOException e) { 
-			e.printStackTrace();
-		}		
+		public void stop() {
+			isRunning = false;
+		}
+
+		public BlockingQueue<Message> getSenderQueue() {
+			return senderQueue;
+		}
 	}
-	
 }

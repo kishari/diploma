@@ -2,6 +2,8 @@ package hu.messaging.msrp;
 
 import hu.messaging.Constants;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -9,16 +11,12 @@ import java.io.IOException;
 
 public class IncomingMessageProcessor extends Observable implements Runnable {
 	
-	private static int ackCounter = 0;
 	private BlockingQueue<Message> incomingMessageQueue;
-	private Session session;
 	private boolean running = false;
 	
 	public IncomingMessageProcessor(BlockingQueue<Message> incomingMessageQueue, 
-									Session session, 
 									TransactionManager transactionManager ) {
 		this.incomingMessageQueue = incomingMessageQueue;
-		this.session = session;
 		this.addObserver(transactionManager);
 	}
 	
@@ -37,27 +35,21 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 		}
 	}
 	
-	private void processIncomingMessage(Message chunk) throws IOException {
-		//System.out.println("IncomingMessageProcessor processIncomingMessage... ");
-		
+	private void processIncomingMessage(Message chunk) throws IOException {		
 		if (chunk.getMethod() == Constants.methodSEND) {
-			//System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message!");
 			Request req = (Request) chunk;
-			//System.out.println(req.toString());
 			Response ack = createAcknowledgement(req);
-			//System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is 'send' message! Ack created: \n" + ack.toString() );
+			
+			Map<String, Message> map = new HashMap<String, Message>();
+			map.put(Keys.incomingRequest, req);
+			map.put(Keys.createdAck, ack);
 			
 			this.setChanged();
-			this.notifyObservers(req);
+			this.notifyObservers(map);
 			
-			ackCounter++;
-			//System.out.println("incomingMSgProcessor ackCounter: " + ackCounter);
-			this.session.getSenderConnection().sendChunk(ack.toString().getBytes());
 		}
 		else if ( chunk.getMethod() == Constants.method200OK ){
-			//System.out.println("IncomingMessageProcessor.processIncomingMessage. Incoming message is '200 OK' message!");
 			Response resp = (Response) chunk;
-			//System.out.println(resp.toString());
 			this.setChanged();
 			this.notifyObservers(resp);
 		}		

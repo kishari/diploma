@@ -1,6 +1,5 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.IOException;
@@ -23,12 +22,10 @@ import java.util.Random;
 
 public class ReceiverConnection extends Observable implements Runnable {
 	private boolean running = false;	
-	private ByteBuffer buff = null;
 	private MSRPStack msrpStack = null;
 	private Map<SocketChannel, String> saveBuffers = new HashMap<SocketChannel, String>();
 	private InetAddress hostAddress;
-	private int port = 0;
-	
+	private int port = 0;	
 	private ServerSocketChannel serverSocketChannel = null;
 	private Selector selector = null;
 	
@@ -36,8 +33,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 		this.hostAddress = localHostAddress;
 		this.msrpStack = msrpStack;
 		this.selector = initSelector();
-		buff = ByteBuffer.allocate(Constants.receiverBufferSize);
-		buff.clear();
 		this.addObserver(msrpStack.getConnections());
 	}
 
@@ -49,7 +44,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 				// Wait for an event one of the registered channels
 				this.selector.select();
 
-				// Iterate over the set of keys for which events are available
 				Iterator<SelectionKey> selectedKeys = this.selector.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
 					SelectionKey key = (SelectionKey) selectedKeys.next();
@@ -69,13 +63,16 @@ public class ReceiverConnection extends Observable implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		
+		System.out.println("receiverConnection stopped");
+		
 		try {
 			this.serverSocketChannel.close();
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
 		
-		System.out.println("receiverConnection stopped");
+		System.out.println("receiverConnection closed");
 		this.setChanged();
 		notifyObservers(this);
 	}
@@ -121,7 +118,8 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private void read(SelectionKey key) throws IOException {
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
-		    
+	    ByteBuffer buff = ByteBuffer.allocate(15000000);
+	    buff.clear();
 		int numRead;
 		try {
 		   buff.clear();
@@ -196,7 +194,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 		
 		int state = 0;
 		int byteCounter = 0;
-		int messageCounter = 0;
 		while (buffer.hasRemaining()) {
 			byte b = buffer.get();			
 			byteCounter++;
@@ -256,7 +253,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 							String chunk = new String(temp);
 							messages.add(chunk);
 							state = 0;
-							messageCounter++;
 							successProcessedByteCount += byteCounter;
 							byteCounter = 0;
 						}
@@ -270,6 +266,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 			saveBuff = new String(save);
 			saveBuffers.put(channel, saveBuff);
 		}
+		
 		return messages;
 	}
 	

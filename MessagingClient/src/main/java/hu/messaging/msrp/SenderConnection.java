@@ -38,7 +38,7 @@ public class SenderConnection extends Observable implements Runnable {
 		this.selector = initSelector();
 	}
 
-	public void sendChunk(byte[] chunk) throws IOException {
+	public void send(byte[] chunk) throws IOException {
 		this.write(chunk);
 	}
 	
