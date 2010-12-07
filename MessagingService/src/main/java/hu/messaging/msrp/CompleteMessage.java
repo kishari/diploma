@@ -14,23 +14,18 @@ public class CompleteMessage {
 	
 	public CompleteMessage(String messageId, byte[] content) {
 		this.messageId = messageId;
-		this.content = content;
+		setContent(content);		
 	}
 	
 	public CompleteMessage(String messageId, byte[] content, String extension) {
-		if (Base64.isArrayByteBase64(content)) {
-			this.content = Base64.decodeBase64(content);
-		}
-		else {
-			this.content = content;
-		}
-		this.extension = extension;		
+		this.extension = extension;
+		setContent(content);
 		this.messageId = messageId;
 	}
 	
 	public CompleteMessage(String messageId, byte[] content, String extension, String sender, String subject) {
 		this.extension = extension;
-		this.content = content;
+		setContent(content);
 		this.messageId = messageId;
 		this.sender = sender;
 		this.subject = subject;
@@ -50,7 +45,12 @@ public class CompleteMessage {
 	}
 
 	public void setContent(byte[] content) {
-		this.content = content;
+		if (Base64.isArrayByteBase64(content)) {
+			this.content = Base64.decodeBase64(content);
+		}
+		else {
+			this.content = content;
+		}
 	}
 
 	public String getMessageId() {
@@ -87,4 +87,5 @@ public class CompleteMessage {
 		
 		return ready;
 	}
+
 }

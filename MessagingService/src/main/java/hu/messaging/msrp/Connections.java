@@ -12,7 +12,7 @@ public class Connections implements Observer{
 	private MSRPStack msrpStack;
 	private ReceiverConnection receiverConnection = null;
 	private Map<String, SenderConnection> senderConnections = new HashMap<String, SenderConnection>();
-	private boolean isFinishedAllSenderConnections = false;
+	private boolean isFinishedAllSenderConnections = false;	
 	
 	public Connections(MSRPStack msrpStack) {
 		this.msrpStack = msrpStack;
@@ -44,7 +44,7 @@ public class Connections implements Observer{
 		for (String key : this.senderConnections.keySet()) {
 			SenderConnection s = senderConnections.get(key);
 			s.stop();
-		}
+		}		
 		isFinishedAllSenderConnections = true;
 	}
 	

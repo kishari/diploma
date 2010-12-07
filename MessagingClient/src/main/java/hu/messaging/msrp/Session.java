@@ -19,7 +19,6 @@ public class Session {
 	private TransactionManager transactionManager = null;
 
 	public Session(URI localUri, URI remoteUri, SenderConnection senderConnection, MSRPStack msrpStack) {
-		System.out.println("Session konstruktor");
 		this.localUri = localUri;
 		this.remoteUri = remoteUri;
 		this.id = localUri.toString()+remoteUri.toString();
@@ -37,12 +36,10 @@ public class Session {
 	}
 	
 	public void putMessageIntoIncomingMessageQueue(Message message) throws InterruptedException {
-		//System.out.println("Session.putMessageIntoIncomingMessageQueue");
 		this.incomingMessageQueue.put(message);
 	}
 	
 	public void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
-		System.out.println("Session.putMessageIntoOutgoingMessageQueue");
 		this.outgoingMessageQueue.put(message);
 	}
 	

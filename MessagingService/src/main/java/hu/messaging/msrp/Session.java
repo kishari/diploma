@@ -35,12 +35,10 @@ public class Session {
 	}
 	
 	public void putMessageIntoIncomingMessageQueue(Message message) throws InterruptedException {
-		//System.out.println("Session.putMessageIntoIncomingMessageQueue");
 		this.incomingMessageQueue.put(message);
 	}
 	
 	public void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
-		//System.out.println("Session.putMessageIntoOutgoingMessageQueue");
 		this.outgoingMessageQueue.put(message);
 	}
 	

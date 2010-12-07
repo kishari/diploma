@@ -1,6 +1,5 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 
@@ -18,7 +17,6 @@ public class MSRPStack {
 	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
 	private List<MSRPListener> msrpListeners = new ArrayList<MSRPListener>();
 	
-
 	public void createReceiverConnection(InetAddress host) throws IOException {
 		getConnections().createReceiverConnection(host);
 	}
@@ -37,7 +35,7 @@ public class MSRPStack {
 	public Session findSession(String sessionId) {
 		if ( getActiveSessions().containsKey( sessionId ) ) {
 			return getActiveSessions().get(sessionId);
-		} 
+		}
 		return null;
 	}
 	
@@ -59,10 +57,9 @@ public class MSRPStack {
 		return activeSessions;
 	}
 	
-	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		getConnections().deleteSenderConnection(Constants.serverSipURI);
+		getConnections().deleteSenderConnections();
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}

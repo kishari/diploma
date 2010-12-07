@@ -13,8 +13,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.codec.binary.Base64;
-
 public class MSRPUtil {
 	private static Pattern methodPattern =  Pattern.compile("(^MSRP) ([\\p{Alnum}]{8,50}) ([\\p{Alnum}]{3,5}[\\p{Blank}]{0,1}[\\p{Alnum}]{0,2})\r\n(.*)", Pattern.DOTALL);
 	private static Pattern toPathPattern =  Pattern.compile("(To-Path:) (msrp://[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}:[\\p{Digit}]{4,5}/([\\p{Alnum}]{10,50});tcp)\r\n");
@@ -43,7 +41,7 @@ public class MSRPUtil {
 		req.setLastByte(offset + chunkSize - 1);
 		req.setSumByte(completeMessageSize);
 		req.setContentType("text/plain");
-		req.setContent(Base64.encodeBase64(content));
+		req.setContent(content);
 
 		req.setEndToken(endToken);
 
@@ -102,7 +100,7 @@ public class MSRPUtil {
 			matcher = contentPattern.matcher(message);
 			if (matcher.find()) {
 				req.setContentType(matcher.group(2));
-				req.setContent(Base64.decodeBase64(matcher.group(3)));
+				req.setContent(matcher.group(3).getBytes());
 			}
 						
 			matcher = endLinePattern.matcher(message);
