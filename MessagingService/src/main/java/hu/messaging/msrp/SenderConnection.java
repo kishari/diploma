@@ -26,6 +26,8 @@ public class SenderConnection extends Observable implements Runnable {
 	private SocketChannel senderChannel = null;
 	private Selector selector = null;
 		
+	private int sendCount = 0;
+	
 	public SenderConnection(InetAddress remoteAddress, int remotePort, 
 							String sipUri, MSRPStack msrpStack) throws IOException {
 		
@@ -39,6 +41,8 @@ public class SenderConnection extends Observable implements Runnable {
 	}
 
 	public void send(byte[] chunk) throws IOException {
+		sendCount++;
+		//System.out.println("send hivas: " + sendCount + " Time:" +  System.currentTimeMillis());
 		this.write(chunk);
 	}
 	

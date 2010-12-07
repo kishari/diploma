@@ -50,6 +50,9 @@ public class MSRPUtil {
 	
 	public static Message createMessageFromString(String message) {
 		
+		if (message == null) {
+			System.out.println("createMessageFromString bejovo msg null");
+		}
 		Matcher matcher = methodPattern.matcher(message);
 		
 		String method = null;

@@ -1,8 +1,13 @@
 package hu.messaging.msrp;
 
+import hu.messaging.Constants;
 import hu.messaging.msrp.util.MSRPUtil;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -19,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class ReceiverConnection extends Observable implements Runnable {
 	private boolean running = false;	
@@ -28,16 +36,27 @@ public class ReceiverConnection extends Observable implements Runnable {
 	private int port = 0;	
 	private ServerSocketChannel serverSocketChannel = null;
 	private Selector selector = null;
+	private Parser preParser;
+	private Router router;
+	private ByteBuffer buff;
 	
 	public ReceiverConnection(InetAddress localHostAddress, MSRPStack msrpStack) throws IOException {
 		this.hostAddress = localHostAddress;
 		this.msrpStack = msrpStack;
 		this.selector = initSelector();
+		this.preParser = new Parser();
+		this.router = new Router();
 		this.addObserver(msrpStack.getConnections());
+		buff = ByteBuffer.allocate(Constants.receiverBufferSize);
+		buff.clear();
+		
 	}
 
 	public void run() {
 		setRunning(true);
+		
+		this.preParser.start();
+		this.router.start();
 		
 		while (isRunning()) {
 			try {
@@ -65,6 +84,9 @@ public class ReceiverConnection extends Observable implements Runnable {
 		}
 		
 		System.out.println("receiverConnection stopped");
+		
+		this.preParser.stop();
+		this.router.stop();
 		
 		try {
 			this.serverSocketChannel.close();
@@ -118,12 +140,13 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private void read(SelectionKey key) throws IOException {
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
-	    ByteBuffer buff = ByteBuffer.allocate(15000000);
+	    //ByteBuffer buff = ByteBuffer.allocate(100000);
 	    buff.clear();
 		int numRead;
 		try {
 		   buff.clear();
 		   numRead = socketChannel.read(buff);
+		   System.out.println("numReadByte:" + numRead);
 		} catch (IOException e) {
 		// The remote forcibly closed the connection, cancel
 		   key.cancel();
@@ -141,26 +164,17 @@ public class ReceiverConnection extends Observable implements Runnable {
 		   return;
 	    }
 		    
-		byte[] data = new byte[numRead];
+		byte[] rawData = new byte[numRead];
 		    
 		buff.rewind();
-		buff.get(data, 0, numRead);
-		    
-		List<String> messages = preParse(data, socketChannel);
-		for (String m : messages) {
-		  	Message msg = MSRPUtil.createMessageFromString(m);
-		 	try {
-		 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
-		 		if (s != null) {
-		 			s.putMessageIntoIncomingMessageQueue(msg);
-		 		}
-		 		else {
-		 			System.out.println("session is null");
-		 		}		 		
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-	    }	    
+		buff.get(rawData, 0, numRead);
+		
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put(Keys.socketChannel, socketChannel);
+		map.put(Keys.rawData, rawData);
+		
+		this.preParser.getMessageQueue().add(map);
+   
 	}
 	  
 	private Selector initSelector() throws IOException {
@@ -176,98 +190,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 	    serverSocketChannel.register(socketSelector, SelectionKey.OP_ACCEPT);
 
 	    return socketSelector;
-	}
-	
-	private List<String> preParse(byte[] data, SocketChannel channel) {
-		List<String> messages = new ArrayList<String>();
-		int successProcessedByteCount = 0;
-		String m = new String(data);
-		String saveBuff = saveBuffers.get(channel);
-		
-		if (!"".equals(saveBuff)) {
-			m = saveBuff + m;
-			saveBuffers.put(channel, "");
-		}
-		
-		ByteBuffer buffer = ByteBuffer.wrap(m.getBytes(), 0, m.length());
-		buffer.limit(buffer.capacity());
-		
-		int state = 0;
-		int byteCounter = 0;
-		while (buffer.hasRemaining()) {
-			byte b = buffer.get();			
-			byteCounter++;
-			switch(state) {
-				case 0 : 
-						if (b == '\r') state = 1;
-				
-						break;
-				case 1 :
-						if (b == '\n') state = 2;
-						else state = 0;
-				
-						break;
-				case 2 :
-						if (b == '-')	state = 3;
-						else state = 0;
-
-				 		break;
-				case 3 :
-						if (b == '-')	state = 4;
-						else state = 0;
-				
-		 		 		break;
-				case 4 :
-						if (b == '-')	state = 5;
-				 		else state = 0;
-
- 		 		 		break;
-				case 5 :
-						if (b == '-')	state = 6;
-				 		else state = 0;
-				
- 		 		 		break;
-				case 6 : 
-						if (b == '-') state = 7;
-				 		 else state = 0;
- 		 		 		 
-						 break;
-				case 7 : 
-						if (b == '-')	state = 8;
-				 		 else state = 0;
- 		 		 
-						 break;
-				case 8 : 
-						if (b == '-')	state = 9;
-				 		 else state = 0;
- 		 		 
-						 break;
-				case 9 :
-						if (b == '$' || b == '#' || b == '+') state = 10;
-						
-				case 10 : 
-						if (state == 10) {
-							byte[] temp = new byte[byteCounter];
-							buffer.position(buffer.position() - byteCounter);
-							buffer.get(temp, 0, byteCounter);
-							String chunk = new String(temp);
-							messages.add(chunk);
-							state = 0;
-							successProcessedByteCount += byteCounter;
-							byteCounter = 0;
-						}
-			    }			
-		}
-				
-		if (byteCounter != 0) {
-			byte[] save = new byte[byteCounter];
-			buffer.position(buffer.position() - byteCounter);
-			buffer.get(save, 0, byteCounter);
-			saveBuff = new String(save);
-			saveBuffers.put(channel, saveBuff);
-		}
-		
-		return messages;
 	}
 	
 	public void start() {
@@ -314,5 +236,226 @@ public class ReceiverConnection extends Observable implements Runnable {
 	public Map<SocketChannel, String> getSaveBuffers() {
 		return saveBuffers;
 	}
+	
+	private class Parser implements Runnable {
+		
+		private ByteBuffer parserBuffer;
+		private BlockingQueue<Map<String, Object>> messageQueue = new LinkedBlockingQueue<Map<String, Object>>();
+		private boolean isRunning = false;
+		public void run() {
+			while (isRunning) {
+				try {
+					//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
+					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
+					Map<String, Object> map = messageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+					if (map != null) {
+						//System.out.println("parser: parse msg");
+						byte[] rawData = (byte[]) map.get(Keys.rawData);
+						SocketChannel channel = (SocketChannel) map.get(Keys.socketChannel);
+						List<String> chunks = preParse(rawData, channel);
+						//System.out.println("Parser rawData != null");
+						//System.out.println("Parser chunks: " + chunks.size());
+						ReceiverConnection.this.router.getParsedMessageQueue().addAll(chunks);
+					}				
+				}
+				catch(InterruptedException e) {}				
+			}
+		}
+
+		public void start() {
+			isRunning = true;
+			Thread t = new Thread(this);
+			//t.setDaemon(true);
+			t.start();
+		}
+		public void stop() {
+			isRunning = false;
+		}
+
+		public BlockingQueue<Map<String, Object>> getMessageQueue() {
+			return messageQueue;
+		}
+		
+		private List<String> preParse(byte[] rawData, SocketChannel channel) {
+			List<String> messages = new ArrayList<String>();
+			int successProcessedByteCount = 0;
+			String m = new String(rawData);
+			//printToFile(m.getBytes());	
+			
+			//ByteBuffer buffer = ByteBuffer.wrap(m.getBytes(), 0, m.length());
+			//parserBuffer = ByteBuffer.wrap(m.getBytes(), 0, m.length());
+			//parserBuffer.limit(parserBuffer.capacity());
+			
+			String saveBuff = saveBuffers.get(channel);
+			
+			if (!"".equals(saveBuff)) {
+				System.out.println("saveBuffer nem ures");
+				saveBuff += m;
+				m = new String(saveBuff);
+				System.out.println("saveBuffer utan msg: " + m);
+				saveBuffers.put(channel, new String(""));
+			}
+			
+			parserBuffer = ByteBuffer.wrap(m.getBytes(), 0, m.length());
+			parserBuffer.limit(parserBuffer.capacity());
+			
+			int state = 0;
+			int byteCounter = 0;
+			while (parserBuffer.hasRemaining()) {
+				byte b = parserBuffer.get();			
+				byteCounter++;
+				switch(state) {
+					case 0 : 
+							if (b == '\r') state = 1;
+					
+							break;
+					case 1 :
+							if (b == '\n') state = 2;
+							else state = 0;
+					
+							break;
+					case 2 :
+							if (b == '-')	state = 3;
+							else state = 0;
+
+					 		break;
+					case 3 :
+							if (b == '-')	state = 4;
+							else state = 0;
+					
+			 		 		break;
+					case 4 :
+							if (b == '-')	state = 5;
+					 		else state = 0;
+
+	 		 		 		break;
+					case 5 :
+							if (b == '-')	state = 6;
+					 		else state = 0;
+					
+	 		 		 		break;
+					case 6 : 
+							if (b == '-') state = 7;
+					 		 else state = 0;
+	 		 		 		 
+							 break;
+					case 7 : 
+							if (b == '-')	state = 8;
+					 		 else state = 0;
+	 		 		 
+							 break;
+					case 8 : 
+							if (b == '-')	state = 9;
+					 		 else state = 0;
+	 		 		 
+							 break;
+					case 9 :
+							if (b == '$' || b == '#' || b == '+') state = 10;
+							
+					case 10 : 
+							if (state == 10) {
+								byte[] temp = new byte[byteCounter];
+								parserBuffer.position(parserBuffer.position() - byteCounter);
+								parserBuffer.get(temp, 0, byteCounter);
+								String chunk = new String(temp);
+								messages.add(chunk);
+								state = 0;
+								successProcessedByteCount += byteCounter;
+								byteCounter = 0;
+							}
+				    }			
+			}
+			
+			if (byteCounter != 0) {
+				byte[] save = new byte[byteCounter];
+				parserBuffer.position(parserBuffer.position() - byteCounter);
+				parserBuffer.get(save, 0, byteCounter);
+				saveBuff = new String(save);
+				saveBuffers.put(channel, saveBuff);
+			}
+			
+			return messages;
+		}
+	}
+	
+	
+	private class Router implements Runnable {
+
+		private BlockingQueue<String> parsedMessageQueue = new LinkedBlockingQueue<String>();
+		private boolean isRunning = false;
+		public void run() {
+			String parsedMsg = "";
+			while (isRunning) {
+					//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
+					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
+				
+				String prevMsg = null;
+				if (parsedMsg != null) {
+					//prevMsg = new String(parsedMsg);
+				}
+					
+					parsedMsg = null;
+					try {
+						parsedMsg = parsedMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					} 
+					if (parsedMsg != null) {
+						//System.out.println("router: create msg from parsed string msg");
+						Message msg = MSRPUtil.createMessageFromString(parsedMsg);
+						if (msg == null) {
+							System.out.println("msg null");
+							System.out.println(parsedMsg);
+							//System.out.println(prevMsg);
+						}
+					 	try {
+					 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
+					 		if (s != null) {
+					 			s.putMessageIntoIncomingMessageQueue(msg);
+					 		}
+					 		else {
+					 			System.out.println("session is null");
+					 		}		 		
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}								
+			}
+		}
+
+		public void start() {
+			isRunning = true;
+			Thread t1 = new Thread(this);
+			//t.setDaemon(true);
+			t1.start();
+		}
+		public void stop() {
+			isRunning = false;
+		}
+
+		public BlockingQueue<String> getParsedMessageQueue() {
+			return parsedMessageQueue;
+		}
+		
+	}
+	
+	//>>>>>>>>>>>TESZT
+	public void printToFile(byte[] data) {
+		try {
+			OutputStream out = null;
+			File recreatedContentFile = new File("c:\\serverRawData.txt");
+			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
+			
+			out.write(data);
+			out.write("\r\n**********************************************************************\r\n".getBytes());
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
+//<<<<<<<<<<<<<<TESZT
+	
 
 }

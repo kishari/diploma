@@ -17,7 +17,6 @@ import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
 
 import hu.messaging.*;
-import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
@@ -82,7 +81,9 @@ public class MessagingSipServlet extends SipServlet {
 		super.init(config);
 		ServletContext context = config.getServletContext();
 		sipFactory = (SipFactory) context.getAttribute(SipServlet.SIP_FACTORY);
-		this.messagingService = new MessagingService();
+		messagingService = new MessagingService();
+		messagingService.addMSRPListener(messagingService);
+		
 		System.out.println("MessagingSipServlet inited!");
 	}
 
@@ -110,8 +111,7 @@ public class MessagingSipServlet extends SipServlet {
 		
 		if (req.getContent().toString().startsWith("GETMESSAGES")) {
 			//System.out.println(req.getContent().toString());
-			MessagingDAO dao = new MessagingDAO();
-			List<CompleteMessage> messages = dao.getMessagesToMessageIds(getMessageIds(req.getContent().toString()));
+			List<CompleteMessage> messages = messagingService.getMessagingDao().getMessagesToMessageIds(getMessageIds(req.getContent().toString()));
 			String sipURI = this.getCleanSipUri(req.getFrom().toString());
 			this.messagingService.sendMessages(messages, sipURI);
 		}
@@ -142,9 +142,8 @@ public class MessagingSipServlet extends SipServlet {
 				recipients.add(recipient);
 			}
 			
-			MessagingDAO dao = new MessagingDAO();
-			dao.insertRecipients(messageId, recipients);
-			dao.updateMessage(messageId, extension, sender);
+			messagingService.getMessagingDao().insertRecipients(messageId, recipients);
+			messagingService.getMessagingDao().updateMessage(messageId, extension, sender);
 			notifyOnlineRecipients(req, recipients, messageId, sender, extension);
 		}
 	}
@@ -213,7 +212,7 @@ public class MessagingSipServlet extends SipServlet {
 			ParsedSDP localSdp = new SDPUtil().parseSessionDescription(content);
 
 			this.messagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
-			this.messagingService.getMsrpStack().getConnections().findSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
+			this.messagingService.getMsrpStack().getConnections().getSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
 			this.messagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
 
 			resp.send();			

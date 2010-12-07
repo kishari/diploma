@@ -4,7 +4,11 @@ import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.util.MSRPUtil;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,9 +19,12 @@ import java.util.Observer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class TransactionManager implements Observer {
 
 	private int ackCounter = 0;
+	private int sentMsgCounter = 0;
 	
 	private Map<String, Request> requestMap;
 	private List<Request> requestList;
@@ -63,7 +70,14 @@ public class TransactionManager implements Observer {
 				requestMap.put(r.getTransactionId(), r);
 			}
 			
-			this.sender.getSenderQueue().add(requestList.get(0));
+			//this.sender.getSenderQueue().add(requestList.get(0));
+/*			if (requestMap.size() > Constants.burstSize) {
+				this.sender.getSenderQueue().addAll(requestList.subList(0, Constants.burstSize));
+			}
+			else {
+*/				this.sender.getSenderQueue().addAll(requestList);
+//			}
+			
 		}
 		else if (o.toString().contains(IncomingMessageProcessor.class.getSimpleName())) {	
 			Map<String, Message> map = null;
@@ -101,9 +115,9 @@ public class TransactionManager implements Observer {
 				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
 
 				//Ha van még küldendõ kérés, akkor elküldjük
-				if (ackCounter < requestList.size()) {
-					this.sender.getSenderQueue().add(requestList.get(ackCounter));
-				}												
+				//if (ackCounter < requestList.size()) {
+				//	this.sender.getSenderQueue().add(requestList.get(ackCounter));
+				//}												
 				
 				if (isAckedTotalSentMessage(ackedReq)) {
 					System.out.println("minden nyugtazva...");
@@ -116,18 +130,18 @@ public class TransactionManager implements Observer {
 	}
 
 	private boolean isAckedTotalSentMessage(Request ackedReq) {
-		System.out.println(" ackCounter: " + ackCounter);
+		//System.out.println(" ackCounter: " + ackCounter);
 		int mapSize = this.requestMap.size();
 		boolean empty = this.requestMap.isEmpty();
 		boolean lastChunk = (ackedReq.getEndToken() == '$');
 		boolean t = empty && lastChunk;
-		System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
+		//System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
 		return t;
 	}
 	
 	private class SenderThread implements Runnable {
 		
-		private BlockingQueue<Message> senderQueue = new java.util.concurrent.LinkedBlockingQueue<Message>();
+		private BlockingQueue<Message> senderQueue = new LinkedBlockingQueue<Message>();
 		private boolean isRunning = false;
 		public void run() {
 			while (isRunning) {
@@ -136,7 +150,18 @@ public class TransactionManager implements Observer {
 					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
 					Message data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 					if (data != null) {
+						System.out.println("send data: " + sentMsgCounter);
+						//Request r = (Request)data;
+						//printToFile(Base64.decodeBase64(r.getContent()), "mp3");
+						if (sentMsgCounter % Constants.burstSize == 0) {
+							do {
+								Thread.sleep(10);
+								System.out.println(ackCounter);
+							} while (ackCounter % Constants.burstSize != 0);
+						}
+						
 						session.getSenderConnection().send(data.toString().getBytes());
+						sentMsgCounter++;
 					}				
 				}
 				catch(IOException e) {}
@@ -156,4 +181,21 @@ public class TransactionManager implements Observer {
 			return senderQueue;
 		}
 	}
+	
+	//>>>>>>>>>>>TESZT
+	public void printToFile(byte[] data, String fileExtension) {
+		try {
+			OutputStream out = null;
+			File contentFile = new File("c:\\clientQueueContentFile." + fileExtension);
+			out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
+			
+			out.write(data);
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
+//<<<<<<<<<<<<<<TESZT
 }

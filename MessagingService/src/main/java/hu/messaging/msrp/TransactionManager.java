@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class TransactionManager implements Observer {
 
 	private int ackCounter = 0;
+	private int testCounter = 0;
 	
 	private Map<String, Request> requestMap;
 	private List<Request> requestList;
@@ -45,7 +46,6 @@ public class TransactionManager implements Observer {
 			sender.start();
 			
 	}
-	
 	public void stop() {
 		this.outgoingMessageProcessor.stop();
 		this.incomingMessageProcessor.stop();
@@ -136,6 +136,11 @@ public class TransactionManager implements Observer {
 					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
 					Message data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 					if (data != null) {
+						testCounter++;
+						if (testCounter % 100 == 0) {
+							System.out.println("send: " + testCounter);
+						}
+											
 						session.getSenderConnection().send(data.toString().getBytes());
 					}				
 				}
