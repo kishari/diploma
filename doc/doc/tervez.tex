@@ -1,4 +1,4 @@
-
+\setcounter{tocdepth}{5}
 
 \section{Tervezés}
 
@@ -177,6 +177,82 @@ A következő fejezetek a kommunikációs üzenetek szerkezetét, valamint a has
 
 \subsubsection{Kommunikációs üzenetek}
 \label{sec:komm_uzenetek}
+
+A kliens és az alkalmazás szerver közötti kommunikáció során többféle üzenettípus használatos, mint például az MSRP kapcsolat felépítésénél használt SIP INVITE, vagy a címzettek értesítésére is használt SIP MESSAGE. A multimédia tartalom átvitele MSRP csomagok formájában történik.  
+
+\paragraph{SIP INVITE üzenetek felépítése\\}
+\label{sec:sip_invite}
+
+SDP-s cucc leírása
+
+\paragraph{SIP MESSAGE üzenetek felépítése\\}
+\label{sec:sip_message}
+
+XML-es cucc leírása
+
+\paragraph{MSRP csomagok felépítése\\}
+\label{sec:msrp_chunks}
+
+A multimédia tartalom MSRP kapcsolaton kerül átvitelre, amely kapcsolaton MSRP csomagok formájában történik a kommunikáció. Egy MSRP üzenetváltás két lépésből áll. A küldő fél egy msrp kérést küld a fogadó félnek, amit a fogadó fél nyugtázik. A küldés -- fogadás -- nyugtázás lépések folyamatát tranzakciónak nevezik. Tehát fő MSRP üzenettípus létezik:
+\begin{myenumerate}
+\item \label{enum:msrp_req} MSRP kérés
+\item \label{enum:msrp_resp} MSRP válasz
+\end{myenumerate}
+\bigskip
+
+\noindent
+{\bf \ref{enum:msrp_req}.~MSRP kérés}
+
+Az msrp kérés struktúrális felépítése rendszerint három részből áll: fejléc, törzs, valamint egy záró sor. A fejléc tartalmazza többek között az üzenet azonosítóját, a tranzakció azonosítót, az MSRP kapcsolat azonosítóját, illetve a forrást és a célt leíró URI-kat. Amennyiben a kérés törzsében tartalom kerül átvitelre, abban az esetben a tartalmat leíró információk is megtalálhatóak a fejlécben (a tartalom típusa, hossza). A záró sor szabvány szerint hét darab ,,-'' jelből, a tranzakció azonosítóból és a ,,\$'', ,,+'' vagy ,,\#'' karakterek egyikéből épül fel. Mivel egy üzenet darabolva, több msrp kérésben kerülhet átvitelre, a záró sor utolsó karaktere attól függ, hogy az adott kérés ugyanazon üzenet egy köztes részét tartalmazza (+~jel), az üzenet utolsó darabját tartalmazza (\$~jel), vagy az üzenet küldését megszakították (\#~jel). Az alábbi két msrp kérés az ,,abcdefGHIJKL'' üzenet két darabban történő átvitelét szemlélteti:
+
+\fontsize{10}{10}
+\begin{verbatim}
+MSRP 1a2b3c4d SEND
+To-Path: msrp://syrius.bme.hu:12763/kjhd37s2s20w2a;tcp
+From-Path: msrp://csb.invitel.hu:7654/jshA7weztas;tcp
+Message-ID: abcd9876
+Byte-Range: 1-6/12
+Content-Type: text/plain
+
+abcdef
+-------1a2b3c4d+
+
+MSRP 5e6f7g8h SEND
+To-Path: msrp://syrius.bme.hu:12763/kjhd37s2s20w2a;tcp
+From-Path: msrp://csb.invitel.hu:7654/jshA7weztas;tcp
+Message-ID: abcd9876
+Byte-Range: 7-12/12
+Content-Type: text/plain
+
+GHIJKL
+-------5e6f7g8h$
+\end{verbatim}
+\fontsize{12}{12} 
+
+A csoportos multimédia üzenetküldő rendszerben a multimédia tartalom átvitele msrp kérésekben, base64 kódolva\footnote{RFC4648: The Base16, Base32, and Base64 Data Encodings \cite{rfc4648}} kerül átvitelre. A kódolás célja, hogy a bináris, speciális karaktereket tartalmazó adatokból ASCII\footnote{American Standard Code for Information Interchange} karaktersorozatot állít elő, ezáltal a vételi oldalon az eredeti multimédia tartalom egy base64 dekódolással egyértelműen visszaállítható lesz.
+\bigskip
+
+\noindent
+{\bf \ref{enum:msrp_resp}.~MSRP válasz}
+
+Az msrp válasz felépítése megegyezik az msrp kérés felépítésével, azzal a különbséggel, hogy az msrp válaszban nincs tartalom átvitel, ezáltal a törzs rész hiányzik. Az előző részben illusztrált két msrp kérésre sikeres kézbesítés esetén az alábbi msrp válaszok jönnek:
+\fontsize{10}{10}
+\begin{verbatim}
+MSRP 1a2b3c4d 200 OK
+To-Path: msrp://csb.invitel.hu:7654/jshA7weztas;tcp
+From-Path: msrp://syrius.bme.hu:12763/kjhd37s2s20w2a;tcp
+-------1a2b3c4d$
+
+MSRP 5e6f7g8h 200 OK
+To-Path: msrp://csb.invitel.hu:7654/jshA7weztas;tcp
+From-Path: msrp://syrius.bme.hu:12763/kjhd37s2s20w2a;tcp
+-------5e6f7g8h$
+\end{verbatim}
+\fontsize{12}{12} 
+
+\bigskip
+
+Az MSRP protokollról, a csomagok felépítéséről részletesen a \cite{rfc4975} és a \cite{rfc4976} irodalomban olvashat.
 
 \subsubsection{Az adatbázis}
 \label{sec:adatb}
