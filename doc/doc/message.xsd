@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
-<xs:element name="message">
+<xs:element name="information">
     <xs:complexType>
         <xs:sequence>
             <xs:element name="type">
@@ -11,22 +11,11 @@
                         <xs:enumeration value="MESSAGE_DATA"/>
                     </xs:restriction>
                 </xs:simpleType>
-            </xs:element>
-            <xs:element name="sender" minOccurs="0">
+            </xs:element>            
+            <xs:element name="message" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element name="name" type="xs:string"/>
-                        <xs:element name="sip_uri" type="xs:string"/>
-                    </xs:sequence>
-                </xs:complexType>
-            </xs:element>
-            <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
-            <xs:element name="subject" type="xs:string" minOccurs="0"/>
-            <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
-            <xs:element name="recipients" minOccurs="0">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="recipient" maxOccurs="unbounded">
+                        <xs:element name="sender" minOccurs="0">
                             <xs:complexType>
                                 <xs:sequence>
                                     <xs:element name="name" type="xs:string"/>
@@ -34,8 +23,26 @@
                                 </xs:sequence>
                             </xs:complexType>
                         </xs:element>
-                    </xs:sequence>                    
-                </xs:complexType>                
+                        <xs:element name="id" type="xs:string"/>
+                        <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
+                        <xs:element name="subject" type="xs:string" minOccurs="0"/>
+                        <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
+                        <xs:element name="recipients" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="recipient" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:sequence>
+                                                <xs:element name="name" type="xs:string"/>
+                                                <xs:element name="sip_uri" type="xs:string"/>
+                                            </xs:sequence>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>                    
+                            </xs:complexType>                
+                        </xs:element>            
+                    </xs:sequence>
+                </xs:complexType>
             </xs:element>            
         </xs:sequence>
     </xs:complexType>

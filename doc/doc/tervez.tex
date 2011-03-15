@@ -188,7 +188,68 @@ SDP-s cucc leírása
 \paragraph{SIP MESSAGE üzenetek felépítése\\}
 \label{sec:sip_message}
 
-XML-es cucc leírása
+A jelen dokumentumban leírt rendszerben a SIP MESSAGE típusú üzeneteket a kliensek és a szerver közötti kommunikáció során használom. Az üzenet törzsében, jól definiált XML formátumban kerülnek elküldésre a szükséges információk, mint például az üzenet típusa, a feladó neve és SIP URI-ja, címzett neve és SIP URI-ja, a multimédia tartalom típusa, az üzenet tárgya, stb. Az XML tartalom az alábbi séma szerint kerül megadásra:
+\fontsize{10}{10}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
+<xs:element name="information">
+   <xs:complexType>
+      <xs:sequence>
+         <xs:element name="type">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">                        
+                  <xs:enumeration value="STATUS_UPDATE"/>
+                  <xs:enumeration value="NOTIFY"/>
+                  <xs:enumeration value="MESSAGE_DATA"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>            
+         <xs:element name="message" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="sender" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="name" type="xs:string"/>
+                           <xs:element name="sip_uri" type="xs:string"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="id" type="xs:string"/>
+                  <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
+                  <xs:element name="subject" type="xs:string" minOccurs="0"/>
+                  <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
+                  <xs:element name="recipients" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="recipient" maxOccurs="unbounded">
+                              <xs:complexType>
+                                 <xs:sequence>
+                                    <xs:element name="name" type="xs:string"/>
+                                    <xs:element name="sip_uri" type="xs:string"/>
+                                 </xs:sequence>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:sequence>                    
+                     </xs:complexType>                
+                  </xs:element>            
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>            
+      </xs:sequence>
+   </xs:complexType>
+</xs:element>
+</xs:schema>
+\end{verbatim}
+\fontsize{12}{12} 
+
+A szóban forgó üzeneteket az alábbi esetekben használom:
+\begin{mydescription}
+\item[Kliens regisztráció:] a kliens oldali alkalmazás elindulása után az al\-kal\-ma\-zás azonnal, majd periodikusan ismételve üzenetet küld a szerver oldalnak, azt jelezve, hogy a felhasználó elérhető a hálózaton. Az üzenet törzse XML formátumban tartalmazza az üzenet típusát (STATUS\_UPDATE), valamint a felhasználó nevét és SIP URI-ját. A szerver alkalmazás egy regisztrációs üzenet hatására vagy hozzáadja az új felhasználót az elérhető kliensek listájához, vagy újraindítja a listán már meglévő felhasználóhoz tartozó időzítőt. Minden felhasználóhoz tartozik egy időzítő, amely a periódusidő+$\Delta$t időtartamról számol visszafelé. A $\Delta$t egy pozitív szám, amely a változó hálózati késleltetés miatt egy biztonsági sávot nyújt az időzítőnek. Abban az esetben, ha egy periódus alatt nem érkezik egy felhasználótól ilyen regisztrációs üzenet, azaz az időzítő lejár, a szerver törli az adott felhasználót az elérhető kliensek listájából.
+\item[Elküldött multimédia üzenet adatai:] az MSRP kapcsolaton elküldött multimédia tartalomhoz kapcsolódó címzettek, illetve egyéb információk átvitele is ilyen típusú üzenetben történik. Ebben az esetben a kliens oldal a SIP MESSAGE üzenetet azután küldi el a szerver oldalnak, miután a multimédia üzenethez kapcsolódó tartalom az MSRP kapcsolaton sikeresen továbbítódott.
+\item[Új üzenetről értesítés:] amikor egy felhasználó új multimédia üzenetet kap, a szerver a szóban forgó üzenetben értesíti az új üzenetről, vagy több üzenet esetén az új üzenetekről a kliens oldalt. Az üzenet tartalmazza a feladó adatait, illetve az üzenetek adatait (mint például az üzenet azonosítóját, a tartalom típusát, az üzenet tárgyát, stb.).
+\end{mydescription}
 
 \paragraph{MSRP csomagok felépítése\\}
 \label{sec:msrp_chunks}
