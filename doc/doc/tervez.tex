@@ -46,7 +46,7 @@ A vételi oldalon a kliensek, miután megkapták az MR kéréseket, nyugtázzák
 \label{sec:msrp_message}
 
 Ez a megoldási javaslat a multimédia üzenetek felhasználók közötti átvitelére az MSRP (Message Session Relay Protocol) protokollt használja. Az MSRP -- a SIP-hez vagy a HTTP-hez hasonlóan -- egy szöveges, alkalmazás rétegbeli protokoll. A protokoll kapcsolat orientált adatátvitelt (session mode) tesz lehetővé, aminek számos előnye van a különálló, független üzenetcsomagok küldéséhez képest (paging mode).
-Ezen előnyök közé tartozik, hogy a kommunikációs felek explicit felépítenek egymás között egy kommunikációs kapcsolatot az üzenet csomagok átvitelére. A kapcsolat léte magában foglalja többek között az összefüggő üzenet csomagok biztonságos, sorrendhelyes átvitelét, valamint a garantált kézbesítést is. Minden MSRP üzenet vagy egy kérés, vagy egy válasz. Az üzenetek fejlécből és törzsből állnak. A fejlécben az MSRP kapcsolatot, illetve a törzsben lévő -- szöveges vagy bináris -- tartalmat leíró információk találhatóak. Az MSRP kapcsolat felépítése SIP és SDP (Session Description Protocol) protokoll~\cite{rfc4566} segítségével történik. {\color{red} (IDE pár mondat az SDP-ről)} Az MSRP protokollról részletesebben az~\cite{rfc4975} irodalomban olvashat. 
+Ezen előnyök közé tartozik, hogy a kommunikációs felek explicit felépítenek egymás között egy kommunikációs csatornát az üzenet csomagok átvitelére. A kapcsolat léte magában foglalja az összefüggő üzenet csomagok biztonságos, sorrendhelyes átvitelét, valamint a garantált kézbesítést is. Minden MSRP üzenet vagy egy kérés, vagy egy válasz. Az üzenetek fejlécből és törzsből állnak. A fejlécben az MSRP kapcsolatot, illetve a törzsben lévő -- szöveges vagy bináris -- tartalmat leíró információk találhatóak. Az MSRP kapcsolat felépítése SIP és SDP (Session Description Protocol) protokoll~\cite{rfc4566} segítségével történik. Az MSRP csomagok felépítésének leírása \aref{sec:msrp_chunks}.~fejezetben található. A protokollról részletesebben az~\cite{rfc4975} irodalomban olvashat. Az SDP protokoll egy olyan szabályegyüttes, amely a multimédiás tartalmakat továbbító kapcsolatok paramétereit írja le. Ilyen paraméter többek között a kapcsolat sávszélessége, a kapcsolaton átvitelre kerülő multimédiát leíró információk, az átviteli protokoll, a kommunikációs IP cím és port, stb. A kapcsolatot felépítő kommunikációs felek az SDP protokoll alapján leírják a rájuk jellemző paramétereket, majd SIP protokoll segítségével ,,megbeszélik'' egymással a felépíteni kívánt kapcsolatokat, azaz megoszják egymás között az SDP protokollal megadott paramétereket. 
 
 Mivel a címzettek csoportjában lehet olyan felhasználó, aki az üzenet küldésének pillanatában nem elérhető, így a késletetett kézbesítés problémája ebben az esetben is felmerül. Utóbbi problémára itt is megoldást nyújt az, ha a kliensek közé egy alkalmazás szervert helyezünk el, amely többek között a késletetett üzenet kézbesítését is végzi. A köztes szerver használata a hálózati forgalmat is csökkenti, mivel a feladó és a szerver közötti, jellemzően alacsony sávszélességű (pl. rádiós) linken csak egyszer kerül átvitelre a -- gyakran nagy méretű -- multimédia üzenetet, szemben azzal az esettel, amikor a feladó minden címzettre külön-külön elküldi azt. Miután sikeresen átvitelre került a multimédia üzenet, a feladónak a címzettek listáját valamilyen módon, például egy SIP MESSAGE üzenet törzsében kézbesíteni kell a szerver felé. Mivel ez a lista jellemzően rövid szöveges üzenet, így belefér egyetlen SIP MESSAGE üzenetbe. A megoldás hátránya az MSRP kapcsolat felépítésének költsége, ami viszont a kapcsolat tényéből fakadó, már fentebb említett előnyökhöz képest elhanyagolható.
 
@@ -56,7 +56,7 @@ A dolgozatban a szolgáltatás fejlesztése során a fentebb leírt megoldások 
 
 \subsection{Funkcionális terv}
 
-A rendszer alapvetően a klasszikus kliens-szerver architektúrát valósítja meg. A kliensek azok, akik létrehozzák a multimédia üzeneteket, majd a szerver köz\-ve\-tí\-té\-sé\-vel elküldik azt kliensek egy meghatározott csoportjának. A szerver adatbázisban tárolja a multimédia üzenethez tartozó adatokat. A küldő kliens az átvitel si\-ke\-res\-sé\-gé\-ről folyamatos értesítést kap a szervertől. A szerver, miután sikeresen megkapta az új üzenetet, az online címzetteknek -- egy SIP MESSAGE üzenet törzsében -- azonnal értesítést küld erről. Az említett üzenet törzsének részletes ismertetése az {\color{red}xyz fejezetben} található. Egy kliens, amikor az új üzenetről értesítést kap a szervertől, a tényleges multimédia üzenetről kapott információk alapján eldöntheti, hogy érdekli-e őt az üzenet, vagy sem, és ezáltal a döntésnek megfelelő akciót végrehajtsa (azaz megtekintse a multimédia üzenetet vagy sem). 
+A rendszer alapvetően a klasszikus kliens-szerver architektúrát valósítja meg. A kliensek azok, akik létrehozzák a multimédia üzeneteket, majd a szerver köz\-ve\-tí\-té\-sé\-vel elküldik azt más kliensek egy meghatározott csoportjának. A szerver adatbázisban tárolja a multimédia üzenethez tartozó adatokat, mint például a feladó neve, SIP azonosítója, a címzettek nevei, a multimédia tartalom, stb. A küldő kliens az átvitel si\-ke\-res\-sé\-gé\-ről folyamatos értesítést kap a szervertől. A szerver, miután sikeresen megkapta az új üzenetet, az online címzetteknek -- egy SIP MESSAGE üzenet törzsében -- azonnal értesítést küld erről. Az említett üzenet törzsének részletes ismertetése a \aref{sec:sip_message} fejezetben található. Egy kliens, amikor az új üzenetről értesítést kap a szervertől, a tényleges multimédia üzenetről kapott leíró információk alapján eldöntheti, hogy érdekli-e őt az üzenet, vagy sem. Ilyen leíró információ az üzenet feladójának adatai, az üzenet tárgya, valamint az üzenet tartalmának típusa, úgy mint kép, hang vagy videó, illetve a küldés dátuma. A kapott információk alapján a címzett eldöntheti, hogy érdekli őt az üzenet tényleges multimédia tartalma vagy sem, és ezáltal a döntésnek megfelelő akciót végrehajtsa (azaz megtekintse a multimédia üzenetet vagy sem). 
 
 A rendszer magasszintű modelljét \aref{fig:model}.~ábra szemlélteti.
 
@@ -80,13 +80,13 @@ A következő fejezetekben az egyes elemek funkciójának részletes tárgyalás
 \subsubsection{Kliens}
 \label{sec:kliens_pc}
 
-A felhasználó ezen keresztül éri el az IMS hálózatot, azaz magát az üzenetküldő szolgáltatást is, ebből fakadóan a PC eszköznek rendelkeznie kell hálózati kapcsolattal. Miután a kliens oldali üzenetküldő szolgáltatást használó alkalmazás elindult, egy, a felhasználó SIP URI-ját tartalmazó üzenetet periodikusan elküld a szerver oldalnak. Ez a periodikus ,,regisztráció'' azért szükséges, hogy a szerver oldal, amikor új multimédia üzenetet kap egy felhasználótól, értesíteni tudja a címzettek közül azokat, akik aktuálisan elérhető állapotban vannak. 
+A felhasználó ezen keresztül éri el az IMS hálózatot, azaz magát az üzenetküldő szolgáltatást is, ebből fakadóan a PC eszköznek rendelkeznie kell hálózati kapcsolattal. Miután a kliens oldali üzenetküldő szolgáltatást használó alkalmazás elindult, a felhasználó SIP URI-ját tartalmazó üzenetet periodikusan elküld a szerver oldalnak. Ez a periodikus ,,regisztráció'' azért szükséges, hogy a szerver oldal tisztában legyen azzal, hogy pillanatnyilag melyik felhasználó érhető el. A szerver amikor új multimédia üzenetet kap egy felhasználótól, értesíteni tudja a címzettek közül azokat, akik aktuálisan elérhető állapotban vannak. Az alkalmazás bezárásakor a kliens oldal ,,leiratkozó'' értesítést küld a szerver felé arról, hogy innentől kezdve a szóban forgó kliens nem elérhető. A regisztrációs üzenet küldésének periodikus jellege azért fontos, mert a kliens alkalmazás bármilyen hibás leállása esetén nem garantált az említett leiratkozó üzenet továbbítása a szerver felé. Utóbbi esetben az adott felhasználó elérhető kliensek listájáról való törlését a periódusidő lejárta után autómatikusan elvégzi a szerver oldal.
 
-A felhasználó multimédia üzenetet küldhet más, általa ismert felhasználók csoportjának. Az elküldendő multimédia üzenet többféleképpen állhat a kliens rendelkezésére. Egyik lehetséges opció, hogy az elküldenő üzenethez tartozó multimédia tartalom fájlrendszeren már a felhasználó rendelkezésére áll, kép, hang vagy videó fájl formájában. Ebben az esetben a küldő kliens fájlrendszeren való tallózással választhatja ki a multimédia tartalmat. A tartalom létrehozásának egy másik lehetséges módja, hogy a felhasználó a számítógépéhez kapcsolódó audiovizuális eszközökkel (mikrofon és kamera) maga készíti el a multimédia üzenethez tartozó kép, hang vagy videó felvételt. Miután az elküldendő multimédia üzenethez a tartalom a felhasználó rendelkezésére áll, valamilyen módon el kell küldeni a szerver oldalnak.
+A felhasználó multimédia üzenetet küldhet más, általa ismert felhasználók csoportjának. Az elküldendő multimédia üzenet többféleképpen állhat a kliens rendelkezésére. Egyik lehetséges opció, hogy az elküldenő üzenethez tartozó multimédia tartalom fájlrendszeren már a felhasználó rendelkezésére áll kép, hang vagy videó fájl formájában. Ebben az esetben a küldő kliens fájlrendszeren való tallózással választhatja ki a multimédia tartalmat. A tartalom létrehozásának egy másik lehetséges módja, hogy a felhasználó a számítógépéhez kapcsolódó audiovizuális eszközökkel (mikrofon és kamera) maga készíti el a multimédia üzenethez multimédia felvételt. Miután az elküldendő multimédia üzenethez a tartalom a felhasználó rendelkezésére áll, valamilyen módon el kell küldeni a szerver oldalnak. A tartalom kliens-szerver közötti átvitele MSRP protokoll szerint történik.
 
 {\color{red}Ezeket inkább a megvalósítási tervbe kellene tenni. Vagy nem?}
 
-Az üzenetküldés folyamatát \aref{fig:sending_proc}.~ábrán láthatjuk. A folyamat első lépéseként a küldő kliens és a szerver között fel kell építeni egy MSRP kapcsolatot, amelyen keresztül a multimédia üzenet átvitele történik. Egy MSRP kapcsolat minden esetben egy kliens és a szerver között épül fel, két kliens közvetlenül egymáshoz soha nem csatlakozik. Amikor az MSRP kapcsolat sikeresen felépült, a feladó ezen kapcsolaton keresztül MSRP csomagok\footnote{a szerkezetét hol lehetne leírni?} formájában továbbítja a multimédia üzenetet a szervernek. A szerver minden MSRP csomag vételét nyugtázza\footnote{nyugta formája} a küldő kliens felé. Miután a teljes üzenet sikeresen megérkezett a szerver oldalra, a a kliens bontja az MSRP kapcsolatot a szerverrel. A folyamat utolsó lépéseként a felhasználó egy SIP MESSAGE típusú üzenet törzsében elküldi a szervernek a címzettek listáját, illetve opcionálisan egyéb, az elküldött multimédia üzenetre jellemző információt. A címzett lista, illetve a kiegészítő információk XML (Extensible Markup Language) formátumban kerülnek átvitelre. Mivel az említett XML rövid, így az belefér egyetlen SIP MESSAGE üzenetbe. Miután a szerver sikeresen megkapta az XML-t tartalmazó üzenetet, a multimédia tartalommal együtt adatbázisban eltárolja azt, majd nyugtázza a sikeres vételt a feladó felé.
+Az üzenetküldés folyamatát \aref{fig:sending_proc}.~ábrán láthatjuk. A folyamat első lépéseként a küldő kliens és a szerver között fel kell építeni egy MSRP kapcsolatot, amelyen keresztül a multimédia üzenet átvitele történik. Egy MSRP kapcsolat minden esetben egy kliens és a szerver között épül fel, két kliens közvetlenül egymáshoz soha nem csatlakozik. Amikor az MSRP kapcsolat sikeresen felépült, a feladó ezen kapcsolaton keresztül MSRP csomagok\footnote{Az MSRP csomag felépítése \aref{sec:msrp_chunks}.~fejezetben található} formájában továbbítja a multimédia üzenetet a szervernek. A szerver minden MSRP csomag vételét nyugtázza a küldő kliens felé. Miután a teljes üzenet sikeresen megérkezett a szerver oldalra, a a kliens bontja az MSRP kapcsolatot. A folyamat utolsó lépéseként a felhasználó egy SIP MESSAGE típusú üzenet törzsében elküldi a szervernek a címzettek listáját, illetve opcionálisan egyéb, az elküldött multimédia üzenetre jellemző információt. A címzett lista, illetve a kiegészítő információk XML (Extensible Markup Language) formátumban kerülnek átvitelre. Mivel az említett XML rövid, így az belefér egyetlen SIP MESSAGE üzenetbe. Miután a szerver sikeresen megkapta az XML-t tartalmazó üzenetet, a multimédia tartalommal együtt adatbázisban eltárolja azt, majd nyugtázza a sikeres vételt a feladó felé.
 
 \begin{figure}[htbp]
 \center
@@ -96,7 +96,7 @@ Az üzenetküldés folyamatát \aref{fig:sending_proc}.~ábrán láthatjuk. A fo
 \label{fig:sending_proc}
 \end{figure}
 
-A kliens oldalon a multimédia üzenet vétele is több lépésben zajlik (\ref{fig:receiving_proc}.~ábra). Amennyiben a címzett felhasználó elérhető, úgy a szerver első lépésként egy SIP MESSAGE üzenetben értesíti a kliens oldalt a neki érkezett új multimédia üzenetekről. Utóbbi üzenet törzse szintén XML formátumban tartalmazza a multimédia üzenetekre jellemző adatokat. Második lépésként a kliens eldöntheti, hogy kiváncsi egy adott multimédia üzenetre, vagy sem. Amennyiben érdekli őt maga a multimédia tartalom is, felépít egy MSRP kapcsolatot a szerver oldallal, amelyen keresztül ,,letölti'' magát a tartalmat. A felhasználó dönthet úgy, hogy jelenleg nem kiváncsi az adott multimédia üzenetre. Utóbbi esetben nincs semmilyen további kommunikáció a kliens és a szerver között. A felhasználónak lehetősége nyílik egy adott multimédia üzenet tartalomátvitel nélküli törlésére is, ilyenkor szintén SIP MESSAGE üzenetben értesíti a szervert erről. Utóbbi esetben a multimédia üzenet törlődik a felhasználó szerver oldali postafiókjából.
+A kliens oldalon a multimédia üzenet vétele is több lépésben zajlik (\ref{fig:receiving_proc}.~ábra). Amikor a szerver új multimédia üzenetet kap, akkor a szerver első lépésként egy SIP MESSAGE üzenetben értesíti erről a címzettek közül azokat a felhasználókat, amelyek a regisztrált felhasználók listájában szerepelnek, azaz elérhetőek. Utóbbi üzenet törzse szintén XML formátumban tartalmazza a multimédia üzenetekre jellemző adatokat. Második lépésként a kliens az XML-ben kapott információk alapján eldönti, hogy kiváncsi egy adott multimédia üzenetre, vagy sem. Amennyiben érdekli maga a multimédia tartalom is, felépít egy MSRP kapcsolatot a szerver oldallal, amelyen keresztül ,,letölti'' magát a tartalmat. A felhasználó dönthet úgy, hogy jelenleg nem kiváncsi az adott multimédia üzenetre. Utóbbi esetben nincs semmilyen további kommunikáció a kliens és a szerver között. A felhasználónak lehetősége nyílik egy adott multimédia üzenet tartalom átvitele nélküli törlésére is, ilyenkor szintén SIP MESSAGE üzenetben értesíti erről a szervert. Utóbbi esetben a multimédia üzenet törlődik a felhasználó szerver oldali postafiókjából.
 
 \begin{figure}[htbp]
 \center
@@ -111,7 +111,11 @@ A kliens oldalon a multimédia üzenet vétele is több lépésben zajlik (\ref{
 
 Az alkalmazás szerver szolgáltatást nyújt a kliensek számára, az üzenetküldő rendszerben központi szerephet jut.
 
-A szerver folyamatosan várja a kliensek csatlakozását. Miután a kliens oldali alkalmazás elindult, periodikusan értesíti a szervert arról, hogy elérhető a rendszerben. Amennyiben a periódusidő lejárta előtt a szerver nem kap újabb értesítő üzenetet egy klienstől, törli az adott felhasználót az elérhető kliensek listájából. 
+A szerver folyamatosan várja a kliensek csatlakozását. A szerver listát vezet a rendszerben pillanatnyilag elérhető felhasználókról. Miután a kliens oldali alkalmazás elindult, periodikusan értesíti a szervert arról, hogy elérhető a rendszerben. Egy kliens felől érkező, első regisztrációs üzenet hatására felveszi az adott klienst az elérhető kliensek listájába, majd elindít az adott felhasználóhoz egy időzítőt. Egy adott felhasználó törlése az említett listáról kétféle esemény határása történhet:
+\begin{enumerate}\itemsep1pt
+\item	A kliens oldali alkalmazás normális bezárásról a kliens értesíti a szervert, a\-mely\-nek hatására a szerver törli a listáról az adott felhasználót.
+\item Amennyiben az időzítő lejárta előtt a szerver nem kap újabb regisztrációs üzenetet egy adott klienstől, szintén törli a felhasználót a regisztrált kliensek listájából.
+\end{enumerate} 
 
 A küldő kliens minden esetben az alkalmazás szerverrel építi fel a kapcsolatot, és annak küldi el a multimédia üzenetet. A szerver feladatai közé tartozik, hogy fogadja, majd adatbázisban eltárolja a feladótól érkező multimédia üzenetet, valamint az üzenethez kapcsolódó egyéb adatokat. Utóbbi adatok \aref{sec:kliens_pc}.~részben említett SIP MESSAGE üzenet törzsében XML formátumban érkeznek a kliens felől. Az XML a következő adatokat tartalmazza: 
 
@@ -123,7 +127,9 @@ A küldő kliens minden esetben az alkalmazás szerverrel építi fel a kapcsola
 \item A multimédia tartalom formátuma
 \end{itemize}
 
-A szerver valósítja meg a késletetett üzenettovábbítást is. Utóbbi azt jelenti, hogy amikor a címzettek közül valamelyik nem elérhető, akkor az adott címzett értesítése az új üzenetről akkor történik meg, amikor az elérhetővé válik. Az értesítő üzenet -- hasonlóan a küldésnél használt üzenethez -- XML formátumban tartalmazza a multimédia üzenet adatait:
+Az XML-ben található üzenet azonosító az MSRP átvitel során használt üzenet azonosítóval kell, hogy megegyezzek. A szerver az azonosító alapján megkeresi a kapott adatokhoz tartozó, az MSRP kapcsolaton már sikeresen átvitt, valamint adatbázisban eltárolt multimédia tartalmat, majd sikeres találat esetén hozzárendeli az XML-ből kinyert adatokat a tartalomhoz. Amennyiben a klienstől kapott azonosítóhoz nem található tartalom, hibaüzenetet küld erről a kliens oldalnak.
+
+A szerver valósítja meg a késletetett üzenettovábbítást is. Utóbbi azt jelenti, hogy amikor a címzettek közül valamelyik nem elérhető, akkor az adott címzett értesítése az új üzenetről akkor történik meg, amikor az elérhetővé válik (azaz a kliens felől regisztrációs üzenet érkezik). Az értesítő üzenet -- hasonlóan a küldésnél használt üzenethez -- XML formátumban tartalmazza a multimédia üzenet adatait:
 
 \begin{itemize}\itemsep1pt
 \item	A feladó SIP URI-ja
@@ -178,67 +184,114 @@ A következő fejezetek a kommunikációs üzenetek szerkezetét, valamint a has
 \subsubsection{Kommunikációs üzenetek}
 \label{sec:komm_uzenetek}
 
-A kliens és az alkalmazás szerver közötti kommunikáció során többféle üzenettípus használatos, mint például az MSRP kapcsolat felépítésénél használt SIP INVITE, vagy a címzettek értesítésére is használt SIP MESSAGE. A multimédia tartalom átvitele MSRP csomagok formájában történik.  
+A kliens és az alkalmazás szerver közötti kommunikáció során többféle üzenettípus használatos. A kliensek regisztrációja, az MSRP kapcsolaton elküldött multimédia tartalomhoz kapcsolódó adatok átvitele, kliensek új üzenetről való értesítése SIP MESSAGE üzenetekben, XML küldésével történik. A kliens és a szerver közötti MSRP kapcsolat felépítése SIP INVITE üzenettel valósulhat meg. A multimédia tartalom átvitele MSRP csomagok formájában történik. 
 
 \paragraph{SIP INVITE üzenetek felépítése\\}
 \label{sec:sip_invite}
 
-SDP-s cucc leírása
+A kliens és a szerver közötti MSRP kapcsolat felépítése SIP és SDP protokollok használatával történik. A kapcsolatot leíró paramétereket SDP protokollal írjuk le, majd ezen adatokat SIP protokoll segítségével küldjük el a szerver oldalnak. Utóbbi azt jelenti, hogy egy SIP INVITE üzenetet küldünk a szerver oldalnak, amely üzenet törzsében az SDP-vel leírt kapcsolati információk vannak. Az alábbi üzenet bemutatja az INVITE üzenet felépítését. A kliens hasonló SIP üzenet küldésével kezdeményezi egy audió átvitelét végző MSRP kapcsolat felépítését a szerverrel.
+
+\fontsize{10}{10}
+\begin{verbatim}
+INVITE sip:mediamulticast.service@ericsson.com SIP/2.0
+   To: sip:server.1234@ericcson.com
+   From: csaba@tmit.bme.hu
+   Call-ID: 3413an89KU
+   Content-Type: application/sdp
+
+   c=IN IP4 tmit.bme.hu
+   m=message 7654 TCP/MSRP *
+   a=accept-types:audio/mpeg;base64
+   a=path:msrp://tmit.bme.hu:7654/jshA7weztas;tcp
+\end{verbatim}
+\fontsize{12}{12} 
+
+A Content-Type fejléc mező utáni üres sor az INVITE üzenet törzsének kezdetét jelzi. Látható, hogy a  törzs tartalmazza az SDP-vel leírt MSRP kapcsolat paramétereit. A példában a kliens a a tmit.bme.hu hoszton a 7654-es porton várja majd az MSRP kapcsolaton érkező csomagokat. Mivel egy adott porthoz több MSRP kapcsolat is hozzá lehet rendelve, annak érdekében, hogy az egyes kapcsolatokat meg lehessen egymástól különböztetni, a kliens generál egy egyedi kapcsolat azonosítót is. Utóbbi a path nevű argumentumban található URL elérési útjában (jshA7weztas). 
+
+Miután a szerver oldal veszi az INVITE üzenetet, SDP protokoll alapján ő is meghatározza az MSRP kapcsolatot szerver oldalon leíró paramétereit, amelyet SIP 200 OK üzenetben továbbít a kliens felé. A fent leírt INVITE üzenetre küldött 200 OK üzenet felépítése a következő lehet:
+
+\fontsize{10}{10}
+\begin{verbatim}
+SIP/2.0 200 OK
+   To: sip:csaba@tmit.bme.hu
+   From: sip:server.1234@ericcson.com
+   Call-ID: 3413an89KU
+   Content-Type: application/sdp
+
+   c=IN IP4 ericsson.com
+   m=message 7743 TCP/MSRP *
+   a=accept-types:audio/mpeg;base64
+   a=path:msrp://ericsson.com:7743/xyzabc45h54;tcp
+\end{verbatim}
+\fontsize{12}{12} 
+ 
+Látható, hogy a szerver a 7743-as porton várja az MSRP kapcsolaton érkező csomagokat. Az MSRP kapcsolat szerver oldali azonosítója szintén a path argumentumban leírt URL-ben látható (xyzabc45h54)
+
+A kliens oldal a 200 OK sikeres vétele után egy SIP ACK küldésével nyugtázza a szervernek a sikeres vételt. Ebben a pontban az MSRP kapcsolat sikeresen felépült a kliens és a szerver között.
 
 \paragraph{SIP MESSAGE üzenetek felépítése\\}
 \label{sec:sip_message}
 
-A jelen dokumentumban leírt rendszerben a SIP MESSAGE típusú üzeneteket a kliensek és a szerver közötti kommunikáció során használom. Az üzenet törzsében, jól definiált XML formátumban kerülnek elküldésre a szükséges információk, mint például az üzenet típusa, a feladó neve és SIP URI-ja, címzett neve és SIP URI-ja, a multimédia tartalom típusa, az üzenet tárgya, stb. Az XML tartalom az alábbi séma szerint kerül megadásra:
+A jelen dokumentumban leírt rendszerben a SIP MESSAGE típusú üzeneteket a kliensek és a szerver közötti kommunikáció során használom. Az üzenet törzsében, jól definiált XML formátumban kerülnek elküldésre a szükséges információk, mint az üzenet típusa, a feladó neve és SIP URI-ja, címzett neve és SIP URI-ja, a multimédia tartalom típusa, az üzenet tárgya, stb. Az XML tartalom az alábbi séma szerint kerül megadásra:
 \fontsize{10}{10}
 \begin{verbatim}
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
 <xs:element name="information">
-   <xs:complexType>
-      <xs:sequence>
-         <xs:element name="type">
-            <xs:simpleType>
-               <xs:restriction base="xs:string">                        
-                  <xs:enumeration value="STATUS_UPDATE"/>
-                  <xs:enumeration value="NOTIFY"/>
-                  <xs:enumeration value="MESSAGE_DATA"/>
-               </xs:restriction>
-            </xs:simpleType>
-         </xs:element>            
-         <xs:element name="message" maxOccurs="unbounded">
-            <xs:complexType>
-               <xs:sequence>
-                  <xs:element name="sender" minOccurs="0">
-                     <xs:complexType>
-                        <xs:sequence>
-                           <xs:element name="name" type="xs:string"/>
-                           <xs:element name="sip_uri" type="xs:string"/>
-                        </xs:sequence>
-                     </xs:complexType>
-                  </xs:element>
-                  <xs:element name="id" type="xs:string"/>
-                  <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
-                  <xs:element name="subject" type="xs:string" minOccurs="0"/>
-                  <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
-                  <xs:element name="recipients" minOccurs="0">
-                     <xs:complexType>
-                        <xs:sequence>
-                           <xs:element name="recipient" maxOccurs="unbounded">
-                              <xs:complexType>
-                                 <xs:sequence>
+    <xs:complexType>
+        <xs:sequence>
+            <!-- A üzenet típusa -->
+            <xs:element name="message_type">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">                        
+                        <xs:enumeration value="STATUS_UPDATE"/>
+                        <xs:enumeration value="NOTIFY"/>
+                        <xs:enumeration value="MESSAGE_DATA"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>                                    
+            <xs:element name="message" maxOccurs="unbounded">
+                <xs:complexType>                    
+                    <xs:sequence>
+                        <!-- STATUS_UPDATE esetén regisztráció vagy törlés -->
+                        <xs:element name="status" type="xs:string" minOccurs="0"/>
+                        <!-- A küldö adatai -->
+                        <xs:element name="sender" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
                                     <xs:element name="name" type="xs:string"/>
                                     <xs:element name="sip_uri" type="xs:string"/>
-                                 </xs:sequence>
-                              </xs:complexType>
-                           </xs:element>
-                        </xs:sequence>                    
-                     </xs:complexType>                
-                  </xs:element>            
-               </xs:sequence>
-            </xs:complexType>
-         </xs:element>            
-      </xs:sequence>
-   </xs:complexType>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <!-- Az üzenet azonosítója -->
+                        <xs:element name="id" type="xs:string" minOccurs="0"/>
+                        <!-- A multimédia tartalom típusa -->
+                        <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
+                        <!-- Az üzenet tárgya -->
+                        <xs:element name="subject" type="xs:string" minOccurs="0"/>
+                        <!-- A küldés dátuma -->
+                        <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
+                        <!-- Címzettek listája -->
+                        <xs:element name="recipients" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="recipient" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:sequence>
+                                                <xs:element name="name" type="xs:string"/>
+                                                <xs:element name="sip_uri" type="xs:string"/>
+                                            </xs:sequence>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>                    
+                            </xs:complexType>                
+                        </xs:element>            
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+        </xs:sequence>
+    </xs:complexType>
 </xs:element>
 </xs:schema>
 \end{verbatim}
@@ -246,15 +299,15 @@ A jelen dokumentumban leírt rendszerben a SIP MESSAGE típusú üzeneteket a kl
 
 A szóban forgó üzeneteket az alábbi esetekben használom:
 \begin{mydescription}
-\item[Kliens regisztráció:] a kliens oldali alkalmazás elindulása után az al\-kal\-ma\-zás azonnal, majd periodikusan ismételve üzenetet küld a szerver oldalnak, azt jelezve, hogy a felhasználó elérhető a hálózaton. Az üzenet törzse XML formátumban tartalmazza az üzenet típusát (STATUS\_UPDATE), valamint a felhasználó nevét és SIP URI-ját. A szerver alkalmazás egy regisztrációs üzenet hatására vagy hozzáadja az új felhasználót az elérhető kliensek listájához, vagy újraindítja a listán már meglévő felhasználóhoz tartozó időzítőt. Minden felhasználóhoz tartozik egy időzítő, amely a periódusidő+$\Delta$t időtartamról számol visszafelé. A $\Delta$t egy pozitív szám, amely a változó hálózati késleltetés miatt egy biztonsági sávot nyújt az időzítőnek. Abban az esetben, ha egy periódus alatt nem érkezik egy felhasználótól ilyen regisztrációs üzenet, azaz az időzítő lejár, a szerver törli az adott felhasználót az elérhető kliensek listájából.
-\item[Elküldött multimédia üzenet adatai:] az MSRP kapcsolaton elküldött multimédia tartalomhoz kapcsolódó címzettek, illetve egyéb információk átvitele is ilyen típusú üzenetben történik. Ebben az esetben a kliens oldal a SIP MESSAGE üzenetet azután küldi el a szerver oldalnak, miután a multimédia üzenethez kapcsolódó tartalom az MSRP kapcsolaton sikeresen továbbítódott.
+\item[Kliens regisztráció, regisztráció törlés:] a kliens oldali alkalmazás elindulása után az al\-kal\-ma\-zás azonnal, majd periodikusan ismételve üzenetet küld a szerver oldalnak jelezvén azt, hogy a felhasználó elérhető a hálózaton. Az üzenet törzse XML formátumban tartalmazza az üzenet típusát (STATUS\_UPDATE), az üzenethez tartozó státuszt (REGISTER) valamint a felhasználó nevét és SIP URI-ját. A szerver alkalmazás a regisztrációs üzenet hatására hozzáadja a felhasználót az elérhető kliensek listájához, vagy újraindítja a listán már meglévő felhasználóhoz tartozó időzítőt. Minden felhasználóhoz tartozik egy időzítő, amely a periódusidő+$\Delta$t időtartamról számol visszafelé. A $\Delta$t egy pozitív szám, amely a változó hálózati késleltetés miatt egy biztonsági sávot nyújt az időzítőnek. Abban az esetben, ha egy periódus alatt nem érkezik egy felhasználótól ilyen regisztrációs üzenet, azaz az időzítő lejár, a szerver törli az adott felhasználót az elérhető kliensek listájából. A kliens alkalmazás bezárása esetén is ilyen típusú üzenetben értesül a szerver a kilépés eseményéről, amelynek határása szintén eltávolítja az adott klienst az elérhető felhasználókat tartalmazó listából. Utóbbi esetben az XML-ben a status mező értéke EXIT lesz.
+\item[Multimédia üzenet adatainak küldése a szervernek:] az MSRP kap\-cso\-la\-ton elküldött multimédia tartalom címzetteinek adatai, illetve egyéb az üzenethez kapcsolódó információk átvitele is ilyen típusú üzenetben történik. Ebben az esetben a kliens oldal a SIP MESSAGE üzenetet azután küldi el a szerver oldalnak, miután a multimédia üzenethez kapcsolódó tartalom az MSRP kapcsolaton sikeresen továbbítódott.
 \item[Új üzenetről értesítés:] amikor egy felhasználó új multimédia üzenetet kap, a szerver a szóban forgó üzenetben értesíti az új üzenetről, vagy több üzenet esetén az új üzenetekről a kliens oldalt. Az üzenet tartalmazza a feladó adatait, illetve az üzenetek adatait (mint például az üzenet azonosítóját, a tartalom típusát, az üzenet tárgyát, stb.).
 \end{mydescription}
 
 \paragraph{MSRP csomagok felépítése\\}
 \label{sec:msrp_chunks}
 
-A multimédia tartalom MSRP kapcsolaton kerül átvitelre, amely kapcsolaton MSRP csomagok formájában történik a kommunikáció. Egy MSRP üzenetváltás két lépésből áll. A küldő fél egy msrp kérést küld a fogadó félnek, amit a fogadó fél nyugtázik. A küldés -- fogadás -- nyugtázás lépések folyamatát tranzakciónak nevezik. Tehát fő MSRP üzenettípus létezik:
+A multimédia tartalom MSRP kapcsolaton kerül átvitelre, amely kapcsolaton MSRP csomagok formájában történik a kommunikáció. Egy MSRP üzenetváltás két lépésből áll. A küldő fél egy msrp kérést küld a fogadó félnek, amit a fogadó fél nyugtázik. A kérés küldés -- fogadás -- nyugtázás lépések együttesét tranzakciónak nevezik. Tehát fő MSRP üzenettípus létezik:
 \begin{myenumerate}
 \item \label{enum:msrp_req} MSRP kérés
 \item \label{enum:msrp_resp} MSRP válasz
@@ -317,6 +370,80 @@ Az MSRP protokollról, a csomagok felépítéséről részletesen a \cite{rfc497
 
 \subsubsection{Az adatbázis}
 \label{sec:adatb}
+
+A multimédia üzenet tárolásához egy relációs adatbázisra van szükség. Mivel a Java nyelvben az SQL alapú adatbázisok használatára már kiforrott API áll rendelkezésre, az SQL alapú relációs adatbázis-kezelő szerverek közül célszerű választani. A fejlesztés során a MySQL adatbázis-kezelő szerverre esett a választás, mivel széles közben elérhető, illetve Java nyelvre megtalálható hozzá egyedi illesztőfelület.
+
+Az adatbázis felépítéséhez az alábbi táblákra lesz szükség:
+
+\begin{myitemize}
+\item A multimédia üzenet tárolásához,
+\item a multimédia üzenet címzettjeinek tárolásához
+\end{myitemize}
+
+A következőkben ezen pontok részletezésére kerül sor.
+
+\paragraph*{A multimédia üzenet tárolása\\}
+
+Az alábbi szerkezetű tábla szükséges az egyes multimédia üzenethez kapcsolódó adatok tárolásához:
+\fontsize{10}{10}
+\begin{verbatim}
+CREATE TABLE MESSAGES
+(
+  ID INT NOT NULL AUTO_INCREMENT,
+  MESSAGE_ID VARCHAR(200) NOT NULL,
+  CONTENT BLOB NOT NULL
+  SENDER_NAME VARCHAR(150)
+  SENDER_SIP_URI VARCHAR(150)
+  SENT_AT DATE
+  SUBJECT VARCHAR(250)
+  CONTENT_TYPE VARCHAR(50),
+  PRIMARY KEY(ID)
+);
+\end{verbatim}
+\fontsize{12}{12}
+
+Az egyes adatmezők jelentése:
+\begin{mydescription}
+\item[ID:] ff 
+\item[MESSAGE\_ID:] ff 
+\item[CONTENT:] ff
+\item[SENDER\_NAME:] ff
+\item[SENDER\_SIP\_URI:] ff
+\item[SENT\_AT:] ff
+\item[SUBJECT:] ff
+\item[CONTENT\_TYPE:] ff     
+\end{mydescription}
+\medskip
+
+\paragraph*{A multimédia üzenet címzettjeinek tárolása\\}
+
+A címzettek tárolásához a következő szerkezetű tábla szükséges:
+\fontsize{10}{10}
+\begin{verbatim}
+CREATE TABLE RECIPIENTS
+(
+  ID INT NOT NULL AUTO_INCREMENT,
+  MESSAGE_ID INT NOT NULL,
+  NAME VARCHAR(150)
+  SIP_URI VARCHAR(150)
+  DELIVERY_STATUS VARCHAR(30)
+  PRIMARY KEY (ID)
+  FOREIGN KEY (MESSAGE_ID)
+  REFERENCES MESSAGES(ID)
+);
+\end{verbatim}
+\fontsize{12}{12}
+
+Az egyes adatmezők jelentése:
+\begin{mydescription}
+\item[ID:] ff 
+\item[MESSAGE\_ID:] ff 
+\item[NAME:]  ff
+\item[SIP\_URI:] ff
+\item[DELIVERY\_STATUS:] ff
+\end{mydescription}
+
+\medskip
 
 \subsection{Megvalósítási terv}
 \label{sec:megvalositas}
