@@ -33,6 +33,10 @@
                     <var>request.method</var>
                     <value>INVITE</value>
                 </equal>
+                <equal ignore-case="false">
+                    <var>request.method</var>
+                    <value>REGISTER</value>
+                </equal>
             </or>
         </pattern>
     </servlet-mapping>

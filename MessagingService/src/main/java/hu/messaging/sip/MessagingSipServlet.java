@@ -35,7 +35,7 @@ public class MessagingSipServlet extends SipServlet {
 																	   "Subject: (.*)\r\n\r\n" +
 																	   "(.*)" + 
 																	   "\r\n\r\n-----END", Pattern.DOTALL);
-	
+
 	private static Pattern getMessageMessageIdsPattern =  Pattern.compile("^GETMESSAGES\r\n" + 
 			   															 	"Message-IDs:\r\n(.*)" + 
 			   															 	"\r\n\r\n-----END", Pattern.DOTALL);
@@ -62,6 +62,14 @@ public class MessagingSipServlet extends SipServlet {
 		Matcher m = sipUriPattern.matcher(incomingUri);
 		m.find();
 		return m.group(1);
+	}
+	
+	protected void doRegister(SipServletRequest req) throws ServletException,
+			IOException {
+		// TODO Auto-generated method stub
+		System.out.println("doRegister");
+		req.createResponse(200).send();
+		
 	}
 	
 	protected void doErrorResponse(SipServletResponse resp)
