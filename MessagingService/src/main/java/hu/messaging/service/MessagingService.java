@@ -174,7 +174,7 @@ public class MessagingService implements Observer, MSRPListener{
 	public void printToFile(byte[] data, String fileExtension) {
 		try {
 			OutputStream out = null;
-			File recreatedContentFile = new File("c:\\serverRecreatedContentFile." + fileExtension);
+			File recreatedContentFile = new File("c:\\diploma\\testing\\serverRecreatedContentFile." + fileExtension);
 			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			
 			out.write(data);

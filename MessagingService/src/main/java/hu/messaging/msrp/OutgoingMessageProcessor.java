@@ -150,11 +150,11 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		try {
 			OutputStream out = null;
 			if (!recreated) {
-				contentFile = new File("c:\\serverContentFile." + fileExtension);
+				contentFile = new File("c:\\diploma\\testing\\serverContentFile." + fileExtension);
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			}
 			else {
-				recreatedContentFile = new File("c:\\serverRecreatedContentFile." + fileExtension);
+				recreatedContentFile = new File("c:\\diploma\\testing\\serverRecreatedContentFile." + fileExtension);
 				out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			}
 			
