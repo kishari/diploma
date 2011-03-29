@@ -186,7 +186,7 @@ public class TransactionManager implements Observer {
 	public void printToFile(byte[] data, String fileExtension) {
 		try {
 			OutputStream out = null;
-			File contentFile = new File("c:\\clientQueueContentFile." + fileExtension);
+			File contentFile = new File("c:\\diploma\\testing\\clientQueueContentFile." + fileExtension);
 			out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 			out.write(data);
