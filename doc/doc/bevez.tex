@@ -1,12 +1,12 @@
 
 \section{Bevezetés}
 
-Ide jön a bevezetés... Íme egy hivatkozás~\cite{KonyvId}. Még egy~\cite{sds_tech_desc}
+Ide jön a bevezetés...
 
 \subsection{Motiváció}
 
 Napjaink infokommunikációs hálózatainak fejlődési tendenciája azt mutatja, hogy az egymástól elszigetelt,
-különálló szolgáltató hálózatok helyett egy konvergált, egységes hálózat van kialakulóban. Egységes hálózaton azt értem, hogy a felhasználók azonos módon érhetik el a szolgáltatásokat, függetlenül attól, hogy éppen milyen hálózatról, milyen eszközzel -- mobil vagy fix -- kívánják ezt megtenni. Ehhez egyrészt az szükséges, hogy a fix és a mobil hálózatok konvergenciája megvalósuljon (fixed-mobile convergence), másrészt a szolgáltatások azonos hálózatra történő konvergeciájára is szükség van (multiple play). Utóbbi azt jelenti, hogy egy szolgáltató ugyanazon a hálózaton képes különböző szolgáltatásokat nyújtani az előfizetőknek. Itt jut szerephez az IMS (IP Multimedia Subsystem). Az IMS-ről részletesebben a \ref{sec:ims}.~fejezetben lesz szó.
+különálló szolgáltató hálózatok helyett egy konvergált, egységes hálózat van kialakulóban. Egységes hálózaton azt értem, hogy a felhasználók azonos módon érhetik el a szolgáltatásokat, függetlenül attól, hogy éppen milyen hálózatról, milyen eszközzel -- mobil vagy fix -- kívánják ezt megtenni. Ehhez egyrészt az szükséges, hogy a fix és a mobil hálózatok konvergenciája megvalósuljon (fixed-mobile convergence), másrészt a szolgáltatások azonos hálózatra történő konvergeciájára is szükség van (multiple play). Utóbbi azt jelenti, hogy egy szolgáltató ugyanazon a hálózaton képes különböző szolgáltatásokat nyújtani az előfizetőknek. Itt jut szerephez az IMS (IP Multimedia Subsystem). Az IMS-ről részletesebben a \aref{sec:ims}.~fejezetben lesz szó.
 
 Korunkban egyre többen használnak különféle elektronikus kommunikációs formákat, különféle környezetben, különböző eszközökkel. Ezek az eszközök jellemzően más-más módon kommunikálnak egymással, amely sok esetben jelentős kompatibilitási problémákhoz vezet.
 
@@ -28,7 +28,7 @@ Az IMS hálózat három rétegre bontható: a maghálózatra, a maghálózat fel
 \center
 \resizebox{11cm}{!}{
 \includegraphics{img/ims-network.eps}}
-\caption{Az IMS hálózat felépítése}
+\caption{Az IMS hálózat felépítése~\cite{ims_figure} }
 \label{fig:model}
 \end{figure}
 
@@ -42,7 +42,7 @@ A maghálózat központi egysége a \emph{Call/Session Control Function} (CSCF),
 \item Az \emph{S-CSCF} (Serving-CSCF) a jelzés sík központi eleme. Mindig a felhasználó otthoni hálózatában helyezkedik el. Feladatai közé tartozik a kapcsolatkezelés, illetve SIP registrar-ként is működik. Ez végzi a felhasználók tartózkodási helyének címe (a terminál IP címe, ahol éppen tartózkodik) illetve a SIP címe (Public User Identity) közötti kötést. A HSS-től kéri le a felhasználók hitelesítő vektorait, profiljait. Utóbbiban van a triggerek halmaza, amelyből tudja, hogy melyik alkalmazás szervernek kell továbbítania a felhasználótól jövő SIP üzeneteket. A felhasználó regisztrációjáról értesíti a HSS-t, amelyben eltárolódik a felhasználó aktuális állapota. Egyik fő funkciója a SIP üzenetek útvonalválasztása. Címfordítást is végez, ha például a felhasználó telefonszámot tárcsáz SIP URI (Uniform Resource Identifier) helyett. Több S-CSCF lehet a hálózatban szintén a skálázhatóság és a redundancia végett.
 \end{itemize}
 
-A maghálózat feletti szolgáltatási réteg tartalmaz egy vagy több \emph{alkalmazás szervert} (Application Server - AS), amely az elérhető szolgáltatásokat nyújtja. Az aktuális szolgáltatástól függően futhat SIP proxyként, vagy SIP User Agentként (SIP UA), mint végpont. Az S-CSCF-vel a SIP protokoll segítségével kommunikál.
+A maghálózat feletti szolgáltatási réteg tartalmaz egy vagy több \emph{alkalmazás szer\-vert} (Application Server - AS), amely az elérhető szolgáltatásokat nyújtja. Az aktuális szolgáltatástól függően futhat SIP proxyként, vagy SIP User Agentként (SIP UA), mint végpont. Az S-CSCF-vel a SIP protokoll segítségével kommunikál.
 
 Az IMS hálózatban jelen van egy vagy több \emph{MRF} (Media Resource Function), amelyek jelzés síkban MRF Controller-ből (MRFC), média síkban MRF Processor-ból (MRFP) állnak.  Az MRF az otthoni hálózatban a média forrása, a médiafolyamok átalakításáért, lejátszásáért felelős. Az MRFC SIP UA-ként viselkedik, H.248-as interfészen keresztül vezérli az MRFP erőforrásait.
 
@@ -52,5 +52,8 @@ Az áramkörkapcsolt hálózatok felé való átjárásért a \emph{PSTN Gateway
 
 \subsubsection{A felhasználók azonosítása}
 
-A felhasználóknak egy vagy több publikus felhasználó azonosítójuk (Public User Identitities), és pontosan egy privát azonosítójuk van (Privat User Identity). A publikus azonosító lehet a SIP URI (Uniform Resource Identifier, RFC 3261), vagy a TEL URI (RFC 3966). Ezen publikus azonosítókat a tartomány operátora osztja ki, és ezeket használja az IMS hálózat az útvonalválasztás során. A privát azonosító nem TEL URI vagy SIP URI, hanem formailag követi a NAI alakot (Network Access Identifier, RFC 2486). A privát azonosítókat csak hitelesítésre használják.
+A felhasználóknak egy vagy több publikus felhasználó azonosítójuk (Public User Identitities), és pontosan egy privát azonosítójuk van (Privat User Identity). A publikus azonosító lehet a SIP URI (Uniform Resource Identifier, RFC 3261~\cite{rfc3261}), vagy a TEL URI (RFC 3966~\cite{rfc3966}). Ezen publikus azonosítókat a tartomány operátora osztja ki, és ezeket használja az IMS hálózat az útvonalválasztás során. A privát azonosító nem TEL URI vagy SIP URI, hanem formailag követi a NAI alakot (Network Access Identifier, RFC 2486~\cite{rfc2486}). A privát azonosítókat csak hitelesítésre használják.
+\\
+\\
+Az IMS hálózatról, az egyes funkcionális egységekről bővebben a \cite{wiley_ims}-es~számú irodalomban olvashat.
 
