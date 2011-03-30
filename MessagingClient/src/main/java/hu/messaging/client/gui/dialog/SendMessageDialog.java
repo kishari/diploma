@@ -30,6 +30,8 @@ import hu.messaging.client.Resources;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.client.model.InfoMessage;
+import hu.messaging.util.*;
 
 public abstract class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
 	
@@ -348,7 +350,8 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 				case MSRPEvent.messageSentSuccess :
 					System.out.println("message sent successful event");
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
-					icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
+					System.out.println(sipMsg);
+					//icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
 					break;
 				case MSRPEvent.messageReceivingSuccess :
 					break;
@@ -360,21 +363,32 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 	}
 	
 	protected String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
+		InfoMessage m = new InfoMessage();
 		completeMessage.setMessageId(messageId);
-		String msg = "RECIPIENTS\r\n";
-		msg += "Message-ID: " + completeMessage.getMessageId() + "\r\n" + 
-			   "Extension: " + completeMessage.getExtension() + "\r\n" +
-			   "Sender: " + completeMessage.getSender() + "\r\n" +
-			   "Subject: " + completeMessage.getSubject() + "\r\n\r\n"; 
+		
+		m.setMessageType("MESSAGE_DATA");		
+		InfoMessage.Details detail = new InfoMessage.Details();
+		detail.setId(completeMessage.getMessageId());
+		detail.setMimeType(completeMessage.getExtension());
+		detail.setSubject(completeMessage.getSubject());
+		
+		InfoMessage.Details.Sender sender = new InfoMessage.Details.Sender();
+		sender.setName("");
+		sender.setSipUri(completeMessage.getSender());		
+		detail.setSender(sender);
+		
 		
 		for (Buddy r : recipients) {
-			msg += r.getDisplayName() + "#" + r.getContact() + "\r\n";
+			InfoMessage.Details.Recipients.Recipient recipient = new InfoMessage.Details.Recipients.Recipient();
+			recipient.setName(r.getDisplayName());
+			recipient.setSipUri(r.getContact());
+			detail.setRecipients(new InfoMessage.Details.Recipients());
+			detail.getRecipients().getRecipient().add(recipient);
 		}
+
+		m.getDetails().add(detail);
 		
-		msg += "\r\n-----END";
-		
-		System.out.println(msg);
-		return msg;
+		return XMLUtils.createStringXMLFromInfoMessage(m);
 	}
 	
 	protected String getFileExtension(File file) {

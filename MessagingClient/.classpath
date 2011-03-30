@@ -31,5 +31,6 @@
 	<classpathentry kind="lib" path="lib/substance.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.4.jar"/>
 	<classpathentry kind="lib" path="lib/activation.jar"/>
+	<classpathentry kind="lib" path="lib/xom-1.2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
