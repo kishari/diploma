@@ -140,6 +140,11 @@ public class TransactionManager implements Observer {
 						if (testCounter % 100 == 0) {
 							System.out.println("send: " + testCounter);
 						}
+						
+						if (testCounter >= 4900) {
+							System.out.println("send: " + testCounter);
+						}
+						
 											
 						session.getSenderConnection().send(data.toString().getBytes());
 					}				

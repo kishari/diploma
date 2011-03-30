@@ -17,13 +17,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Observable;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +33,10 @@ public class ReceiverConnection extends Observable implements Runnable {
 	private Parser preParser;
 	private Router router;
 	private ByteBuffer buff;
+	
+	private Date testDate;
+	
+	int parsedCounter = 0;
 	
 	public ReceiverConnection(InetAddress localHostAddress, MSRPStack msrpStack) throws IOException {
 		this.hostAddress = localHostAddress;
@@ -125,6 +123,9 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private void accept(SelectionKey key) throws IOException {
 		  System.out.println("receiver accept!");
+		  testDate = new Date();
+		  parsedCounter = 0;
+		  
 		    // For an accept to be pending the channel must be a server socket channel.
 		    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
@@ -142,17 +143,22 @@ public class ReceiverConnection extends Observable implements Runnable {
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
 	    //ByteBuffer buff = ByteBuffer.allocate(100000);
 	    buff.clear();
-		int numRead;
+		int numRead = 0;
 		try {
 		   buff.clear();
 		   numRead = socketChannel.read(buff);
-		   System.out.println("numReadByte:" + numRead);
+		   //System.out.println("numReadByte:" + numRead);
 		} catch (IOException e) {
+			System.out.println("Exception van!");
+			e.printStackTrace();
 		// The remote forcibly closed the connection, cancel
 		   key.cancel();
 		   socketChannel.close();
 		   saveBuffers.remove(socketChannel);
 		   return;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
 		}
 
 		if (numRead == -1) {
@@ -238,7 +244,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	}
 	
 	private class Parser implements Runnable {
-		
+				
 		private ByteBuffer parserBuffer;
 		private BlockingQueue<Map<String, Object>> messageQueue = new LinkedBlockingQueue<Map<String, Object>>();
 		private boolean isRunning = false;
@@ -255,6 +261,8 @@ public class ReceiverConnection extends Observable implements Runnable {
 						List<String> chunks = preParse(rawData, channel);
 						//System.out.println("Parser rawData != null");
 						//System.out.println("Parser chunks: " + chunks.size());
+						parsedCounter += chunks.size();
+						//System.out.println("all parsed: " + parsedCounter);
 						ReceiverConnection.this.router.getParsedMessageQueue().addAll(chunks);
 					}				
 				}
@@ -292,7 +300,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 				System.out.println("saveBuffer nem ures");
 				saveBuff += m;
 				m = new String(saveBuff);
-				System.out.println("saveBuffer utan msg: " + m);
+				//System.out.println("saveBuffer utan msg: " + m);
 				saveBuffers.put(channel, new String(""));
 			}
 			
@@ -371,6 +379,8 @@ public class ReceiverConnection extends Observable implements Runnable {
 				parserBuffer.position(parserBuffer.position() - byteCounter);
 				parserBuffer.get(save, 0, byteCounter);
 				saveBuff = new String(save);
+				System.out.println("savebuff length: " + saveBuff.length());
+				printToFile(saveBuff.getBytes());	
 				saveBuffers.put(channel, saveBuff);
 			}
 			
@@ -443,7 +453,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	public void printToFile(byte[] data) {
 		try {
 			OutputStream out = null;
-			File recreatedContentFile = new File("c:\\serverRawData.txt");
+			File recreatedContentFile = new File("c:\\diploma\\testing\\saveBufferData-" + testDate.getTime() + ".txt");
 			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			
 			out.write(data);

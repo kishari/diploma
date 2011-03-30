@@ -147,6 +147,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 
 //>>>>>>>>>>>TESZT
 	public void printToFile(byte[] data, boolean recreated) {
+		System.out.println("printtofile:" + data.length);
 		try {
 			OutputStream out = null;
 			if (!recreated) {

@@ -21,10 +21,13 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	}
 	
 	public void run() {
+		int cnt = 0;
 		while(running) {
 			try {
 				Message mIn = this.incomingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS);
 				if (mIn != null) {
+					cnt++;
+					//System.out.println("incoming message counter: " + cnt);
 					processIncomingMessage(mIn);
 				}				
 			}
