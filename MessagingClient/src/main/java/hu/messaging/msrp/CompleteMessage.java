@@ -81,9 +81,9 @@ public class CompleteMessage {
 		boolean ready = true;
 		
 		ready = ready && (getContent() != null);
-		ready = ready && (getExtension() != null && !"".equals(getExtension()));
-		ready = ready && (getSender() != null && !"".equals(getSender()));
-		ready = ready && (getSubject() != null && !"".equals(getSubject()));
+		ready = ready && (getExtension() != null && !"".equals(getExtension().trim()));
+		ready = ready && (getSender() != null && !"".equals(getSender().trim()));
+		ready = ready && (getSubject() != null && !"".equals(getSubject().trim()));
 		
 		return ready;
 	}

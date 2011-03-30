@@ -228,7 +228,7 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 		      public void actionPerformed(ActionEvent event) {
 		    	  completeMessage.setSender(getLocalUserSipURI());
 		    	  completeMessage.setSubject("tesztSubject");
-		    	  if (completeMessage.isReady()) {		    		  
+		    	  if (completeMessage.isReady() && selectedGroupListModel.size()> 0) {		    		  
 		    		  try {
 		    			  sendButton.setEnabled(false);
 		    			  ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
@@ -241,8 +241,12 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 		    		  }
 		    		  catch(Exception e) { }		    		  		    		  
 		    	  }
+		    	  else {
+		    		  System.out.println("Nincs rendesen kitöltve az üzenet vagy nincsenek címzettek");
+		    	  }
 		      }
-		    });
+		    });		   
+		    
 		    subPanel.add(sendButton);
 
 		    JButton cancelButton = new JButton("Cancel");

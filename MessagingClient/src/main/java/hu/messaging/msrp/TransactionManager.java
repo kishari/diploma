@@ -150,18 +150,16 @@ public class TransactionManager implements Observer {
 					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
 					Message data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 					if (data != null) {
-						System.out.println("send data: " + sentMsgCounter);
-						//Request r = (Request)data;
-						//printToFile(Base64.decodeBase64(r.getContent()), "mp3");
-						if (sentMsgCounter % Constants.burstSize == 0) {
-							do {
-								Thread.sleep(10);
-								System.out.println(ackCounter);
-							} while (ackCounter % Constants.burstSize != 0);
-						}
-						
 						session.getSenderConnection().send(data.toString().getBytes());
 						sentMsgCounter++;
+						System.out.println("send data: " + sentMsgCounter);
+						if (sentMsgCounter % Constants.burstSize == 0) {
+							do {
+								Thread.sleep(100);
+								System.out.println("ackCounter : " + ackCounter);
+								System.out.println("sentMsgCounter : " + sentMsgCounter);
+							} while (sentMsgCounter - ackCounter > Constants.burstSize / 2);
+						}											
 					}				
 				}
 				catch(IOException e) {}

@@ -22,48 +22,17 @@ public class SendAudioMessageDialog extends SendMessageDialog {
 	
 	protected JComponent createCenterPanel()  {
 		
-	    JPanel panel = new JPanel(new BorderLayout());
 	    JPanel subjectTextFieldPanel = new JPanel(new BorderLayout());
-	    JPanel radioPanel = new JPanel(new GridLayout(1, 0));
+	    JPanel radioPanel = new JPanel(new GridLayout(0, 2, 10, 10));
 	    JPanel centerPanel = new JPanel(new BorderLayout());
 	    
-	    final JPanel fromFilePanel = new JPanel(new BorderLayout());
-	    final JPanel fromCaptureDevicePanel = new JPanel(new BorderLayout());
-	    
-	    centerPanel.add(BorderLayout.NORTH, fromFilePanel);
-	    centerPanel.add(BorderLayout.SOUTH, fromCaptureDevicePanel);
-	    
-	    panel.add(BorderLayout.NORTH, radioPanel);
-	    panel.add(BorderLayout.CENTER, centerPanel);
-	    panel.add(BorderLayout.SOUTH, subjectTextFieldPanel);
+	    centerPanel.add(BorderLayout.NORTH, radioPanel);
+	    centerPanel.add(BorderLayout.SOUTH, subjectTextFieldPanel);
 	    
 	    fileChooser = new JFileChooser();
 	    fileChooser.setMultiSelectionEnabled(false);
 	    
-	    this.getFromCaptureDeviceButton().addActionListener(new ActionListener(){
-	    	public void actionPerformed(ActionEvent event) {
-	    		fromCaptureDevicePanel.setVisible(true);
-	    		fromFilePanel.setVisible(false);
-	    	}
-	    });
-	    
-	    this.getFromFileButton().addActionListener(new ActionListener(){
-	    	public void actionPerformed(ActionEvent event) {
-	    		fromCaptureDevicePanel.setVisible(false);
-	    		fromFilePanel.setVisible(true);
-	    	}
-	    });
-	    
-	    fromCaptureDevicePanel.add(new JTextField("Capture", 20)); 
-	    fromFilePanel.add(new JTextField("File", 20));
-	    
-	    fromFilePanel.setVisible(false);
-	    fromCaptureDevicePanel.setVisible(true);
-	    
-	    radioPanel.add(this.getFromCaptureDeviceButton());
-	    radioPanel.add(this.getFromFileButton());
-/*	    
-	    JButton openFileButton = new JButton("Open file");
+	    final JButton openFileButton = new JButton("Open file");
 	    openFileButton.addActionListener(new ActionListener() {
 	      public void actionPerformed(ActionEvent event) {
 	    	  int retVal = fileChooser.showOpenDialog(SendAudioMessageDialog.this);
@@ -77,15 +46,40 @@ public class SendAudioMessageDialog extends SendMessageDialog {
 	    	  }
 	      }
 	    });
-	    buttonsPanel.add(openFileButton);
-*/	    
+	    
+	    openFileButton.setEnabled(false);
+	    
+	    final JButton captureAudioButton = new JButton("Create audio message");
+	    captureAudioButton.addActionListener(new ActionListener() {
+	      public void actionPerformed(ActionEvent event) {
+	      
+	      }
+	    });
+	    
+	    getFromCaptureDeviceButton().addActionListener(new ActionListener(){
+	    	public void actionPerformed(ActionEvent event) {
+	    		openFileButton.setEnabled(false);
+	    		captureAudioButton.setEnabled(true);
+	    	}
+	    });
+	    
+	    getFromFileButton().addActionListener(new ActionListener(){
+	    	public void actionPerformed(ActionEvent event) {
+	    		openFileButton.setEnabled(true);
+	    		captureAudioButton.setEnabled(false);
+	    	}
+	    });	    	      	  	    	   
+	    
+	    radioPanel.add(getFromCaptureDeviceButton());
+	    radioPanel.add(captureAudioButton);
+	    radioPanel.add(getFromFileButton());
+	    radioPanel.add(openFileButton);
+	    
 	    this.setSubjectTextField(new JTextField("Subject", 20));
 	    this.getSubjectTextField().selectAll();
 	    subjectTextFieldPanel.add(this.getSubjectTextField());
-	    
-	    
-
-	    return panel;
+	    	    
+	    return centerPanel;
 	  }
 
 }
