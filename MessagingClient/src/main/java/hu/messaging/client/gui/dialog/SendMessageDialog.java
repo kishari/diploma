@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,28 +17,12 @@ import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.gui.data.Buddy;
-//import hu.messaging.client.gui.util.FileUtils;
 import hu.messaging.client.gui.util.MessageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.ListModel;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import org.apache.commons.io.FileUtils;
 
 import com.ericsson.icp.util.ISessionDescription;
 
@@ -48,7 +31,7 @@ import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 
-public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
+public abstract class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
 	
 	private static final long serialVersionUID = -211908165523434927L;
 	
@@ -67,23 +50,19 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JButton deselectButton;
 	private JButton sendButton;
 	
+	private JTextField subjectTextField;
+	
+	private JRadioButton fromFileButton = new JRadioButton("Létezõ fájl küldése");
+	private JRadioButton fromCaptureDeviceButton = new JRadioButton("Felvétel készítése");
+	private ButtonGroup radioGroup = new ButtonGroup();
+	
 	private CompleteMessage completeMessage = new CompleteMessage();
 	
-	private JFileChooser fileChooser;
-	/**
-     * Indicates if the dialog is closing
-     */
     private boolean closing = false;
-
-    /**
-     * The main menu bar
-     */
-    protected JMenuBar menuBar; 
     
-    public SendMessageDialog(ICPController icpController, ContactListController contactListController)
-    {
+    public SendMessageDialog(ICPController icpController) {
         this.icpController = icpController;
-        this.contactListController = contactListController;
+        this.contactListController = icpController.getContactListController();
         
         setLocation(100, 100);
         //setPreferredSize(new Dimension(500, 300));
@@ -93,6 +72,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
         
         JPanel content = new JPanel(new BorderLayout());
 	    add(content);
+	    
+	    radioGroup.add(fromFileButton);
+	    radioGroup.add(fromCaptureDeviceButton);
+	    fromCaptureDeviceButton.setSelected(true);
+	    
 	    content.add(BorderLayout.NORTH, createGroupSelectionPanel());
 	    content.add(BorderLayout.CENTER, createCenterPanel());
 	    content.add(BorderLayout.SOUTH, createButtonsPanel());
@@ -100,19 +84,15 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    List<String> groupNames = contactListController.getGroupDisplayNames();
 	    String[] groups = groupNames.toArray(new String[groupNames.size()]);
 	    initAvailableGroupList(groups);
-	    
-	    
-		pack();
-		
+	    	    
+		pack();		
     }
 
     /**
      * Process the connection change events
      */
-    public void connectionChanged(ConnectionState event)
-    {
-        switch (event)
-        {
+    public void connectionChanged(ConnectionState event){
+        switch (event) {
             case Connecting:
                 break;
             case Connected:      
@@ -144,24 +124,10 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
     }
     
     @Override
-    protected void processWindowEvent(WindowEvent e)
-    {
+    protected void processWindowEvent(WindowEvent e) {
         super.processWindowEvent(e);
-        if (e.getID() == WindowEvent.WINDOW_CLOSING) 
-        {
+        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
         }        
-    }
-
-    /**
-     * Create a menu item.
-     * @param name of the menu item to create.
-     * @return The created menu item.
-     */
-    protected JMenu createMenu(String name)
-    {
-        JMenu menu = new JMenu(Resources.resources.get(name));
-        menu.setName(name);
-        return menu;
     }
     
     protected JComponent createGroupSelectionPanel() {
@@ -249,36 +215,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 
 	    updateButtonsState();
 	    return mainPanel;
-	  }
-    
-    protected JComponent createCenterPanel() {
-	    JPanel centerPanel = new JPanel(new BorderLayout());
-	    centerPanel.add(BorderLayout.NORTH, new JSeparator());
-	    JPanel buttonsPanel = new JPanel(new BorderLayout());
-	    
-	    centerPanel.add(BorderLayout.NORTH, buttonsPanel);
-
-	    fileChooser = new JFileChooser(); 
-	    fileChooser.setMultiSelectionEnabled(false);
-	    
-	    JButton openFileButton = new JButton("Open file");
-	    openFileButton.addActionListener(new ActionListener() {
-	      public void actionPerformed(ActionEvent event) {
-	    	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
-	    	  if (retVal == JFileChooser.APPROVE_OPTION) {
-	    		  File selectedFile = fileChooser.getSelectedFile();
-	    		  try {
-	    			  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
-	    		  }
-	    		  catch(IOException e) { }	    		  
-	    		  completeMessage.setExtension(getFileExtension(selectedFile));    		  
-	    	  }
-	      }
-	    });
-	    buttonsPanel.add(openFileButton);
-
-	    return centerPanel;
-	  }
+	  }    
     
 	  protected JComponent createButtonsPanel() {
 		    JPanel buttonsPanel = new JPanel(new BorderLayout());
@@ -318,7 +255,9 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    subPanel.add(cancelButton);
 
 		    return buttonsPanel;
-		  }
+	  }
+	  
+	  protected abstract JComponent createCenterPanel();
 	  
 	  private void updateButtonsState() {
 		    selectButton.setEnabled(!availableGroupList.getSelectionModel().isSelectionEmpty());
@@ -359,7 +298,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		completeMessage.setContent(messageContent);
 	}
 	
-	private List<Buddy> getSelectedGroupsMembers() {
+	protected List<Buddy> getSelectedGroupsMembers() {
 		String[] selectedGroupNames = getSelectedGroupNames();		
 		List<Group> allGroup = contactListController.getGroups();
 		
@@ -416,7 +355,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
     	}	 
 	}
 	
-	private String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
+	protected String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
 		completeMessage.setMessageId(messageId);
 		String msg = "RECIPIENTS\r\n";
 		msg += "Message-ID: " + completeMessage.getMessageId() + "\r\n" + 
@@ -434,12 +373,12 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		return msg;
 	}
 	
-	private String getFileExtension(File file) {
+	protected String getFileExtension(File file) {
 		String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
 		return extension;
 	}
 	
-	private String getLocalUserSipURI() {
+	protected String getLocalUserSipURI() {
 		String sipURI = null;
 		try {
 			sipURI = icpController.getProfile().getIdentity().toString();
@@ -448,5 +387,34 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		
 		return sipURI;
 	}
+	
+	public void setMessageExtension(String extension) {
+		completeMessage.setExtension(extension);
+	}
+
+	public JTextField getSubjectTextField() {		
+		return subjectTextField;
+	}
+
+	public void setSubjectTextField(JTextField subjectTextField) {
+		this.subjectTextField = subjectTextField;
+	}
+
+	public JRadioButton getFromFileButton() {
+		return fromFileButton;
+	}
+
+	public void setFromFileButton(JRadioButton fromFileButton) {
+		this.fromFileButton = fromFileButton;
+	}
+
+	public JRadioButton getFromCaptureDeviceButton() {
+		return fromCaptureDeviceButton;
+	}
+
+	public void setFromCaptureDeviceButton(JRadioButton fromCaptureDeviceButton) {
+		this.fromCaptureDeviceButton = fromCaptureDeviceButton;
+	}
+	
 }
 
