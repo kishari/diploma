@@ -30,7 +30,7 @@ import hu.messaging.client.Resources;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
-import hu.messaging.client.model.InfoMessage;
+import hu.messaging.client.model.*;
 import hu.messaging.util.*;
 
 public abstract class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
@@ -351,7 +351,7 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 					System.out.println("message sent successful event");
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
 					System.out.println(sipMsg);
-					//icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
+					icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
 					break;
 				case MSRPEvent.messageReceivingSuccess :
 					break;
@@ -363,30 +363,33 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 	}
 	
 	protected String buildRecipientsSIPMessage(String messageId, List<Buddy> recipients) {
-		InfoMessage m = new InfoMessage();
+		ObjectFactory factory = new ObjectFactory();
+		
+		InfoMessage m = factory.createInfoMessage();
 		completeMessage.setMessageId(messageId);
 		
-		m.setMessageType("MESSAGE_DATA");		
-		InfoMessage.Details detail = new InfoMessage.Details();
+		m.setInfoType("MESSAGE_DATA");		
+		InfoMessage.InfoDetail detail = factory.createInfoMessageInfoDetail();
+		
 		detail.setId(completeMessage.getMessageId());
 		detail.setMimeType(completeMessage.getExtension());
 		detail.setSubject(completeMessage.getSubject());
 		
-		InfoMessage.Details.Sender sender = new InfoMessage.Details.Sender();
+		InfoMessage.InfoDetail.Sender sender = factory.createInfoMessageInfoDetailSender();
 		sender.setName("");
 		sender.setSipUri(completeMessage.getSender());		
 		detail.setSender(sender);
 		
 		
 		for (Buddy r : recipients) {
-			InfoMessage.Details.Recipients.Recipient recipient = new InfoMessage.Details.Recipients.Recipient();
+			InfoMessage.InfoDetail.Recipients.Recipient recipient = factory.createInfoMessageInfoDetailRecipientsRecipient();
 			recipient.setName(r.getDisplayName());
 			recipient.setSipUri(r.getContact());
-			detail.setRecipients(new InfoMessage.Details.Recipients());
+			detail.setRecipients(factory.createInfoMessageInfoDetailRecipients());
 			detail.getRecipients().getRecipient().add(recipient);
 		}
-
-		m.getDetails().add(detail);
+		
+		m.setInfoDetail(detail);
 		
 		return XMLUtils.createStringXMLFromInfoMessage(m);
 	}
