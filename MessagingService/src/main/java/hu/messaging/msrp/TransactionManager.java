@@ -92,6 +92,14 @@ public class TransactionManager implements Observer {
 					}
 					
 					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
+					
+					while (this.sender.getSenderQueue().size() > 0) {
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}

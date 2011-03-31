@@ -112,11 +112,16 @@ public class MessagingSipServlet extends SipServlet {
 	}
 
 	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
-		
+		InfoMessage info = null;
 		System.out.println("doMessage calling...");
 		//System.out.println("Incoming message: " + req.getContent() );
 		req.createResponse(200).send();
 		
+		if (req.getContent().toString().startsWith("<?xml")) {
+			info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(req.getContent().toString());
+			System.out.println(info.getInfoType());
+		}
+		 
 		if (req.getContent().toString().startsWith("GETMESSAGES")) {
 			//System.out.println(req.getContent().toString());
 			List<CompleteMessage> messages = messagingService.getMessagingDao().getMessagesToMessageIds(getMessageIds(req.getContent().toString()));
@@ -132,21 +137,17 @@ public class MessagingSipServlet extends SipServlet {
 			}
 		}
 		
-		if (req.getContent().toString().startsWith("RECIPIENTS")) {
-			Matcher m = recipientsMessagePattern.matcher(req.getContent().toString());
-			m.find();
-			
-			System.out.println(req.getContent().toString());
-			String messageId = m.group(1);
-			String extension = m.group(2);
-			String sender = m.group(3);
-			String[] rTemp = m.group(5).split("\r\n");
+		if (info != null && "MESSAGE_DATA".equals(info.getInfoType().toUpperCase())) {
+			InfoMessage.InfoDetail detail = info.getInfoDetail();
+			String messageId = detail.getId();
+			String extension = detail.getMimeType();
+			String sender = detail.getSender().getSipUri();
 			
 			List<Recipient> recipients = new ArrayList<Recipient>();
 			
-			for (String r : rTemp) {
-				String[] t = r.split("#");
-				Recipient recipient = new Recipient(t[0], t[1]);
+			for (InfoMessage.InfoDetail.Recipients.Recipient r : detail.getRecipients().getRecipient()) {				
+				Recipient recipient = new Recipient(r.getName(), r.getSipUri());
+				System.out.println("recipient name : " + recipient.getName() + " ****** uri: " + recipient.getSipURI());
 				recipients.add(recipient);
 			}
 			

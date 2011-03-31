@@ -152,6 +152,7 @@ public class MessagingService implements Observer, MSRPListener{
 		switch(event.getCode()) {
 			case MSRPEvent.messageReceivingSuccess:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: messageReceivingSuccess");
+				this.messagingDao.insertMessage(event.getCompleteMessage());
 				printToFile(event.getCompleteMessage().getContent(), event.getCompleteMessage().getExtension());
 				break;
 			case MSRPEvent.brokenTrasmission:

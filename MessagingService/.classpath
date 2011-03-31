@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre6"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="lib" path="C:/Ericsson/SDS4.0/extension/eclipse/plugins/com.ericsson.sds.3pp_4.0.2.v20080505/sipservlet/sipservlet.jar"/>
 	<classpathentry kind="lib" path="C:/Ericsson/SDS4.0/extension/eclipse/plugins/com.ericsson.sds.3pp_4.0.2.v20080505/tomcat/common/lib/servlet-api.jar"/>
@@ -9,5 +8,12 @@
 	<classpathentry kind="lib" path="lib/commons-io-1.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/activation.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/j2ee.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxb-xjc.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxp-api-1.4.jar"/>
 	<classpathentry kind="output" path="eclipse_classes"/>
 </classpath>
