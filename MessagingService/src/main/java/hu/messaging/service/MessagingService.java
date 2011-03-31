@@ -1,10 +1,13 @@
 package hu.messaging.service;
 
+import hu.messaging.InfoMessage;
+import hu.messaging.ObjectFactory;
 import hu.messaging.User;
 import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.*;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.util.XMLUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -88,7 +91,7 @@ public class MessagingService implements Observer, MSRPListener{
 	public synchronized void removeUserFromOnlineList(User user) {
 		int index = 0;
 		for (User u : this.onlineUsers) {
-			if (user.getSipURI().equals(u.getSipURI())) {
+			if (user.equals(u)) {
 				u.getTimer().cancel();
 				this.onlineUsers.remove(index);
 				
@@ -98,9 +101,9 @@ public class MessagingService implements Observer, MSRPListener{
 		}
 	}
 	
-	public synchronized User findUserInOnlineList(String sipURI) {
+	public synchronized User findUserInOnlineList(User user) {
 		for (User u : this.onlineUsers) {
-			if (sipURI.equals(u.getSipURI())) {
+			if (user.equals(u)) {
 				return u;
 			}
 		}
@@ -109,12 +112,13 @@ public class MessagingService implements Observer, MSRPListener{
 	
 	public synchronized boolean addUserToOnlineList(User user) {
 		boolean userIsAddedFirst = false;
-		if(findUserInOnlineList(user.getSipURI()) == null) {
+		User u = findUserInOnlineList(user);
+		if(u == null) {
 			this.onlineUsers.add(user);	
 			userIsAddedFirst = true;
 		}
 		else {
-			removeUserFromOnlineList(user);
+			this.removeUserFromOnlineList(user);
 			this.onlineUsers.add(user);			
 		}
 		
@@ -137,15 +141,25 @@ public class MessagingService implements Observer, MSRPListener{
 	}
 	
 	public String createNotifyMessageContent(String sender, String messageId, String extension) {
-		String msg = "MESSAGENOTIFY\r\n\r\n";
-		msg += "Message-ID: " + messageId + "\r\n";
-		msg += "Extension: " + extension + "\r\n";
-		msg += "Sender: " + sender + "\r\n";
-		msg += "Subject: "; 
+		ObjectFactory factory = new ObjectFactory();
+		InfoMessage info = factory.createInfoMessage();
 		
+		info.setInfoType("NOTIFY_USER");
+		InfoMessage.InfoDetail detail = factory.createInfoMessageInfoDetail();
+		
+		detail.setId(messageId);
+		detail.setMimeType(extension);
+		InfoMessage.InfoDetail.Sender s = factory.createInfoMessageInfoDetailSender();
+		s.setName("");
+		s.setSipUri(sender);
+		
+		detail.setSender(s);
+		info.setInfoDetail(detail);
+		
+		String xml = XMLUtils.createStringXMLFromInfoMessage(info);
 		System.out.println("createNotifyMessageContent:");
-		System.out.println(msg);
-		return msg;
+		System.out.println(xml);
+		return xml;
 	}
 
 	public void fireMsrpEvent(MSRPEvent event) {

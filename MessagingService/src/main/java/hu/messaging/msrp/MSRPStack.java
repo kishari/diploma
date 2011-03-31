@@ -44,6 +44,7 @@ public class MSRPStack {
 	}
 	
 	public void sendMessage(CompleteMessage completeMessage, String sipUri) {
+		System.out.println(getClass().getSimpleName() + " sendMessage()");
 		SenderConnection s = getConnections().getSenderConnection(sipUri);
 		Session session = s.getSession();
 		session.sendMessage(completeMessage);

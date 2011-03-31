@@ -58,8 +58,8 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	@SuppressWarnings("unchecked")
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
 		fileExtension = completeMessage.getExtension();
-		
-		this.printToFile(completeMessage.getContent(), false);
+		System.out.println(getClass().getSimpleName() + "processOutgoingMessage()");
+		//this.printToFile(completeMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 
 		int chunkSize = Constants.chunkSize;
@@ -93,7 +93,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //>>>> TESZT
 			Message mTest = MSRPUtil.createMessageFromString(req.toString());
 			Request r = (Request)mTest;
-			this.printToFile(Base64.decodeBase64(r.getContent()), true);
+			//this.printToFile(Base64.decodeBase64(r.getContent()), true);
 //<<<< TESZT
 			
 			offset += chunk.length;

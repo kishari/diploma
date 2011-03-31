@@ -3,6 +3,7 @@ package hu.messaging.sip;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,9 +67,15 @@ public class MessagingSipServlet extends SipServlet {
 	
 	protected void doRegister(SipServletRequest req) throws ServletException,
 			IOException {
-		// TODO Auto-generated method stub
 		System.out.println("doRegister");
+		//System.out.println(req.toString());
 		req.createResponse(200).send();
+		User user = new User(this.getCleanSipUri(req.getTo().toString()), req.getExpires());
+		
+		user.addObserver(this.messagingService);
+		if (this.messagingService.addUserToOnlineList(user)) {
+			notifyUserFromItsNewMessages(req, user);
+		}
 		
 	}
 	
@@ -125,16 +132,13 @@ public class MessagingSipServlet extends SipServlet {
 		if (req.getContent().toString().startsWith("GETMESSAGES")) {
 			//System.out.println(req.getContent().toString());
 			List<CompleteMessage> messages = messagingService.getMessagingDao().getMessagesToMessageIds(getMessageIds(req.getContent().toString()));
+			System.out.println(getClass().getSimpleName() + " messages size: " + messages.size());
 			String sipURI = this.getCleanSipUri(req.getFrom().toString());
 			this.messagingService.sendMessages(messages, sipURI);
 		}
 		
 		if ("UPDATESTATUS".equals(req.getContent())) {
-			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
-			user.addObserver(this.messagingService);
-			if (this.messagingService.addUserToOnlineList(user)) {
-				notifyUserFromItsNewMessages(req);
-			}
+			
 		}
 		
 		if (info != null && "MESSAGE_DATA".equals(info.getInfoType().toUpperCase())) {
@@ -157,8 +161,15 @@ public class MessagingSipServlet extends SipServlet {
 		}
 	}
 
-	private void notifyUserFromItsNewMessages(SipServletRequest req) {
-		System.out.println("notifyUserFromItsNewMessages");		
+	private void notifyUserFromItsNewMessages(SipServletRequest req, User user) throws ServletParseException, IOException {
+		System.out.println("notifyUserFromItsNewMessages");
+		SipServletRequest r = sipFactory.createRequest(sipFactory.createApplicationSession(), "MESSAGE", sipFactory.createAddress("sip:weblogic@ericsson.com") , req.getTo());
+		r.setRequestURI(sipFactory.createURI(req.getTo().toString()));
+		r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
+		r.setContent(messagingService.createNotifyMessageContent("sender", "messageId", "extension"), "text/plain");	        
+		r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
+		System.out.println(r.toString());
+		r.send();
 	}
 	
 	private void notifyOnlineRecipients(SipServletRequest req, 
@@ -174,7 +185,6 @@ public class MessagingSipServlet extends SipServlet {
 					SipServletRequest r = sipFactory.createRequest(req, false);
 					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
 					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-					//r.pushRoute(sipFactory.createSipURI(null, "127.0.0.1:5082"));
 					r.setContent(messagingService.createNotifyMessageContent(sender, messageId, extension), "text/plain");	        
 					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
 					
