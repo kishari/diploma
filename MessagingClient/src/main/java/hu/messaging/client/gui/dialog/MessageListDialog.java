@@ -1,5 +1,6 @@
 package hu.messaging.client.gui.dialog;
 
+import java.io.*;
 import hu.messaging.Constants;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
@@ -57,6 +58,8 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     
     public MessageListDialog(ICPController icpController) {  
     	this.icpController = icpController;
+    	
+    	this.inboxNewMessageList = icpController.getCommunicationController().getIncomingNewMessages();
     	
         setLocation(100, 100);
         setTitle(Resources.resources.get("dialog.messagelist.title"));
@@ -126,7 +129,7 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
          		if (event.getClickCount() == 2) {
          			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
          			if (containsElement(inboxNewMessageList, selectedMessage)) {
-         				System.out.println("get message from server...");         				
+         				System.out.println("New Message: get message from server...");         				
          				try {
          					createMSRPSessionToRemote(Constants.serverSipURI);         					
          				}
@@ -329,6 +332,7 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 					CompleteMessage m = event.getCompleteMessage();
 					copyMessageFromNewMessageListToMessageList(m);
 					MessageUtil.createMessageFile(m, false);
+					this.printToFile(m.getContent(), m.getExtension());
 					icpController.getCommunicationController().sendBye();
 					this.selectedMessage = null;
 					break;
@@ -362,8 +366,10 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     }
     
     public boolean containsElement(List<CompleteMessage> list, CompleteMessage message) {
+    	System.out.println("containsElement");
 		boolean contain = false;
 		for (CompleteMessage m : list) {
+			System.out.println(m.getSender());
 			if (m.getMessageId().equals(message.getMessageId())) {
 				contain = true;
 				break;
@@ -373,6 +379,9 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 	}
     
 	private void createMSRPSessionToRemote(String sipURI) throws Exception {
+		
+		System.out.println("createMSRPSessionToRemote : " + sipURI);
+		
 		ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
 		icpController.getCommunicationController().addMSRPListener(MessageListDialog.this);
 		  
@@ -392,4 +401,21 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 		 }	
 		 inboxMessageList.add(message);		 
 	 }
+	
+	//>>>>>>>>>>>TESZT
+	public void printToFile(byte[] data, String fileExtension) {
+		try {
+			OutputStream out = null;
+			File recreatedContentFile = new File("c:\\diploma\\testing\\clientInboxContentFile." + fileExtension);
+			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
+			
+			out.write(data);
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
+	}
+//<<<<<<<<<<<<<<TESZT	
 }

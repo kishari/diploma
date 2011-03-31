@@ -25,6 +25,7 @@ public class TransactionManager implements Observer {
 
 	private int ackCounter = 0;
 	private int sentMsgCounter = 0;
+	private int incomedMsgCounter = 0;
 	
 	private Map<String, Request> requestMap;
 	private List<Request> requestList;
@@ -90,6 +91,7 @@ public class TransactionManager implements Observer {
 				m = (Message) obj;
 			}
 			if (m.getMethod() == Constants.methodSEND) {
+				incomedMsgCounter++;
 				Request req = (Request) m;
 				this.incomingMessages.put(req.getTransactionId(), req);
 				//Nyugtát küldünk
@@ -158,7 +160,9 @@ public class TransactionManager implements Observer {
 								Thread.sleep(100);
 								System.out.println("ackCounter : " + ackCounter);
 								System.out.println("sentMsgCounter : " + sentMsgCounter);
-							} while (sentMsgCounter - ackCounter > Constants.burstSize / 2);
+								System.out.println("incomedMsgCounter : " + incomedMsgCounter);	
+							} while ((sentMsgCounter - ackCounter > Constants.burstSize / 2) && 
+									 (incomedMsgCounter - sentMsgCounter > Constants.burstSize / 2));
 						}											
 					}				
 				}

@@ -305,14 +305,16 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 	}
 	
 	protected List<Buddy> getSelectedGroupsMembers() {
-		String[] selectedGroupNames = getSelectedGroupNames();		
+		String[] selectedGroupNames = getSelectedGroupNames();
 		List<Group> allGroup = contactListController.getGroups();
 		
 		List<Buddy> selectedGroupMembers = new ArrayList<Buddy>();		
 		List<Group> selectedGroups = new ArrayList<Group>();
 		
 		for (int i = 0; i < selectedGroupNames.length; i++) {
+			System.out.println("selected group name: " + selectedGroupNames[i]);
 			for (Group g : allGroup) {
+				System.out.println(" ---***--- "+ g.getDisplayName() + " " + g.getName());
 				if (g.getDisplayName().equals(selectedGroupNames[i]))  {
 					selectedGroups.add(g);
 					break;
@@ -321,7 +323,9 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 		}
 		
 		for (Group g : selectedGroups) {
+			System.out.println("selected group: " + g.getName());
 			for (Buddy b : g.getBuddies()) {
+				//System.out.println("Buddy: " + b.getContact());
 				boolean isRedundant = false;
 				for (Buddy sb : selectedGroupMembers) {
 					if (b.getContact().equals(sb.getContact())) {
@@ -330,11 +334,13 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 					}
 				}
 				if (!isRedundant) {
+					System.out.println("add: " + b.getContact());
 					selectedGroupMembers.add(b);
 				}
 			}
 		}
 		
+		System.out.println("selected: " + selectedGroupMembers.size());
 		return selectedGroupMembers;
 	}
 	
@@ -380,12 +386,11 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 		sender.setSipUri(completeMessage.getSender());		
 		detail.setSender(sender);
 		
-		
+		detail.setRecipients(factory.createInfoMessageInfoDetailRecipients());		
 		for (Buddy r : recipients) {
 			InfoMessage.InfoDetail.Recipients.Recipient recipient = factory.createInfoMessageInfoDetailRecipientsRecipient();
 			recipient.setName(r.getDisplayName());
-			recipient.setSipUri(r.getContact());
-			detail.setRecipients(factory.createInfoMessageInfoDetailRecipients());
+			recipient.setSipUri(r.getContact());			
 			detail.getRecipients().getRecipient().add(recipient);
 		}
 		

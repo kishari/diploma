@@ -11,7 +11,7 @@ public class MessageUtil {
 
 	public static void createMessageFile(CompleteMessage message, boolean sentMessage) {
 		try {
-			String path = "c:\\";
+			String path = "c:\\diploma\\testing\\";
 			if (sentMessage) {
 				path += "message\\sent";
 				
@@ -29,7 +29,8 @@ public class MessageUtil {
 			out.write("Content:\n " + new String(message.getContent()));
 			
 			out.flush();			
-			out.close();			
+			out.close();
+			
 		}
 		catch(IOException e) { 
 			e.printStackTrace();

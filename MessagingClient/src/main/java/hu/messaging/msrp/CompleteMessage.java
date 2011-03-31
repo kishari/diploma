@@ -44,8 +44,8 @@ public class CompleteMessage {
 		return content;
 	}
 
-	public void setContent(byte[] content) {
-		if (Base64.isArrayByteBase64(content)) {
+	public void setContent(byte[] content) {		
+		if (content != null && Base64.isArrayByteBase64(content)) {
 			this.content = Base64.decodeBase64(content);
 		}
 		else {

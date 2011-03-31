@@ -5,9 +5,13 @@ import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.MSRPStack;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.msrp.Session;
+import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
-import hu.messaging.util.SDPUtil;
+import hu.messaging.util.*;
+import hu.messaging.client.listener.NotifyListener;
+
+import hu.messaging.client.model.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -16,36 +20,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.ericsson.icp.util.ISessionDescription;
 import com.ericsson.icp.util.SdpFactory;
 
-public class CommunicationController
-{
-	private static Pattern notifyMessagesPattern =  Pattern.compile("^MESSAGENOTIFY\r\n\r\n" + 
-			   														"Message-ID: ([\\p{Alnum}]{10,})\r\n" +
-			   														"Extension: (.*)\r\n" +
-			   														"Sender: (sip:[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}" +
-			   														"@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n" +
-			   														"Subject: (.*)", Pattern.DOTALL);
-
-	private List<String> incomingNewMessageDescriptors = new ArrayList<String>();
+public class CommunicationController {
+	
+	private List<InfoMessage> incomingNewMessageDescriptors = new ArrayList<InfoMessage>();
 	
 	private Map<String, String> localSDPs = new HashMap<String, String>();	
 	private MSRPStack msrpStack = new MSRPStack();
-	private Timer timer = null;
+	private List<NotifyListener> notifyListeners = new ArrayList<NotifyListener>();
+	
 	private ICPController icpController;
 	
 	public CommunicationController(ICPController icpController) { 
-		this.icpController = icpController;
-		this.timer = new Timer();
-		this.timer.scheduleAtFixedRate(new UpdateStatusTask(), 
-									   3000, 
-									   Constants.onlineUserTimeOut - 10000);
+		this.icpController = icpController;		
 	}
 	
 	public void createSenderConnection(InetAddress host, int port, String sipUri) {
@@ -128,12 +118,26 @@ public class CommunicationController
 		getMsrpStack().removeMSRPListener(listener);
 	}
 	
-    /**
-     * Send a text instant message to a remote party
-     * 
-     * @param to The sip address were send the message (ex: sip:user@ericsson.com)
-     * @param message The text message to send.
-     */
+	public void addNotifyListener(NotifyListener listener) {
+		this.notifyListeners.add(listener);
+	}
+	
+	public void removeNotifyListener(NotifyListener listener) {
+		this.notifyListeners.remove(listener);
+	}
+	
+	public synchronized void notifyListeners(InfoMessage infoMessage) {
+		List<NotifyListener> temp = new ArrayList<NotifyListener>();
+		synchronized(this.notifyListeners) {
+			for (NotifyListener l : this.notifyListeners ) {
+				temp.add(l);
+			}
+		}
+		for (NotifyListener listener : temp) {					
+			listener.notifyNewMessage(infoMessage);
+		}
+	}
+	
 	public void sendSIPMessage(String to, String message) {
         try
         {
@@ -146,17 +150,14 @@ public class CommunicationController
         }
 	}
 	
-    /**
-     * 
-     * @param remote The callee
-     * @param message The minstant message
-     */
-    public void incomingSIPMessage(String to, String message)
-    {
+    public void incomingSIPMessage(String to, String message) {
     	System.out.println(getClass().getSimpleName() + " incomingSIPMessage: ");
     	System.out.println(message);
-    	if (message.startsWith("MESSAGENOTIFY")) {
-    		incomingNewMessageDescriptors.add(message);
+    	if (message.startsWith("<?xml")) {
+    		InfoMessage info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(message);
+    		if ("NOTIFY_USER".equals(info.getInfoType().toUpperCase().trim())) {
+    			incomingNewMessageDescriptors.add(info);
+    		}    		
     	}
     }
     
@@ -177,20 +178,12 @@ public class CommunicationController
 		this.sendSIPMessage(Constants.serverSipURI, Constants.updateStatusMessage);
 	}
     
-    private class UpdateStatusTask extends TimerTask {
-		public void run() {
-			update();
-		}		
-	}
-    
     public List<CompleteMessage> getIncomingNewMessages() {
     	List<CompleteMessage> newMessages = new ArrayList<CompleteMessage>();
-    	for (String descr : this.incomingNewMessageDescriptors) {
-    		Matcher m = notifyMessagesPattern.matcher(descr);
-    		if (m.find()) {
-        		CompleteMessage cm = new CompleteMessage(m.group(1), null, null, m.group(2), m.group(3));
-        		newMessages.add(cm);
-    		}
+    	for (InfoMessage descr : this.incomingNewMessageDescriptors) {
+    		CompleteMessage cm = new CompleteMessage(descr.getInfoDetail().getId(), null, descr.getInfoDetail().getMimeType(), 
+    												 descr.getInfoDetail().getSender().getSipUri(), descr.getInfoDetail().getSubject());
+        	newMessages.add(cm);    	
     	}
     	
     	return newMessages;
