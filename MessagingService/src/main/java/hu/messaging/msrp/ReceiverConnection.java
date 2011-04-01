@@ -261,7 +261,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 						List<String> chunks = preParse(rawData, channel);
 						//System.out.println("Parser rawData != null");
 						//System.out.println("Parser chunks: " + chunks.size());
-						parsedCounter += chunks.size();
+						//parsedCounter += chunks.size();
 						//System.out.println("all parsed: " + parsedCounter);
 						ReceiverConnection.this.router.getParsedMessageQueue().addAll(chunks);
 					}				

@@ -74,7 +74,7 @@ public class MessagingSipServlet extends SipServlet {
 		
 		user.addObserver(this.messagingService);
 		if (this.messagingService.addUserToOnlineList(user)) {
-			notifyUserFromItsNewMessages(req, user);
+			//notifyUserFromItsNewMessages(req, user);
 		}
 		
 	}

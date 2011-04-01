@@ -58,7 +58,6 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	@SuppressWarnings("unchecked")
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
 		fileExtension = completeMessage.getExtension();
-		System.out.println(getClass().getSimpleName() + "processOutgoingMessage()");
 		//this.printToFile(completeMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 

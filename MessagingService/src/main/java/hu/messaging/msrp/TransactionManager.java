@@ -4,7 +4,11 @@ import hu.messaging.Constants;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.util.MSRPUtil;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,12 +17,14 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class TransactionManager implements Observer {
 
-	private int ackCounter = 0;
-	private int testCounter = 0;
+	private int numOfUnacknowledgedChunks = 0;
+	private int sendCounterTest = 0;
+	private int incCounterTest = 0;
 	
 	private Map<String, Request> requestMap;
 	private List<Request> requestList;
@@ -54,6 +60,7 @@ public class TransactionManager implements Observer {
 
 	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object obj) {
+		//A kimenõ processort csak akkor használjuk, ha mi küldünk chunk-okat.(nyugtánál nem kerül bele semmi.)
 		if (o.toString().contains(OutgoingMessageProcessor.class.getSimpleName())) {
 			requestList = (List<Request>) obj;
 			
@@ -63,7 +70,7 @@ public class TransactionManager implements Observer {
 				requestMap.put(r.getTransactionId(), r);
 			}
 			
-			this.sender.getSenderQueue().add(requestList.get(0));
+			this.sender.getSenderQueue().addAll(requestList);
 		}
 		else if (o.toString().contains(IncomingMessageProcessor.class.getSimpleName())) {	
 			Map<String, Message> map = null;
@@ -76,8 +83,13 @@ public class TransactionManager implements Observer {
 				m = (Message) obj;
 			}
 			if (m.getMethod() == Constants.methodSEND) {
+				printTo(m, false);
 				Request req = (Request) m;
 				this.incomingMessages.put(req.getTransactionId(), req);
+				incCounterTest++;
+				if (incCounterTest % 20 == 0 || incCounterTest > 4900) {
+					System.out.println("incCounterTest: " + incCounterTest);
+				}
 				//Nyugtát küldünk
 				this.sender.getSenderQueue().add(map.get(Keys.createdAck));
 				
@@ -91,11 +103,14 @@ public class TransactionManager implements Observer {
 						chunks.add(this.incomingMessages.get(key));
 					}
 					
-					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
+					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));				
 					
+					System.out.println("senderQueue merete: " + this.sender.getSenderQueue().size());
+					//Várunk amíg minden nyugtát vissza nem küldtünk
 					while (this.sender.getSenderQueue().size() > 0) {
 						try {
 							Thread.sleep(100);
+							System.out.println("var amig nem 0. senderQueue merete: " + this.sender.getSenderQueue().size());
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -105,14 +120,10 @@ public class TransactionManager implements Observer {
 			}
 			else if (m.getMethod() == Constants.method200OK) {
 				Response resp = (Response) m;
-				ackCounter++;
-				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
 
-				//Ha van még küldendõ kérés, akkor elküldjük
-				if (ackCounter < requestList.size()) {
-					this.sender.getSenderQueue().add(requestList.get(ackCounter));
-				}												
-				
+				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
+				numOfUnacknowledgedChunks--;
+
 				if (isAckedTotalSentMessage(ackedReq)) {
 					System.out.println("minden nyugtazva...");
 					MSRPEvent event = new MSRPEvent(MSRPEvent.messageSentSuccess);
@@ -124,37 +135,50 @@ public class TransactionManager implements Observer {
 	}
 
 	private boolean isAckedTotalSentMessage(Request ackedReq) {
-		System.out.println(" ackCounter: " + ackCounter);
+		//System.out.println(" ackCounter: " + ackCounter);
 		int mapSize = this.requestMap.size();
 		boolean empty = this.requestMap.isEmpty();
 		boolean lastChunk = (ackedReq.getEndToken() == '$');
 		boolean t = empty && lastChunk;
-		System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
+		//System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
 		return t;
 	}
 	
 	private class SenderThread implements Runnable {
 		
-		private BlockingQueue<Message> senderQueue = new java.util.concurrent.LinkedBlockingQueue<Message>();
+		private BlockingQueue<Message> senderQueue = new LinkedBlockingQueue<Message>();
 		private boolean isRunning = false;
+		boolean isAck = false;
 		public void run() {
 			while (isRunning) {
 				try {
 					//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
 					//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
-					Message data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+					Message data = senderQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 					
 					if (data != null) {
-						testCounter++;
-						if (testCounter % 100 == 0) {
-							System.out.println("send: " + testCounter);
+						isAck = data instanceof Response;
+						
+						if (!isAck) { 
+							numOfUnacknowledgedChunks++;
+							printTo(data, false);
+						}
+						else {
+							printTo(data, true);
 						}
 						
-						if (testCounter >= 4900) {
-							System.out.println("send: " + testCounter);
-						}
 						
-											
 						session.getSenderConnection().send(data.toString().getBytes());
+						sendCounterTest++;						
+						if (sendCounterTest % 250 == 0 || sendCounterTest > 4900) {
+							System.out.println("sent counter: " + sendCounterTest);
+						}
+						
+						if (!isAck && (numOfUnacknowledgedChunks)  > Constants.unAcknoledgedChunksLimit) {
+							do {
+								Thread.sleep(100);
+								System.out.println("numOfUnacknowledgedChunks : " + numOfUnacknowledgedChunks);
+							} while (numOfUnacknowledgedChunks > Constants.unAcknoledgedChunksLimit);
+						}											
 					}				
 				}
 				catch(IOException e) {}
@@ -173,5 +197,33 @@ public class TransactionManager implements Observer {
 		public BlockingQueue<Message> getSenderQueue() {
 			return senderQueue;
 		}
+	}
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TESZT
+	public void printTo(Message data, boolean isAck) {
+		try {
+			String line = "";
+			File f = null;
+			if (isAck) {
+				Response r = (Response)data;
+				line =  r.getTransactionId() + "\n";
+				f = new File("c:\\diploma\\testing\\serverAckBytes.txt");
+			}
+			else {
+				Request d = (Request)data;
+				line = d.getFirstByte() + "\t" + d.getLastByte() + "\t" + d.getTransactionId() + "\n";
+				f = new File("c:\\diploma\\testing\\serverMsgBytes.txt");
+			}
+
+			OutputStream out = null;
+
+			out = new BufferedOutputStream(new FileOutputStream(f, true));
+			
+			out.write(line.getBytes());
+			out.flush();					
+			out.close();
+		}
+		catch(IOException e) { 
+			e.printStackTrace();
+		}		
 	}
 }
