@@ -160,10 +160,10 @@ public class TransactionManager implements Observer {
 						
 						if (!isAck) { 
 							numOfUnacknowledgedChunks++;
-							printTo(data, false);
+							//printTo(data, false);
 						}
 						else {
-							printTo(data, true);
+							//printTo(data, true);
 						}
 						
 						
@@ -175,7 +175,7 @@ public class TransactionManager implements Observer {
 						
 						if (!isAck && (numOfUnacknowledgedChunks)  > Constants.unAcknoledgedChunksLimit) {
 							do {
-								Thread.sleep(100);
+								Thread.sleep(200);
 								System.out.println("numOfUnacknowledgedChunks : " + numOfUnacknowledgedChunks);
 							} while (numOfUnacknowledgedChunks > Constants.unAcknoledgedChunksLimit);
 						}											

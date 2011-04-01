@@ -140,23 +140,24 @@ public class MessagingService implements Observer, MSRPListener{
 		getMsrpStack().removeMSRPListener(listener);
 	}
 	
-	public String createNotifyMessageContent(String sender, String messageId, String extension) {
+	public String createNotifyMessageContent(InfoMessage info) {
 		ObjectFactory factory = new ObjectFactory();
-		InfoMessage info = factory.createInfoMessage();
+		InfoMessage i = factory.createInfoMessage();
 		
-		info.setInfoType("NOTIFY_USER");
-		InfoMessage.InfoDetail detail = factory.createInfoMessageInfoDetail();
+		i.setInfoType("NOTIFY_USER");
+		InfoMessage.InfoDetail detail = factory.createInfoMessageInfoDetail();		
+		detail.setId(info.getInfoDetail().getId());
+		detail.setMimeType(info.getInfoDetail().getMimeType());
+		detail.setSubject(info.getInfoDetail().getSubject());
 		
-		detail.setId(messageId);
-		detail.setMimeType(extension);
 		InfoMessage.InfoDetail.Sender s = factory.createInfoMessageInfoDetailSender();
-		s.setName("");
-		s.setSipUri(sender);
+		s.setName(info.getInfoDetail().getSender().getName());
+		s.setSipUri(info.getInfoDetail().getSender().getSipUri());
 		
 		detail.setSender(s);
-		info.setInfoDetail(detail);
+		i.setInfoDetail(detail);
 		
-		String xml = XMLUtils.createStringXMLFromInfoMessage(info);
+		String xml = XMLUtils.createStringXMLFromInfoMessage(i);
 		System.out.println("createNotifyMessageContent:");
 		System.out.println(xml);
 		return xml;

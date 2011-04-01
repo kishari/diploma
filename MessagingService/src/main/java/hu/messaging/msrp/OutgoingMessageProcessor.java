@@ -74,7 +74,15 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		int offset = 1;
 		char endToken = '+';
 		String tId = "";
-		String messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
+		
+		String messageId = "";
+		if (completeMessage.getMessageId() != null && completeMessage.getMessageId().trim().length() > 0) {
+			messageId = completeMessage.getMessageId();
+		}
+		else {
+			messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
+		}
+		 
 		List<Request> requestList = new ArrayList<Request>();
 		
 		for (byte[] chunk : chunks) {			
