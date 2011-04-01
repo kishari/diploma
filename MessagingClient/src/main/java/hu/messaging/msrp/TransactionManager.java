@@ -122,7 +122,7 @@ public class TransactionManager implements Observer {
 			else if (m.getMethod() == Constants.method200OK) {
 				Response resp = (Response) m;
 				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
-				printTo(m, true);
+				//printTo(m, true);
 				decrementNumOfUnacknowledgedChunks();
 
 				//Ha van még küldendõ kérés, akkor elküldjük
@@ -169,13 +169,13 @@ public class TransactionManager implements Observer {
 						if (!isAck) incrementNumOfUnacknowledgedChunks();
 						
 						session.getSenderConnection().send(data.toString().getBytes());
-						printTo(data, false);
+						//printTo(data, false);
 						sendCounterTest++;
 						
 						if (sendCounterTest % 100 == 0 || sendCounterTest > 4900) {
 							System.out.println("sent counter: " + sendCounterTest);
 							if (sendCounterTest > 4910) {
-								Request r = (Request)data;
+								//Request r = (Request)data;
 								//System.out.println(data.toString());
 							}
 						}

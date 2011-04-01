@@ -5,7 +5,6 @@ import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.MSRPStack;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.msrp.Session;
-import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.util.*;
@@ -156,7 +155,9 @@ public class CommunicationController {
     	if (message.startsWith("<?xml")) {
     		InfoMessage info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(message);
     		if ("NOTIFY_USER".equals(info.getInfoType().toUpperCase().trim())) {
-    			incomingNewMessageDescriptors.add(info);
+    			MessageContainer c = MessageUtils.createMessageContainerFromNotifyInfoMessage(info);
+    			MessageUtils.createMessageContainerFile(c, null);
+    			
     		}    		
     	}
     }
@@ -172,10 +173,6 @@ public class CommunicationController {
 			icpController.getSession().end();
 		}
 		catch(Exception e) { }		
-	}
-	
-    private void update() {
-		this.sendSIPMessage(Constants.serverSipURI, Constants.updateStatusMessage);
 	}
     
     public List<CompleteMessage> getIncomingNewMessages() {

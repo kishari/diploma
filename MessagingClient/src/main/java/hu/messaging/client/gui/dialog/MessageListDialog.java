@@ -4,11 +4,12 @@ import java.io.*;
 import hu.messaging.Constants;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
-import hu.messaging.client.gui.util.MessageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.util.MessageUtils;
+import hu.messaging.client.model.*;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -45,21 +46,21 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     private JPanel inboxPanel;
     private JPanel sentPanel;
     
-    private CompleteMessage selectedMessage = null;
+    private MessageContainer selectedMessage = null;
     
     private DefaultTableModel inboxMessageTableModel;
     private DefaultTableModel sentMessageTableModel;
     
-    private List<CompleteMessage> inboxMessageList = new ArrayList<CompleteMessage>();
-    private List<CompleteMessage> inboxNewMessageList = new ArrayList<CompleteMessage>();
-    private List<CompleteMessage> sentMessageList = new ArrayList<CompleteMessage>();
+    private List<MessageContainer> inboxMessageList = new ArrayList<MessageContainer>();
+    private List<MessageContainer> sentMessageList = new ArrayList<MessageContainer>();
 
     private ICPController icpController;
     
     public MessageListDialog(ICPController icpController) {  
     	this.icpController = icpController;
     	
-    	this.inboxNewMessageList = icpController.getCommunicationController().getIncomingNewMessages();
+    	inboxMessageList = MessageUtils.loadInboxMessages();
+    	sentMessageList = MessageUtils.loadSentMessages();
     	
         setLocation(100, 100);
         setTitle(Resources.resources.get("dialog.messagelist.title"));
@@ -80,7 +81,7 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
         
         messagePane = new JTabbedPane();
         messagePane.add("inbox", inboxPanel);
-        messagePane.add("sent", sentPanel);
+        messagePane.add("sent", sentPanel);        
         
         add(messagePane);
         pack();
@@ -124,21 +125,26 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     	 DefaultTableModel messageTableModel;
     	    	 
          JTable messageTable = new JTable();
-         messageTable.addMouseListener(new MouseAdapter() {
-         	public void mouseClicked(MouseEvent event) {
-         		if (event.getClickCount() == 2) {
-         			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
-         			if (containsElement(inboxNewMessageList, selectedMessage)) {
-         				System.out.println("New Message: get message from server...");         				
-         				try {
-         					createMSRPSessionToRemote(Constants.serverSipURI);         					
-         				}
-         				catch(Exception e) { } 
-         			}
-         		}         		
-         	}
-         });
-                           
+        	 messageTable.addMouseListener(new MouseAdapter() {
+              	public void mouseClicked(MouseEvent event) {
+              		if (event.getClickCount() == 2) {
+              			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
+              			selectedMessage.getId();
+              			//Itt kellene egy progressAblak, amiben a letöltés állapotát jelzi
+              			if (!"SENT".equals(selectedMessage.getStatus()) && !selectedMessage.isContentAvailable()) {
+              				System.out.println("content nem elerheto. get content from server...");         				
+              				try {
+              					createMSRPSessionToRemote(Constants.serverSipURI);         					
+              				}
+              				catch(Exception e) { } 
+              			}
+              			else {
+              				System.out.println("Majd megmutatom egy ablakban!");
+              			}
+              		}         		
+              	}
+              }); 
+         
          final int checkboxIndex = isInboxPanel ? 3 : 1;
          
          messageTableModel = new DefaultTableModel() {        	
@@ -192,24 +198,18 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
          messageTable.getTableHeader().getColumnModel().getColumn(checkboxIndex+1).setMaxWidth(0);
          messageTable.getTableHeader().getColumnModel().getColumn(checkboxIndex+1).setResizable(false);
               
-         if (isInboxPanel) {
-        	 inboxNewMessageList = icpController.getCommunicationController().getIncomingNewMessages();
-             for (CompleteMessage m : inboxNewMessageList) {
-            	 System.out.println(m.getMessageId() + " " + m.getSender());
-            	 messageTableModel.addRow(new Object[] { "NEW", m.getSender(), m.getSubject(), false, m.getMessageId() });          
-             }
-             
-        	 List<CompleteMessage> inboxMessages = getTestIncomingMessages();
-             for (CompleteMessage m : inboxMessages) {
-            	 messageTableModel.addRow(new Object[] { "READ", m.getSender(), m.getSubject(), false, m.getMessageId() });
+         if (isInboxPanel) {        	 
+             for (MessageContainer m : this.inboxMessageList) {
+            	 MessageContainer.Sender s = m.getSender();
+            	 String senderLabelText = s.getName() != null && s.getName().trim().length() != 0 ? s.getName() : s.getSipUri();
+            	 messageTableModel.addRow(new Object[] { m.getStatus(), senderLabelText, m.getSubject(), false, m.getId() });
              }
                           
          }
          else {
-        	 List<CompleteMessage> sentMessages = getTestSentMessages();
-             for (CompleteMessage m : sentMessages)
+             for (MessageContainer m : this.sentMessageList)
              {
-            	 messageTableModel.addRow(new Object[] { m.getSubject(), false, m.getMessageId() });            	 
+            	 messageTableModel.addRow(new Object[] { m.getSubject(), false, m.getId() });            	 
              }  
          }
               
@@ -228,43 +228,13 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
          
          return messageTablePanel;
     }
-	
-    private List<CompleteMessage> getTestIncomingMessages() {    	
-    	for (int i = 0; i < 5; i++) {
-    		CompleteMessage m = new CompleteMessage("messageId " + i , 
-    												null, 
-    												"extension " + i, 
-    												"sender " + i,
-    												"subject " + i);    		
-    		inboxMessageList.add(m);
-    	}
-    	return inboxMessageList;
-    }
     
-    private List<CompleteMessage> getTestSentMessages() {    	
-    	for (int i = 0; i < 5; i++) {
-    		CompleteMessage m = new CompleteMessage("sentmessageId " + i , 
-    												null, 
-    												"sentextension " + i, 
-    												"sentsender " + i,
-    												"sentsubject " + i);    		
-    		sentMessageList.add(m);
-    	}
-    	return sentMessageList;
-    }
-    
-    private CompleteMessage getSelectedMessage(int row, int tabIndex) {
-    	CompleteMessage m = null;
+    private MessageContainer getSelectedMessage(int row, int tabIndex) {
+    	MessageContainer m = null;
     	if (tabIndex == 0) {
     		System.out.println("row: " + row);
-    		if (row < inboxNewMessageList.size()) {
-    			System.out.println("(inboxNewMessageList.size()): " + (inboxNewMessageList.size()));
-    			m = inboxNewMessageList.get(row);
-    		}
-    		else {
-    			System.out.println("(row - inboxNewMessageList.size()): " + (row - inboxNewMessageList.size()));
-    			m = inboxMessageList.get(row - inboxNewMessageList.size());
-    		}
+   			System.out.println("(inboxMessageList.size()): " + (inboxMessageList.size()));
+   			m = inboxMessageList.get(row);
     	}
     	else {
     		m = sentMessageList.get(row);
@@ -303,10 +273,10 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     			idx++;
     		}
     			
-    		List<CompleteMessage> list = (tabIndex == 0) ? inboxMessageList : sentMessageList;
+    		List<MessageContainer> list = (tabIndex == 0) ? inboxMessageList : sentMessageList;
     		int mIdx = 0;
-    		for (CompleteMessage m : list) {    			
-    			if (mId.equals(m.getMessageId())) {
+    		for (MessageContainer m : list) {    			
+    			if (mId.equals(m.getId())) {
     				list.remove(mIdx);
     				break;
     			}
@@ -320,7 +290,7 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :
 					String msg = "GETMESSAGES\r\n" +
-			   		 			 "Message-IDs:\r\n" + selectedMessage.getMessageId() + 
+			   		 			 "Message-IDs:\r\n" + selectedMessage.getId() + 
 			   		 			 "\r\n\r\n-----END";
 					icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, msg);
 					break;
@@ -330,8 +300,7 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 					break;
 				case MSRPEvent.messageReceivingSuccess :
 					CompleteMessage m = event.getCompleteMessage();
-					copyMessageFromNewMessageListToMessageList(m);
-					MessageUtil.createMessageFile(m, false);
+					MessageUtils.updateMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(m, false), m.getContent());
 					this.printToFile(m.getContent(), m.getExtension());
 					icpController.getCommunicationController().sendBye();
 					this.selectedMessage = null;
@@ -365,19 +334,6 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
         }
     }
     
-    public boolean containsElement(List<CompleteMessage> list, CompleteMessage message) {
-    	System.out.println("containsElement");
-		boolean contain = false;
-		for (CompleteMessage m : list) {
-			System.out.println(m.getSender());
-			if (m.getMessageId().equals(message.getMessageId())) {
-				contain = true;
-				break;
-			}
-		}
-		return contain;
-	}
-    
 	private void createMSRPSessionToRemote(String sipURI) throws Exception {
 		
 		System.out.println("createMSRPSessionToRemote : " + sipURI);
@@ -389,18 +345,6 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 		icpController.getCommunicationController().sendInvite(sdp);
 		icpController.getCommunicationController().addLocalSDP(sipURI, sdp.format());
 	}
-	
-	private void copyMessageFromNewMessageListToMessageList(CompleteMessage message) {
-		 int index = 0;
-		 for (CompleteMessage m : inboxNewMessageList) {
-			 if (m.getMessageId().equals(message.getMessageId())) {
-				 inboxNewMessageList.remove(index);
-				 break;
-			 }
-			 index++;
-		 }	
-		 inboxMessageList.add(message);		 
-	 }
 	
 	//>>>>>>>>>>>TESZT
 	public void printToFile(byte[] data, String fileExtension) {

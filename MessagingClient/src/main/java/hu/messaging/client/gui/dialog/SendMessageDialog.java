@@ -17,7 +17,6 @@ import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.gui.data.Buddy;
-import hu.messaging.client.gui.util.MessageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
 import javax.swing.*;
@@ -116,7 +115,7 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
                 break;           
             case RecipientsSentSuccessful:
         		icpController.getCommunicationController().sendBye();
-        		MessageUtil.createMessageFile(completeMessage, true);
+        		//MessageUtils.createMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(completeMessage, true), completeMessage.getContent());
             	break;
             case ConnectionFinished:
             	icpController.getCommunicationController().removeMSRPListener(this);
@@ -356,7 +355,6 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 				case MSRPEvent.messageSentSuccess :
 					System.out.println("message sent successful event");
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
-					System.out.println(sipMsg);
 					icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
 					break;
 				case MSRPEvent.messageReceivingSuccess :

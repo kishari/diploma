@@ -27,5 +27,13 @@ public class ObjectFactory {
  public InfoMessage.InfoDetail.Recipients.Recipient createInfoMessageInfoDetailRecipientsRecipient() {
      return new InfoMessage.InfoDetail.Recipients.Recipient();
  }
+ 
+ public MessageContainer createMessageContainer() {
+     return new MessageContainer();
+ }
+
+ public MessageContainer.Sender createMessageContainerSender() {
+     return new MessageContainer.Sender();
+ }
 
 }

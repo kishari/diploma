@@ -17,6 +17,8 @@ public class Constants {
 	public static final int unAcknoledgedChunksLimit = 25;
 	public static final String updateStatusMessage = "UPDATESTATUS";
 	public static final String serverSipURI = "sip:weblogic@ericsson.com";
+	public static final String messagesPath = "C:\\diploma\\testing\\messages\\";
+	public static final String messagesContentsRelativePath = "contents\\";
 	
     public static final Map<Integer, String> methods = new HashMap<Integer, String>(){
 		{
