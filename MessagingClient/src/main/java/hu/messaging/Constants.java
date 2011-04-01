@@ -6,7 +6,7 @@ public class Constants {
 	
 	public static final int methodSEND = 1;
 	public static final int method200OK = 2;
-	public static final int queuePollTimeout = 500; //ms
+	public static final int queuePollTimeout = 300; //ms
 	public static final int chunkSize = 2048; //byte
 	public static final int sessionIdLength = 20;
 	public static final int transactionIdLength = 10;
@@ -14,6 +14,7 @@ public class Constants {
 	public static final int receiverBufferSize = 1000000;	
 	public static final int onlineUserTimeOut = 60000;
 	public static final int burstSize = 50;
+	public static final int unAcknoledgedChunksLimit = 25;
 	public static final String updateStatusMessage = "UPDATESTATUS";
 	public static final String serverSipURI = "sip:weblogic@ericsson.com";
 	
