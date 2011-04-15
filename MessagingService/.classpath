@@ -8,12 +8,12 @@
 	<classpathentry kind="lib" path="lib/commons-io-1.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.4.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/activation.jar"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/j2ee.jar"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxb-api.jar"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxb-impl.jar"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxb-xjc.jar"/>
 	<classpathentry kind="lib" path="web/WEB-INF/lib/jaxp-api-1.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk150_10"/>
 	<classpathentry kind="output" path="eclipse_classes"/>
 </classpath>

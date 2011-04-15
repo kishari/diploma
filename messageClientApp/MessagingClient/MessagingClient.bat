@@ -1,0 +1,1 @@
+java -cp MessagingClient.jar;lib\substance.jar;lib\commons-codec-1.4.jar;lib\activation.jar;lib\xom-1.2.1.jar;lib\commons-io-1.4.jar;IcpJni.jar;PGMJni.jar;PoCJni.jar;VoipJni.jar;WeShareJni.jar hu.messaging.client.gui.Main

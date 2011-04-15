@@ -58,7 +58,7 @@ public class ICPController {
     /**
      * The service static ID
      */
-    private static final String SERVICE_ID = "+g.messagingclient";
+    private static final String SERVICE_ID = "+g.multicastClient";
 
     /**
      * The application static ID
