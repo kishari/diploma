@@ -1,6 +1,7 @@
 package hu.messaging.client.gui.dialog;
 
 import java.io.*;
+
 import hu.messaging.Constants;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
@@ -10,6 +11,7 @@ import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.util.MessageUtils;
 import hu.messaging.client.model.*;
+import hu.messaging.client.media.audio.*;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -129,7 +131,6 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
               	public void mouseClicked(MouseEvent event) {
               		if (event.getClickCount() == 2) {
               			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
-              			selectedMessage.getId();
               			//Itt kellene egy progressAblak, amiben a letöltés állapotát jelzi
               			if (!"SENT".equals(selectedMessage.getStatus()) && !selectedMessage.isContentAvailable()) {
               				System.out.println("content nem elerheto. get content from server...");         				
@@ -139,6 +140,9 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
               				catch(Exception e) { } 
               			}
               			else {
+              				AudioPlayer p = new AudioPlayer();
+              				p.play(getMessageContent(selectedMessage));
+              				
               				System.out.println("Majd megmutatom egy ablakban!");
               			}
               		}         		
@@ -241,6 +245,23 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     	}
     	return m;
     }
+    
+    private byte[] getMessageContent(MessageContainer m) {
+		File contentFile = new File(Constants.messagesPath + 
+									Constants.messagesContentsRelativePath + 
+									m.getId() + "." + m.getMimeType());
+		byte content[] = new byte[(int) contentFile.length()];
+
+		try {
+			FileInputStream fin = new FileInputStream(contentFile);
+			fin.read(content);
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found" + e);
+		} catch (IOException ioe) {
+			System.out.println("Exception while reading the file " + ioe);
+		}
+		return content;
+	}
     
     @SuppressWarnings("unchecked")
 	private void deleteSelectedMessages(int tabIndex) {

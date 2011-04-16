@@ -23,7 +23,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 public class MessagingDAO {
 	 private DataSource dataSource = null;
 	 public static final String DATA_SOURCE_NAME = "jdbc/messagingDataSource";
-	 private static final String INSERT_MESSAGE = "insert into  messages(messageId, content, sender, extension) values (?, ?, ?, ?)";
+	 private static final String INSERT_MESSAGE = "insert into  messagingdb.messages(messageId, content, sender, extension) values (?, ?, ?, ?)";
 	 private static final String UPDATE_MESSAGE = "update messagingdb.messages set extension=?, sender=? " +
 	 														 "where messageId=?";
 	 private static final String INSERT_RECIPIENT = "insert into  messagingdb.recipients(messageId, name, address) values (?, ?, ?)";

@@ -94,7 +94,7 @@ public class MessageUtils {
 	public static MessageContainer readMessageContainerFromFile(String messageId) {
 		File dir = new File(Constants.messagesPath + Constants.messagesContentsRelativePath);
 		File messageFile = new File(dir, messageId + ".message");
-		MessageContainer m = XMLUtils.createMessageContainerFromFile(messageFile);			
+		MessageContainer m = XMLUtils.createMessageContainerFromFile(messageFile);			        
 		
 		return m;
 	}
