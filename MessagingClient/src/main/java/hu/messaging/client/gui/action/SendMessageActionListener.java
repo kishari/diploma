@@ -1,7 +1,7 @@
 package hu.messaging.client.gui.action;
 
 import hu.messaging.client.gui.controller.ICPController;
-import hu.messaging.client.gui.dialog.SendAudioMessageDialog;
+import hu.messaging.client.gui.dialog.SendMessageDialog;
 
 import java.awt.Container;
 import java.awt.event.ActionEvent;
@@ -19,7 +19,7 @@ public class SendMessageActionListener extends BuddyActionListener
 	{
 		System.out.println(getClass().getSimpleName() + " actionPerformed...");		
 			
-		SendAudioMessageDialog dialog = new SendAudioMessageDialog(icpController);
+		SendMessageDialog dialog = new SendMessageDialog(icpController);
     	dialog.setVisible(true);
     	
     	

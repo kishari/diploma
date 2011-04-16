@@ -1,4 +1,4 @@
-package hu.messaging.client.media;
+package hu.messaging.client.gui.dialog;
 
 import hu.messaging.client.media.audio.AudioConverter;
 
@@ -8,16 +8,16 @@ import java.awt.event.*;
 import java.io.*;
 import javax.sound.sampled.*;
 
-public class CaptureFrame extends JFrame {
+public class CaptureDialog extends JFrame {
 
-    boolean stopCapture = false;
-    ByteArrayOutputStream baos;
-    AudioFormat audioFormat;
-    TargetDataLine targetDataLine;
-    AudioInputStream audioInputStream;
-    SourceDataLine sourceDataLine;
+    private boolean stopCapture = false;
+    private ByteArrayOutputStream baos;
+    private AudioFormat audioFormat;
+    private TargetDataLine targetDataLine;
+    private AudioInputStream audioInputStream;
+    private SourceDataLine sourceDataLine;
 
-    public CaptureFrame() {
+    public CaptureDialog() {
         final JButton captureBtn = new JButton("Capture");
         final JButton stopBtn = new JButton("Stop");
         final JButton playBtn = new JButton("Playback");
@@ -44,11 +44,23 @@ public class CaptureFrame extends JFrame {
                 playBtn.setEnabled(true);
                 stopCapture = true;
                 AudioConverter converter = new AudioConverter();
+                byte[] convertedData = null;
                 try {
-                    converter.encodeStream(baos.toByteArray(), "c:\\diploma\\testing\\Mp3.mp3");
+                	convertedData = converter.encodeStream(baos.toByteArray(), "c:\\diploma\\testing\\Mp3.mp3");
                 } catch (Exception e1) {
                     e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
+                
+                File f = new File("c:\\diploma\\testing\\Mp3_2.mp3");
+                try {
+                	FileOutputStream fos = new FileOutputStream(f);
+                	fos.write(convertedData);
+                	fos.flush();
+                	fos.close();
+                } catch (Exception e1) {
+                    e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                
             }
         });
 
@@ -63,9 +75,9 @@ public class CaptureFrame extends JFrame {
         getContentPane().add(playBtn);
 
         getContentPane().setLayout(new FlowLayout());
-        setTitle("Capture/Playback Demo");
+        setTitle("Capture window");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(250, 70);
+        setSize(300, 100);
         setVisible(true);
     }
 
@@ -168,7 +180,7 @@ public class CaptureFrame extends JFrame {
 
     public static void main(String[] args) {
         // TODO Auto-generated method stub
-        new CaptureFrame();
+        new CaptureDialog();
     }
 
 }

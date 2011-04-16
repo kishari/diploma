@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.commons.io.FileUtils;
+
 import com.ericsson.icp.util.ISessionDescription;
 
 import hu.messaging.client.Resources;
@@ -32,12 +35,14 @@ import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.client.model.*;
 import hu.messaging.util.*;
 
-public abstract class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
+public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
 	
 	private static final long serialVersionUID = -211908165523434927L;
 	
 	private JList availableGroupList;
 	private JList selectedGroupList;
+	
+	private JFileChooser fileChooser;
 
 	private ICPController icpController;
 	private ContactListController contactListController;
@@ -262,7 +267,66 @@ public abstract class SendMessageDialog extends JFrame implements ConnectionList
 		    return buttonsPanel;
 	  }
 	  
-	  protected abstract JComponent createCenterPanel();
+	  protected JComponent createCenterPanel() {
+		  JPanel subjectTextFieldPanel = new JPanel(new BorderLayout());
+		  JPanel radioPanel = new JPanel(new GridLayout(0, 2, 10, 10));
+		  JPanel centerPanel = new JPanel(new BorderLayout());
+		    
+		  centerPanel.add(BorderLayout.NORTH, radioPanel);
+		  centerPanel.add(BorderLayout.SOUTH, subjectTextFieldPanel);
+		   
+		  fileChooser = new JFileChooser();
+		  fileChooser.setMultiSelectionEnabled(false);
+		  
+		  final JButton openFileButton = new JButton("Open file");
+		  openFileButton.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent event) {
+		  	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
+		   	  if (retVal == JFileChooser.APPROVE_OPTION) {
+		    		  File selectedFile = fileChooser.getSelectedFile();
+		    		  try {
+		    			  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
+		    		  }
+		    		  catch(IOException e) { }	    		  
+		    		  setMessageExtension(getFileExtension(selectedFile));    		  
+		    	  }
+		      }
+		    });
+		    
+		    openFileButton.setEnabled(false);
+		    
+		    final JButton captureButton = new JButton("Capture message");
+		    captureButton.addActionListener(new ActionListener() {
+		      public void actionPerformed(ActionEvent event) {
+		    	  CaptureDialog cDialog = new CaptureDialog();
+		      }
+		    });
+		    
+		    getFromCaptureDeviceButton().addActionListener(new ActionListener(){
+		    	public void actionPerformed(ActionEvent event) {
+		    		openFileButton.setEnabled(false);
+		    		captureButton.setEnabled(true);
+		    	}
+		    });
+		    
+		    getFromFileButton().addActionListener(new ActionListener(){
+		    	public void actionPerformed(ActionEvent event) {
+		    		openFileButton.setEnabled(true);
+		    		captureButton.setEnabled(false);
+		    	}
+		    });	    	      	  	    	   
+		    
+		    radioPanel.add(getFromCaptureDeviceButton());
+		    radioPanel.add(captureButton);
+		    radioPanel.add(getFromFileButton());
+		    radioPanel.add(openFileButton);
+		    
+		    this.setSubjectTextField(new JTextField("Subject", 20));
+		    this.getSubjectTextField().selectAll();
+		    subjectTextFieldPanel.add(this.getSubjectTextField());
+		    	    
+		    return centerPanel;		
+	  }
 	  
 	  private void updateButtonsState() {
 		    selectButton.setEnabled(!availableGroupList.getSelectionModel().isSelectionEmpty());
