@@ -16,15 +16,19 @@ public class CaptureDialog extends JFrame {
     private TargetDataLine targetDataLine;
     private AudioInputStream audioInputStream;
     private SourceDataLine sourceDataLine;
+    private byte[] capturedContent = null;
+    private String capturedContentExtension = "";
 
     public CaptureDialog() {
         final JButton captureBtn = new JButton("Capture");
         final JButton stopBtn = new JButton("Stop");
         final JButton playBtn = new JButton("Playback");
+        final JButton okButton = new JButton("OK");
 
         captureBtn.setEnabled(true);
         stopBtn.setEnabled(false);
         playBtn.setEnabled(false);
+        okButton.setEnabled(false);
 
         captureBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -42,25 +46,15 @@ public class CaptureDialog extends JFrame {
                 captureBtn.setEnabled(true);
                 stopBtn.setEnabled(false);
                 playBtn.setEnabled(true);
+                okButton.setEnabled(true);
                 stopCapture = true;
-                AudioConverter converter = new AudioConverter();
-                byte[] convertedData = null;
+                AudioConverter converter = new AudioConverter();                
                 try {
-                	convertedData = converter.encodeStream(baos.toByteArray(), "c:\\diploma\\testing\\Mp3.mp3");
+                	capturedContent = converter.encodeStream(baos.toByteArray(), "c:\\diploma\\testing\\Mp3.mp3");
+                	capturedContentExtension = "mp3";
                 } catch (Exception e1) {
                     e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
-                
-                File f = new File("c:\\diploma\\testing\\Mp3_2.mp3");
-                try {
-                	FileOutputStream fos = new FileOutputStream(f);
-                	fos.write(convertedData);
-                	fos.flush();
-                	fos.close();
-                } catch (Exception e1) {
-                    e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-                
             }
         });
 
@@ -68,17 +62,26 @@ public class CaptureDialog extends JFrame {
 
         playBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	okButton.setEnabled(true);
                 playAudio();
             }
-        });
+        });                
 
         getContentPane().add(playBtn);
 
+        okButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {            	
+                CaptureDialog.this.setVisible(false);
+            }
+        }); 
+        
+        getContentPane().add(okButton);
+        
         getContentPane().setLayout(new FlowLayout());
         setTitle("Capture window");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setSize(300, 100);
-        setVisible(true);
+        setVisible(false);
     }
 
     private void captureAudio() {
@@ -182,6 +185,14 @@ public class CaptureDialog extends JFrame {
         // TODO Auto-generated method stub
         new CaptureDialog();
     }
+
+	public byte[] getCapturedContent() {
+		return capturedContent;
+	}
+
+	public String getCapturedContentExtension() {
+		return capturedContentExtension;
+	}
 
 }
 

@@ -42,6 +42,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	private JList availableGroupList;
 	private JList selectedGroupList;
 	
+	private CaptureDialog cDialog = null;
+	
 	private JFileChooser fileChooser;
 
 	private ICPController icpController;
@@ -90,7 +92,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    List<String> groupNames = contactListController.getGroupDisplayNames();
 	    String[] groups = groupNames.toArray(new String[groupNames.size()]);
 	    initAvailableGroupList(groups);
-	    	    
+	    	 
+	    cDialog = new CaptureDialog();
 		pack();		
     }
 
@@ -233,7 +236,11 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent event) {
 		    	  completeMessage.setSender(getLocalUserSipURI());
-		    	  completeMessage.setSubject("tesztSubject");
+		    	  completeMessage.setSubject(subjectTextField.getText());
+		    	  if (fromCaptureDeviceButton.isSelected() && cDialog.getCapturedContent() != null) {
+		    		  completeMessage.setContent(cDialog.getCapturedContent());
+		    		  completeMessage.setExtension(cDialog.getCapturedContentExtension());
+		    	  }
 		    	  if (completeMessage.isReady() && selectedGroupListModel.size()> 0) {		    		  
 		    		  try {
 		    			  sendButton.setEnabled(false);
@@ -298,7 +305,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    final JButton captureButton = new JButton("Capture message");
 		    captureButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent event) {
-		    	  CaptureDialog cDialog = new CaptureDialog();
+		    	  cDialog.setVisible(true);
 		      }
 		    });
 		    
