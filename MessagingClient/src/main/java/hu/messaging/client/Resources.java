@@ -11,15 +11,16 @@ public class Resources {
             put("application.name", "IMS Multicast Messaging Client");
             put("application.version", "Version 1.0");
             put("buddy.group.default", "Others");
-            put("status.disconnected", "Disconnected");
             put("button.cancel", "Cancel");
             put("button.ok", "Ok");
             put("button.add", "Add");
             put("button.remove", "Remove");
+            put("button.delete", "Delete");
             put("button.send", "Send");
+            put("button.play", "Play");
+            put("button.stop", "Stop");
+            put("button.show", "Show");            
             put("menu.file", "File");
-            put("menu.file.status", "Change status...");
-            put("menu.file.transfer", "Transfer...");
             put("menu.file.exit", "Exit");
             put("menu.edit", "Edit");
             put("menu.edit.buddy.add", "Add Buddy...");
@@ -50,7 +51,6 @@ public class Resources {
             put("dialog.buddy.edit.title", "Modify Buddy");
             put("dialog.contact.move.title", "Move to group");
             put("dialog.contact.move.label", "Select new group:");
-            put("dialog.messagelist.title", "Inbox");
             put("dialog.message.sender", "Sender:");
             put("dialog.help.about.title", "About Messaging Client");
             put("dialog.instant.message.send.title", "Message to send");
@@ -79,10 +79,6 @@ public class Resources {
             put("dialog.yes", "Yes");
             put("dialog.no", "No");
             put("dialog.you", "You");
-            put("unit.day", "Day{0}");
-            put("unit.hour", "Hour{0}");
-            put("unit.minute", "Minute{0}");
-            put("unit.second", "Second{0}");
             put("unit.plurial", "s");
             put("users.in.call","Users In The Call");
             put("add.user.in.call","Add User In Call");
@@ -105,7 +101,6 @@ public class Resources {
             put("save.error","Error saving file");
             put("dialog.chat.error","Error processing the chat session");
             put("dialog.call.error","Error processing the voice call");
-            put("send.file.error"," Error sending file");
             put("add.user.error","Error adding user");
             put("add.buddy.error","Error adding buddy");
             put("add.group.error","Error adding group ");
@@ -113,13 +108,8 @@ public class Resources {
             put("remove.group.error","Error removing group ");
             put("update.buddy.error","Error updating buddy");
             put("update.group.error","Error updating group ");
-            put("call.hold.error","Error holding call");
-            put("cannot.establish.call","Error establishing call");
-            put("cannot.establish.chat","Error establishing chat session");
-            put("save.file.error","Error saving file");
-            put("sending.instant.message.failed.title","Error sending instant message");
-            put("sending.instant.message.failed.message","Failed to reach the other party");
-
+            put("frame.messagebox.title", "Messages");
+            put("frame.message.details.title", "Message Details");
         }
     };	
     

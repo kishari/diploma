@@ -1,4 +1,4 @@
-package hu.messaging.client.gui.dialog;
+package hu.messaging.client.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -35,14 +35,14 @@ import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.client.model.*;
 import hu.messaging.util.*;
 
-public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
+public class SendMessageFrame extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
 	
 	private static final long serialVersionUID = -211908165523434927L;
 	
 	private JList availableGroupList;
 	private JList selectedGroupList;
 	
-	private CaptureDialog cDialog = null;
+	private CaptureFrame cDialog = null;
 	
 	private JFileChooser fileChooser;
 
@@ -68,7 +68,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	
     private boolean closing = false;
     
-    public SendMessageDialog(ICPController icpController) {
+    public SendMessageFrame(ICPController icpController) {
         this.icpController = icpController;
         this.contactListController = icpController.getContactListController();
         
@@ -93,7 +93,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	    String[] groups = groupNames.toArray(new String[groupNames.size()]);
 	    initAvailableGroupList(groups);
 	    	 
-	    cDialog = new CaptureDialog();
+	    cDialog = new CaptureFrame();
 		pack();		
     }
 
@@ -246,8 +246,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    			  sendButton.setEnabled(false);
 		    			  ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
 		    			  
-		    			  icpController.getCommunicationController().addMSRPListener(SendMessageDialog.this);
-		    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
+		    			  icpController.getCommunicationController().addMSRPListener(SendMessageFrame.this);
+		    			  icpController.getSessionListener().addConnectionListener(SendMessageFrame.this);
 		    			  
 		    			  icpController.getCommunicationController().sendInvite(sdp);
 		    			  icpController.getCommunicationController().addLocalSDP(Constants.serverSipURI, sdp.format());
@@ -265,8 +265,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    JButton cancelButton = new JButton("Cancel");
 		    cancelButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		    	  SendMessageDialog.this.setVisible(false);
-		    	  SendMessageDialog.this.dispose();
+		    	  SendMessageFrame.this.setVisible(false);
+		    	  SendMessageFrame.this.dispose();
 		      }
 		    });
 		    subPanel.add(cancelButton);
@@ -288,7 +288,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		  final JButton openFileButton = new JButton("Open file");
 		  openFileButton.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent event) {
-		  	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
+		  	  int retVal = fileChooser.showOpenDialog(SendMessageFrame.this);
 		   	  if (retVal == JFileChooser.APPROVE_OPTION) {
 		    		  File selectedFile = fileChooser.getSelectedFile();
 		    		  try {

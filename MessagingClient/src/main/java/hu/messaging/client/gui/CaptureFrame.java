@@ -1,4 +1,4 @@
-package hu.messaging.client.gui.dialog;
+package hu.messaging.client.gui;
 
 import hu.messaging.client.media.audio.AudioConverter;
 
@@ -8,7 +8,7 @@ import java.awt.event.*;
 import java.io.*;
 import javax.sound.sampled.*;
 
-public class CaptureDialog extends JFrame {
+public class CaptureFrame extends JFrame {
 
     private boolean stopCapture = false;
     private ByteArrayOutputStream baos;
@@ -19,7 +19,7 @@ public class CaptureDialog extends JFrame {
     private byte[] capturedContent = null;
     private String capturedContentExtension = "";
 
-    public CaptureDialog() {
+    public CaptureFrame() {
         final JButton captureBtn = new JButton("Capture");
         final JButton stopBtn = new JButton("Stop");
         final JButton playBtn = new JButton("Playback");
@@ -71,7 +71,7 @@ public class CaptureDialog extends JFrame {
 
         okButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {            	
-                CaptureDialog.this.setVisible(false);
+                CaptureFrame.this.setVisible(false);
             }
         }); 
         
@@ -183,7 +183,7 @@ public class CaptureDialog extends JFrame {
 
     public static void main(String[] args) {
         // TODO Auto-generated method stub
-        new CaptureDialog();
+        new CaptureFrame();
     }
 
 	public byte[] getCapturedContent() {

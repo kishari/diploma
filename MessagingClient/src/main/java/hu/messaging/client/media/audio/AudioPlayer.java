@@ -5,11 +5,10 @@ import hu.messaging.client.media.audio.Player;
 
 public class AudioPlayer implements Player {
 	
-	private String filename;
     private javazoom.jl.player.Player mp3Player;
     private static boolean isPlaying = false;
 
-    public void close() { 
+    private void close() { 
     	if (mp3Player != null) 
     		mp3Player.close();
     }
@@ -20,8 +19,7 @@ public class AudioPlayer implements Player {
             BufferedInputStream bis = new BufferedInputStream(is);
             mp3Player = new javazoom.jl.player.Player(bis);
         }
-        catch (Exception e) {
-            System.out.println("Problem playing file " + filename);
+        catch (Exception e) {         
             System.out.println(e);
         }
         new Thread() {
@@ -47,7 +45,7 @@ public class AudioPlayer implements Player {
 
 	@Override
 	public void stop() {
-		
+		close();
 	}
 
     // test client

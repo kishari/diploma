@@ -1,12 +1,12 @@
 package hu.messaging.client.gui.bean;
 
 import hu.messaging.client.Resources;
+import hu.messaging.client.gui.MessageBoxFrame;
 import hu.messaging.client.gui.MessagingClient;
 import hu.messaging.client.gui.action.AboutActionListener;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.data.Group;
-import hu.messaging.client.gui.dialog.MessageListDialog;
 import hu.messaging.client.gui.listener.ui.ContactSelectionListener;
 import hu.messaging.client.gui.util.SwingUtil;
 
@@ -95,7 +95,7 @@ public class MenuBar implements ContactSelectionListener
     	itemBlackList.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
-				MessageListDialog dialog = new MessageListDialog(icpController);
+				MessageBoxFrame dialog = new MessageBoxFrame(icpController);
 				dialog.setVisible(true);
 			}});
     	viewMenu.add(itemBlackList);

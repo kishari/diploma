@@ -1,4 +1,4 @@
-package hu.messaging.client.gui.dialog;
+package hu.messaging.client.gui;
 
 import java.io.*;
 
@@ -11,35 +11,19 @@ import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.util.MessageUtils;
 import hu.messaging.client.model.*;
-import hu.messaging.client.media.audio.*;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import com.ericsson.icp.util.ISessionDescription;
 
-public class MessageListDialog extends JFrame implements MSRPListener, ConnectionListener {
+public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionListener {
 
     private static final long serialVersionUID = -6048051912258339134L;
 
@@ -58,18 +42,25 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 
     private ICPController icpController;
     
-    public MessageListDialog(ICPController icpController) {  
+    private JDesktopPane desktop;
+    
+    private List<MessageDetailsFrame> children = new ArrayList<MessageDetailsFrame>();
+    
+    public MessageBoxFrame(ICPController icpController) {  
     	this.icpController = icpController;
     	
     	inboxMessageList = MessageUtils.loadInboxMessages();
     	sentMessageList = MessageUtils.loadSentMessages();
     	
         setLocation(100, 100);
-        setTitle(Resources.resources.get("dialog.messagelist.title"));
+        setTitle(Resources.resources.get("frame.messagebox.title"));
         setIconImage(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("hu/messaging/client/gui/logo.gif")));
         setPreferredSize(new Dimension(500, 307));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
+        
+       // desktop = new JDesktopPane();
+       //   setContentPane(desktop);
         
         inboxPanel = new JPanel();
         inboxPanel.setLayout(new BorderLayout());
@@ -85,8 +76,18 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
         messagePane.add("inbox", inboxPanel);
         messagePane.add("sent", sentPanel);        
         
-        add(messagePane);
-        pack();
+        getContentPane().add(messagePane);
+        
+        this.addWindowListener(new WindowAdapter() {
+        	public void windowClosing(WindowEvent e) {
+        		for (JFrame f : children) {
+        			f.setVisible(false);
+        			f.dispose();
+        		}
+        	}
+        });
+        	
+        pack();                
         setVisible(true);
     }    
     
@@ -96,18 +97,22 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
     	JPanel subPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     	buttonPanel.add(BorderLayout.CENTER, subPanel);
 
-    	JButton okButton = new JButton("OK");
+    	JButton okButton = new JButton(Resources.resources.get("button.ok"));
     	okButton.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				MessageListDialog.this.setVisible(false);
-				MessageListDialog.this.dispose();				
+				MessageBoxFrame.this.setVisible(false);
+				for (MessageDetailsFrame f : children) {
+        			f.setVisible(false);    
+        			f.close();
+        		}
+				MessageBoxFrame.this.dispose();				
 			}
 		});
 	    subPanel.add(okButton);
 	    
-	    JButton deleteButton = new JButton("Delete");
+	    JButton deleteButton = new JButton(Resources.resources.get("button.delete"));
 	    deleteButton.addActionListener(new ActionListener() {
 			
 			@Override
@@ -140,10 +145,12 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
               				catch(Exception e) { } 
               			}
               			else {
-              				AudioPlayer p = new AudioPlayer();
-              				p.play(getMessageContent(selectedMessage));
-              				
-              				System.out.println("Majd megmutatom egy ablakban!");
+              				if ("MP3".equals(selectedMessage.getMimeType().toUpperCase().trim())) {
+              					children.add(new AudioMessageDetailsFrame(selectedMessage, getMessageContent(selectedMessage)));
+              				}
+              				else {
+              					children.add(new ImageMessageDetailsFrame(selectedMessage, getMessageContent(selectedMessage)));
+              				}
               			}
               		}         		
               	}
@@ -360,9 +367,9 @@ public class MessageListDialog extends JFrame implements MSRPListener, Connectio
 		System.out.println("createMSRPSessionToRemote : " + sipURI);
 		
 		ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
-		icpController.getCommunicationController().addMSRPListener(MessageListDialog.this);
+		icpController.getCommunicationController().addMSRPListener(MessageBoxFrame.this);
 		  
-		icpController.getSessionListener().addConnectionListener(MessageListDialog.this);
+		icpController.getSessionListener().addConnectionListener(MessageBoxFrame.this);
 		icpController.getCommunicationController().sendInvite(sdp);
 		icpController.getCommunicationController().addLocalSDP(sipURI, sdp.format());
 	}
