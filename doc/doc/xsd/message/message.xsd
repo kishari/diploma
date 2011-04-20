@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <!-- ========================= -->
+    <!-- InfoMessage típus -->
+    <!-- Ezzel kommunikál a kliens és a szerver: -->
+    <!--  - amikor az üzenet adatait a kliens elküldi a szerver felé -->
+    <!--  - amikor a szerver értesíti a klienseket az új üzenetekről -->
+    <!--  - amikor a kliens letöltésre kér egy üzenet tartalmát -->
+    <!-- ========================= -->
+    <xs:element name="infoMessage">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- A üzenet típusa -->
+                <xs:element name="info_type">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="NOTIFY_USER"/>
+                            <xs:enumeration value="MESSAGE_DATA"/>
+                            <xs:enumeration value="DOWNLOAD_CONTENT"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <xs:element name="detailList">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="detail" type="InfoDetail" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ============================= -->
+    <!-- A részlet listának egy eleme  -->
+    <!-- ============================= -->
+    <xs:complexType name="InfoDetail">
+        <xs:sequence>
+            <!-- A küldő adatai -->
+            <xs:element name="sender" type="userInfo" minOccurs="0"/>
+            <!-- Az üzenet azonosítója -->
+            <xs:element name="id" type="xs:string"/>
+            <!-- A multimédia tartalom leírása -->
+            <xs:element name="content" type="contentDescription" minOccurs="0"/>
+            <!-- Az üzenet tárgya -->
+            <xs:element name="subject" type="xs:string" minOccurs="0"/>
+            <!-- A küldés dátuma -->
+            <xs:element name="sent_at" type="xs:dateTime" minOccurs="0"/>
+            <!-- Címzettek listája -->
+            <xs:element name="recipientList" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="recipient" type="userInfo" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <!-- ========================== -->
+    <!-- MessageInfoContainer típus -->
+    <!--  - A kliens oldalon az üzenet 
+            adatait tárolja xml formában -->
+    <!-- ========================== -->
+    <xs:element name="messageInfoContainer">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- A feladó adatai -->
+                <xs:element name="sender" type="userInfo"/>
+                <!-- Az üzenet azonosítója -->
+                <xs:element name="id" type="xs:string"/>
+                <!-- Az üzenet tárgya -->
+                <xs:element name="subject" type="xs:string"/>
+                <!-- A küldés dátuma -->
+                <xs:element name="sent_at" type="xs:dateTime"/>
+                <!-- Az üzenet státusza (új, megtekintett, elküldött)-->
+                <xs:element name="status" type="xs:string"/>
+                <!-- A multimédia tartalom adatai -->
+                <xs:element name="contentDescription" type="contentDescription"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    
+    <!-- ========================= -->
+    <!-- Content description típus -->
+    <!-- ========================= -->
+    <xs:complexType name="contentDescription">
+            <xs:sequence>
+                <!-- a multimédia típusa --> 
+                <xs:element name="mimeType">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="image/jpeg"/>                                       
+                            <xs:enumeration value="image/bmp"/>
+                            <xs:enumeration value="image/gif"/>
+                            <xs:enumeration value="image/png"/>  
+                            <!-- mp3 -->                                        
+                            <xs:enumeration value="audio/mpeg"/>
+                            <xs:enumeration value="audio/x-wav"/>
+                            <!-- avi -->                                        
+                            <xs:enumeration value="video/x-msvideo"/>
+                            <!-- mpg, mpeg -->
+                            <xs:enumeration value="video/mpeg"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <!-- A tartalom mérete bájtokban -->
+                <xs:element name="size" type="xs:unsignedLong"/>
+                <!-- A multimédia tartalom elérhető fájlrendszeren? -->
+                <xs:element name="content_available" type="xs:boolean" minOccurs="0"/>
+            </xs:sequence>        
+    </xs:complexType>
+    
+    
+    <!-- ================= --> 
+    <!-- felhasználó típus -->
+    <!-- ================= -->
+    <xs:complexType name="userInfo">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="sip_uri" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

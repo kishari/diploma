@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
+    <xs:element name="message_info_container">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- A feladó adatai -->
+                <xs:element name="sender">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="name" type="xs:string"/>
+                            <xs:element name="sip_uri" type="xs:string"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <!-- Az üzenet azonosítója -->
+                <xs:element name="id" type="xs:string"/>
+                <!-- Az üzenet tárgya -->
+                <xs:element name="subject" type="xs:string"/>
+                <!-- A küldés dátuma -->
+                <xs:element name="sent_at" type="xs:dateTime"/>
+                <!-- Az üzenet státusza (új, megtekintett, elküldött)-->
+                <xs:element name="status" type="xs:string"/>
+                <!-- A multimédia tartalom adatai -->
+                <xs:element name="content">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <!-- a multimédia típusa --> 
+                            <xs:element name="mimeType">
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:enumeration value="image/jpeg"/>                                       
+                                        <xs:enumeration value="image/bmp"/>
+                                        <xs:enumeration value="image/gif"/>
+                                        <xs:enumeration value="image/png"/>  
+                                        <!-- mp3 -->                                        
+                                        <xs:enumeration value="audio/mpeg"/>
+                                        <xs:enumeration value="audio/x-wav"/>
+                                        <!-- avi -->                                        
+                                        <xs:enumeration value="video/x-msvideo"/>
+                                        <!-- mpg, mpeg -->
+                                        <xs:enumeration value="video/mpeg"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                            <!-- A tartalom mérete bájtokban -->
+                            <xs:element name="size" type="xs:positiveInteger"/>
+                            <!-- A multimédia tartalom elérhető fájlrendszeren? -->
+                            <xs:element name="content_available" type="xs:boolean"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
