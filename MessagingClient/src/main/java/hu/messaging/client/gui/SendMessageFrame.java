@@ -123,7 +123,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
                 break;           
             case RecipientsSentSuccessful:
         		icpController.getCommunicationController().sendBye();
-        		MessageUtils.createMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(completeMessage, true), completeMessage.getContent());
+        		//MessageUtils.createMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(completeMessage, true), completeMessage.getContent());
             	break;
             case ConnectionFinished:
             	icpController.getCommunicationController().removeMSRPListener(this);

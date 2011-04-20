@@ -67,7 +67,7 @@ public class MessagingService implements Observer, MSRPListener{
 		return getMsrpStack().getConnections().isReceiverConnection();
 	}
 
-	public Session createNewSession(URI localURI, URI remoteURI, String sipUri) {
+	public Session createNewMSRPSession(URI localURI, URI remoteURI, String sipUri) {
 		SenderConnection s = getMsrpStack().getConnections().getSenderConnection(sipUri);
 		System.out.println("MessagingService createNewSession");
 		
@@ -88,7 +88,7 @@ public class MessagingService implements Observer, MSRPListener{
 		return msrpStack;
 	}
 
-	public synchronized void removeUserFromOnlineList(User user) {
+	private synchronized void removeUserFromOnlineList(User user) {
 		int index = 0;
 		for (User u : this.onlineUsers) {
 			if (user.equals(u)) {
@@ -101,7 +101,7 @@ public class MessagingService implements Observer, MSRPListener{
 		}
 	}
 	
-	public synchronized User findUserInOnlineList(User user) {
+	private synchronized User findUserInOnlineList(User user) {
 		for (User u : this.onlineUsers) {
 			if (user.equals(u)) {
 				return u;

@@ -3,7 +3,6 @@ package hu.messaging.sip;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,40 +25,10 @@ import hu.messaging.util.*;
 public class MessagingSipServlet extends SipServlet {
 
 	private MessagingService messagingService = null;
-	private static Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
-															"[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");
-	private static Pattern recipientsMessagePattern =  Pattern.compile("^RECIPIENTS\r\n" + 
-																	   "Message-ID: ([\\p{Alnum}]{10,50})\r\n" +
-																	   "Extension: ([\\p{Alnum}]{2,10})\r\n" +
-																	   "Sender: (sip:[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}" +
-																	   "@[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,}\\.?[\\p{Alnum}]{1,})\r\n" +
-																	   "Subject: (.*)\r\n\r\n" +
-																	   "(.*)" + 
-																	   "\r\n\r\n-----END", Pattern.DOTALL);
-
-	private static Pattern getMessageMessageIdsPattern =  Pattern.compile("^GETMESSAGES\r\n" + 
-			   															 	"Message-IDs:\r\n(.*)" + 
-			   															 	"\r\n\r\n-----END", Pattern.DOTALL);
-
-	
-	private String[] getMessageIds(String incomingSIPMessage) {
-		System.out.println("getMessageIds");
-		List<String> ids = new ArrayList<String>();
-		Matcher m = getMessageMessageIdsPattern.matcher(incomingSIPMessage);
-		m.find();
-		String temp = m.group(1);
-		
-		String[] mIds = temp.split("\r\n");
-		
-		for (int i = 0; i < mIds.length; i++) {
-			ids.add(mIds[i]);
-			System.out.println(mIds[i]);
-		}
-		
-		return mIds;
-	}
 	
 	private String getCleanSipUri(String incomingUri) {
+		Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
+												 "[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");	
 		Matcher m = sipUriPattern.matcher(incomingUri);
 		m.find();
 		return m.group(1);
@@ -129,10 +98,11 @@ public class MessagingSipServlet extends SipServlet {
 			System.out.println(info.getInfoType());
 		}
 		 
-		if (req.getContent().toString().startsWith("GETMESSAGES")) {
-			//System.out.println(req.getContent().toString());
-			List<CompleteMessage> messages = messagingService.getMessagingDao().getMessagesToMessageIds(getMessageIds(req.getContent().toString()));
-			System.out.println(getClass().getSimpleName() + " messages size: " + messages.size());
+		if (info != null && info.getInfoType().equals("DOWNLOAD_MESSAGE")) {
+			System.out.println("download messages");
+			CompleteMessage message = messagingService.getMessagingDao().getMessageToMessageId(info.getInfoDetail().getId());
+			List<CompleteMessage> messages = new ArrayList<CompleteMessage>();
+			messages.add(message);
 			String sipURI = this.getCleanSipUri(req.getFrom().toString());
 			this.messagingService.sendMessages(messages, sipURI);
 		}
@@ -231,7 +201,7 @@ public class MessagingSipServlet extends SipServlet {
 
 			this.messagingService.createSenderConnection(remoteSdp.getHost(), remoteSdp.getPort(), getCleanSipUri(req.getFrom().toString()));
 			this.messagingService.getMsrpStack().getConnections().getSenderConnection(getCleanSipUri(req.getFrom().toString())).start();
-			this.messagingService.createNewSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
+			this.messagingService.createNewMSRPSession(localSdp.getPath(), remoteSdp.getPath(), getCleanSipUri(req.getFrom().toString()));
 
 			resp.send();			
 		}

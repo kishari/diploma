@@ -10,6 +10,7 @@ import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.util.MessageUtils;
+import hu.messaging.util.XMLUtils;
 import hu.messaging.client.model.*;
 
 import java.awt.*;
@@ -317,9 +318,13 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
 		try {
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :
-					String msg = "GETMESSAGES\r\n" +
-			   		 			 "Message-IDs:\r\n" + selectedMessage.getId() + 
-			   		 			 "\r\n\r\n-----END";
+					System.out.println("session started event");
+					InfoMessage info = new InfoMessage();
+					info.setInfoType("DOWNLOAD_MESSAGE");
+					InfoMessage.InfoDetail detail = new ObjectFactory().createInfoMessageInfoDetail();
+					detail.setId(selectedMessage.getId());
+					info.setInfoDetail(detail);
+					String msg = XMLUtils.createStringXMLFromInfoMessage(info);
 					icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, msg);
 					break;
 				case MSRPEvent.brokenTrasmission :
