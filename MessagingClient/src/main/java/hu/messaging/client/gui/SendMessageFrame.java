@@ -444,9 +444,9 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		
 		m.setInfoType(InfoMessage.messageData);		
 		InfoDetail detail = factory.createInfoDetail();
-		
+		detail.setContent(factory.createContentDescription());
 		detail.setId(completeMessage.getMessageId());
-		detail.setMimeType(completeMessage.getExtension());
+		detail.getContent().setMimeType(completeMessage.getExtension());
 		detail.setSubject(completeMessage.getSubject());
 		
 		UserInfo sender = factory.createUserInfo();

@@ -146,41 +146,38 @@ public class MessagingService implements Observer, MSRPListener{
 		infoMsg.setInfoType(InfoMessage.notifyUser);
 		InfoMessage.DetailList detailList = factory.createInfoMessageDetailList();
 			
-		if (info.getDetailList() != null) {
-			for (InfoDetail d : info.getDetailList().getDetail()) {
-				InfoDetail detail = factory.createInfoDetail();
-				detail.setId(d.getId());
-				detail.setMimeType(d.getMimeType());
+		for (InfoDetail d : info.getDetailList().getDetail()) {
+			InfoDetail detail = factory.createInfoDetail();
+			detail.setId(d.getId());
+			detail.setContent(factory.createContentDescription());
+			detail.getContent().setMimeType(d.getContent().getMimeType());
 				
-				UserInfo sender = factory.createUserInfo();
-				sender.setName(d.getSender().getName());
-				sender.setSipUri(d.getSender().getSipUri());			
-				detail.setSender(sender);
-				
-				detail.setSentAt(d.getSentAt());
-				detail.setSubject(d.getSubject());
-				
-				if (d.getRecipientList() != null) {
-					InfoDetail.RecipientList recipientList = factory.createInfoDetailRecipientList();
-					for (UserInfo r : d.getRecipientList().getRecipient()) {
-						UserInfo recipient = factory.createUserInfo();
-						recipient.setName(r.getName());
-						recipient.setSipUri(r.getSipUri());
-						recipientList.getRecipient().add(recipient);
-					}
+			UserInfo sender = factory.createUserInfo();
+			sender.setName(d.getSender().getName());
+			sender.setSipUri(d.getSender().getSipUri());			
+			detail.setSender(sender);
+			
+			detail.setSentAt(d.getSentAt());
+			detail.setSubject(d.getSubject());
+			
+			if (d.getRecipientList() != null) {
+				InfoDetail.RecipientList recipientList = factory.createInfoDetailRecipientList();
+				for (UserInfo r : d.getRecipientList().getRecipient()) {
+					UserInfo recipient = factory.createUserInfo();
+					recipient.setName(r.getName());
+					recipient.setSipUri(r.getSipUri());
+					recipientList.getRecipient().add(recipient);
 				}
-				
-				detailList.getDetail().add(detail);
 			}
 			
-			infoMsg.setDetailList(detailList);
+			detailList.getDetail().add(detail);
 		}
+			
+		infoMsg.setDetailList(detailList);
 				
 		
 		
 		String xml = XMLUtils.createStringXMLFromInfoMessage(infoMsg);
-		System.out.println("createNotifyMessageContent:");
-		System.out.println(xml);
 		return xml;
 	}
 

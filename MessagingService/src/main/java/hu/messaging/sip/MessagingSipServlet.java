@@ -153,7 +153,7 @@ public class MessagingSipServlet extends SipServlet {
 			InfoDetail detail = detailList.getDetail().get(0);
 			
 			String messageId = detail.getId();
-			String mimeType = detail.getMimeType();
+			String mimeType = detail.getContent().getMimeType();
 			String sender = detail.getSender().getSipUri();
 			
 			List<Recipient> recipients = new ArrayList<Recipient>();

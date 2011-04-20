@@ -181,7 +181,7 @@ public class CommunicationController {
     		InfoMessage.DetailList detailList = descr.getDetailList();
     		
     		for (InfoDetail d : detailList.getDetail()) {
-    			CompleteMessage cm = new CompleteMessage(d.getId(), null, d.getMimeType(), 
+    			CompleteMessage cm = new CompleteMessage(d.getId(), null, d.getContent().getMimeType(), 
 						 d.getSender().getSipUri(), d.getSubject());
     			newMessages.add(cm);    	
     		}

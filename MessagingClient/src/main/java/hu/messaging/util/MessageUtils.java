@@ -144,7 +144,7 @@ public class MessageUtils {
 		InfoDetail detail = info.getDetailList().getDetail().get(0);
 		m.setId(detail.getId());
 		m.setStatus("NEW");
-		m.getContentDescription().setMimeType(detail.getMimeType());
+		m.getContentDescription().setMimeType(detail.getContent().getMimeType());
 		m.setSubject(detail.getSubject());
 		m.getContentDescription().setContentAvailable(false);
 		

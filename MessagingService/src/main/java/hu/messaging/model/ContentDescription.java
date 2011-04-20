@@ -1,4 +1,4 @@
-package hu.messaging.client.model;
+package hu.messaging.model;
 
 import java.math.BigInteger;
 import javax.xml.bind.annotation.XmlAccessType;
