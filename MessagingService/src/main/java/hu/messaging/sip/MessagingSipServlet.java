@@ -154,7 +154,8 @@ public class MessagingSipServlet extends SipServlet {
 			
 			String messageId = detail.getId();
 			String mimeType = detail.getContent().getMimeType();
-			String sender = detail.getSender().getSipUri();
+			String senderSipUri = detail.getSender().getSipUri();
+			String senderName = detail.getSender().getName();
 			
 			List<Recipient> recipients = new ArrayList<Recipient>();
 			
@@ -165,7 +166,7 @@ public class MessagingSipServlet extends SipServlet {
 			}
 			
 			messagingService.getMessagingDao().insertRecipients(messageId, recipients);
-			messagingService.getMessagingDao().updateMessage(messageId, mimeType, sender); 
+			messagingService.getMessagingDao().updateMessage(messageId, mimeType, senderName, senderSipUri); 
 			notifyOnlineRecipientsFromNewMessage(req, info);
 		}
 	}

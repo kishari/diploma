@@ -17,7 +17,7 @@ public class CaptureFrame extends JFrame {
     private AudioInputStream audioInputStream;
     private SourceDataLine sourceDataLine;
     private byte[] capturedContent = null;
-    private String capturedContentExtension = "";
+    private String capturedContentMimeType = "";
 
     public CaptureFrame() {
         final JButton captureBtn = new JButton("Capture");
@@ -51,7 +51,7 @@ public class CaptureFrame extends JFrame {
                 AudioConverter converter = new AudioConverter();                
                 try {
                 	capturedContent = converter.encodeStream(baos.toByteArray(), "c:\\diploma\\testing\\Mp3.mp3");
-                	capturedContentExtension = "mp3";
+                	capturedContentMimeType = "audio/mpeg";
                 } catch (Exception e1) {
                     e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
@@ -190,8 +190,8 @@ public class CaptureFrame extends JFrame {
 		return capturedContent;
 	}
 
-	public String getCapturedContentExtension() {
-		return capturedContentExtension;
+	public String getCapturedContentMimeType() {
+		return capturedContentMimeType;
 	}
 
 }

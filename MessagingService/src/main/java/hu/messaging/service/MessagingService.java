@@ -151,6 +151,7 @@ public class MessagingService implements Observer, MSRPListener{
 			detail.setId(d.getId());
 			detail.setContent(factory.createContentDescription());
 			detail.getContent().setMimeType(d.getContent().getMimeType());
+			detail.getContent().setSize(d.getContent().getSize());
 				
 			UserInfo sender = factory.createUserInfo();
 			sender.setName(d.getSender().getName());
@@ -186,7 +187,7 @@ public class MessagingService implements Observer, MSRPListener{
 			case MSRPEvent.messageReceivingSuccess:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: messageReceivingSuccess");
 				this.messagingDao.insertMessage(event.getCompleteMessage());
-				printToFile(event.getCompleteMessage().getContent(), event.getCompleteMessage().getExtension());
+				printToFile(event.getCompleteMessage().getContent(), event.getCompleteMessage().getMimeType());
 				break;
 			case MSRPEvent.brokenTrasmission:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: brokenTrasmission");
@@ -205,10 +206,10 @@ public class MessagingService implements Observer, MSRPListener{
 	}
 	
 //>>>>>>>>>>>TESZT
-	public void printToFile(byte[] data, String fileExtension) {
+	public void printToFile(byte[] data, String mimeType) {
 		try {
 			OutputStream out = null;
-			File recreatedContentFile = new File("c:\\diploma\\testing\\serverRecreatedContentFile." + fileExtension);
+			File recreatedContentFile = new File("c:\\diploma\\testing\\serverRecreatedContentFile." + mimeType);
 			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			
 			out.write(data);

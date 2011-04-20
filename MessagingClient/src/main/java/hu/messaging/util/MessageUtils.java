@@ -17,7 +17,7 @@ public class MessageUtils {
 		
 		c.getContentDescription().setContentAvailable(m.getContent() != null);
 		c.setId(m.getMessageId());
-		c.getContentDescription().setMimeType(m.getExtension());
+		c.getContentDescription().setMimeType(m.getMimeType());
 		if (isSent) {
 			c.setStatus("SENT");
 		}
@@ -25,8 +25,8 @@ public class MessageUtils {
 			c.setStatus("NEW");
 		}
 		UserInfo s = f.createUserInfo();
-		s.setName(m.getSender() + "_name");
-		s.setSipUri(m.getSender());
+		s.setName(m.getSender().getName());
+		s.setSipUri(m.getSender().getSipUri());
 		c.setSender(s);
 		
 		c.setSubject(m.getSubject());

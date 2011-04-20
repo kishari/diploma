@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,7 @@ import hu.messaging.client.Resources;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.model.*;
 import hu.messaging.util.*;
 
@@ -234,11 +236,14 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		    sendButton = new JButton("Send");
 		    sendButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent event) {
-		    	  completeMessage.setSender(getLocalUserSipURI());
+		    	  UserInfo sender = new ObjectFactory().createUserInfo();
+		    	  sender.setName("Alice Kurbatov");
+		    	  sender.setSipUri(getLocalUserSipURI());
+		    	  completeMessage.setSender(sender);
 		    	  completeMessage.setSubject(subjectTextField.getText());
 		    	  if (fromCaptureDeviceButton.isSelected() && cDialog.getCapturedContent() != null) {
 		    		  completeMessage.setContent(cDialog.getCapturedContent());
-		    		  completeMessage.setExtension(cDialog.getCapturedContentExtension());
+		    		  completeMessage.setMimeType(cDialog.getCapturedContentMimeType());
 		    	  }
 		    	  if (completeMessage.isReady() && selectedGroupListModel.size()> 0) {		    		  
 		    		  try {
@@ -294,7 +299,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		    			  setMessageContent(FileUtils.readFileToByteArray(selectedFile));
 		    		  }
 		    		  catch(IOException e) { }	    		  
-		    		  setMessageExtension(getFileExtension(selectedFile));    		  
+		    		  setMessageMimeType(MimeHelper.getMIMETypeByExtension(getFileExtension(selectedFile)));    		  
 		    	  }
 		      }
 		    });
@@ -445,14 +450,18 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		m.setInfoType(InfoMessage.messageData);		
 		InfoDetail detail = factory.createInfoDetail();
 		detail.setContent(factory.createContentDescription());
+		
+		detail.getContent().setSize(completeMessage.getContent().length);
+		
 		detail.setId(completeMessage.getMessageId());
-		detail.getContent().setMimeType(completeMessage.getExtension());
+		detail.getContent().setMimeType(completeMessage.getMimeType());
 		detail.setSubject(completeMessage.getSubject());
 		
 		UserInfo sender = factory.createUserInfo();
-		sender.setName("");
-		sender.setSipUri(completeMessage.getSender());		
+		sender.setName(completeMessage.getSender().getName());
+		sender.setSipUri(completeMessage.getSender().getSipUri());		
 		detail.setSender(sender);
+		
 		
 		detail.setRecipientList(factory.createInfoDetailRecipientList());
 		for (Buddy r : recipients) {
@@ -484,8 +493,8 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		return sipURI;
 	}
 	
-	public void setMessageExtension(String extension) {
-		completeMessage.setExtension(extension);
+	public void setMessageMimeType(String mimeType) {
+		completeMessage.setMimeType(mimeType);
 	}
 
 	public JTextField getSubjectTextField() {		

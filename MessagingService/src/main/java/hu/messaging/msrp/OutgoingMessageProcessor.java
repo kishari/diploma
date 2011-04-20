@@ -25,7 +25,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //TESZTHEZ START
 	private File contentFile = null;
 	private File recreatedContentFile = null;
-	private String fileExtension = null;
+	private String mimeType = null;
 //TESZTHEZ END
 	
 	private boolean running = false;
@@ -57,7 +57,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	
 	@SuppressWarnings("unchecked")
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
-		fileExtension = completeMessage.getExtension();
+		mimeType = completeMessage.getMimeType();
 		//this.printToFile(completeMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 
@@ -158,11 +158,11 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		try {
 			OutputStream out = null;
 			if (!recreated) {
-				contentFile = new File("c:\\diploma\\testing\\serverContentFile." + fileExtension);
+				contentFile = new File("c:\\diploma\\testing\\serverContentFile." + mimeType);
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			}
 			else {
-				recreatedContentFile = new File("c:\\diploma\\testing\\serverRecreatedContentFile." + fileExtension);
+				recreatedContentFile = new File("c:\\diploma\\testing\\serverRecreatedContentFile." + mimeType);
 				out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			}
 			

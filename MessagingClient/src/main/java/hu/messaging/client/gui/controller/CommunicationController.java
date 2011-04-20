@@ -182,7 +182,7 @@ public class CommunicationController {
     		
     		for (InfoDetail d : detailList.getDetail()) {
     			CompleteMessage cm = new CompleteMessage(d.getId(), null, d.getContent().getMimeType(), 
-						 d.getSender().getSipUri(), d.getSubject());
+						 d.getSender(), d.getSubject());
     			newMessages.add(cm);    	
     		}
     	}

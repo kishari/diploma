@@ -1,10 +1,8 @@
 package hu.messaging.client.model;
 
-import java.math.BigInteger;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 
 
@@ -32,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
  *             &lt;/restriction>
  *           &lt;/simpleType>
  *         &lt;/element>
- *         &lt;element name="size" type="{http://www.w3.org/2001/XMLSchema}unsignedLong"/>
+ *         &lt;element name="size" type="{http://www.w3.org/2001/XMLSchema}int" minOccurs="0"/>
  *         &lt;element name="content_available" type="{http://www.w3.org/2001/XMLSchema}boolean" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
@@ -52,9 +50,7 @@ public class ContentDescription {
 
     @XmlElement(required = true)
     protected String mimeType;
-    @XmlElement(required = true)
-    @XmlSchemaType(name = "unsignedLong")
-    protected BigInteger size;
+    protected Integer size;
     @XmlElement(name = "content_available")
     protected Boolean contentAvailable;
 
@@ -87,10 +83,10 @@ public class ContentDescription {
      * 
      * @return
      *     possible object is
-     *     {@link BigInteger }
+     *     {@link Integer }
      *     
      */
-    public BigInteger getSize() {
+    public Integer getSize() {
         return size;
     }
 
@@ -99,10 +95,10 @@ public class ContentDescription {
      * 
      * @param value
      *     allowed object is
-     *     {@link BigInteger }
+     *     {@link Integer }
      *     
      */
-    public void setSize(BigInteger value) {
+    public void setSize(Integer value) {
         this.size = value;
     }
 

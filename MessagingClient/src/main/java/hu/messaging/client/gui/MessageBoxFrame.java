@@ -11,6 +11,7 @@ import hu.messaging.msrp.event.MSRPEvent;
 import hu.messaging.msrp.event.MSRPListener;
 import hu.messaging.util.MessageUtils;
 import hu.messaging.util.XMLUtils;
+import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.model.*;
 
 import java.awt.*;
@@ -341,7 +342,9 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
 				case MSRPEvent.messageReceivingSuccess :
 					CompleteMessage m = event.getCompleteMessage();
 					MessageUtils.updateMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(m, false), m.getContent());
-					this.printToFile(m.getContent(), m.getExtension());
+					
+					this.printToFile(m.getContent(), m.getMimeType());
+					
 					icpController.getCommunicationController().sendBye();
 					this.selectedMessage = null;
 					break;
@@ -387,10 +390,10 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
 	}
 	
 	//>>>>>>>>>>>TESZT
-	public void printToFile(byte[] data, String fileExtension) {
+	public void printToFile(byte[] data, String mimeType) {
 		try {
 			OutputStream out = null;
-			File recreatedContentFile = new File("c:\\diploma\\testing\\clientInboxContentFile." + fileExtension);
+			File recreatedContentFile = new File("c:\\diploma\\testing\\clientInboxContentFile." + MimeHelper.getExtensionByMIMEType(mimeType));
 			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			
 			out.write(data);

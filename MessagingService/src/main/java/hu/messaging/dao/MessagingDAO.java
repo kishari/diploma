@@ -23,15 +23,18 @@ import org.apache.commons.lang.StringEscapeUtils;
 public class MessagingDAO {
 	 private DataSource dataSource = null;
 	 public static final String DATA_SOURCE_NAME = "jdbc/messagingDataSource";
-	 private static final String INSERT_MESSAGE = "insert into  messagingdb.messages(messageId, content, sender, extension) values (?, ?, ?, ?)";
-	 private static final String UPDATE_MESSAGE = "update messagingdb.messages set extension=?, sender=? " +
-	 														 "where messageId=?";
-	 private static final String INSERT_RECIPIENT = "insert into  messagingdb.recipients(messageId, name, address) values (?, ?, ?)";
-	 private static final String SELECT_MESSAGES_TO_SIPURI = "SELECT messageId, content FROM messagingdb.messages " + 
-	 															"WHERE messageId IN(" + 
-	 																	"SELECT messageId " +
+	 private static final String INSERT_MESSAGE = "INSERT INTO " + 
+	 											  "messagingdb.messages(message_id, content, content_size) " + 
+	 											  "VALUES (?, ?, ?)";
+	 private static final String UPDATE_MESSAGE = "UPDATE messagingdb.messages " + "" +
+	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ? " +
+	 											  "WHERE message_id = ?";
+	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri) values (?, ?, ?)";
+	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
+	 															"WHERE message_id IN(" + 
+	 																	"SELECT message_id " +
 	 																	"FROM messagingdb.recipients " + 
-	 																	"WHERE address = ?)";
+	 																	"WHERE sip_uri = ?)";
 	
 	 public MessagingDAO() {
 		 init();
@@ -84,16 +87,17 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void updateMessage( String messageId, String extension, String sender ) {
+	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri ) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
 	        try {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(UPDATE_MESSAGE);
-	            pstmt.setString(1, extension);
-	            pstmt.setString(2, sender);
-	            pstmt.setString(3, messageId);
+	            pstmt.setString(1, senderName);
+	            pstmt.setString(2, senderSIPUri);
+	            pstmt.setString(3, mimeType);
+	            pstmt.setString(4, messageId);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
@@ -108,11 +112,10 @@ public class MessagingDAO {
 	        PreparedStatement pstmt = null;
 	        try {
 	            conn = getConnection();
-	            pstmt = conn.prepareStatement(INSERT_MESSAGE);
+	            pstmt = conn.prepareStatement(INSERT_MESSAGE);	            
 	            pstmt.setString(1, message.getMessageId());
 	            pstmt.setBytes(2, message.getContent());
-	            pstmt.setString(3, message.getSender());
-	            pstmt.setString(4, message.getExtension());
+	            pstmt.setInt(3, message.getContent().length);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
@@ -170,7 +173,7 @@ public class MessagingDAO {
 	        	        
 	        try {
 	        	conn = getConnection();
-	            pstmt = conn.prepareStatement(SELECT_MESSAGES_TO_SIPURI);
+	            pstmt = conn.prepareStatement(SELECT_CONTENTS_TO_SIPURI);
 	            pstmt.setString(1, sipURI);
 	            rs = pstmt.executeQuery();	        
 	            

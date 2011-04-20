@@ -1,13 +1,15 @@
 package hu.messaging.msrp;
 
+import hu.messaging.model.UserInfo;
+
 import org.apache.commons.codec.binary.Base64;
 
 public class CompleteMessage {
 
 	private byte[] content = null;
 	private String messageId = null;
-	private String extension = null;
-	private String sender = null;
+	private String mimeType = null;	
+	private UserInfo sender = null;
 	private String subject = null;
 	
 	public CompleteMessage() { }
@@ -17,14 +19,14 @@ public class CompleteMessage {
 		setContent(content);		
 	}
 	
-	public CompleteMessage(String messageId, byte[] content, String extension) {
-		this.extension = extension;
+	public CompleteMessage(String messageId, byte[] content, String mimeType) {
+		this.mimeType = mimeType;
 		setContent(content);
 		this.messageId = messageId;
 	}
 	
-	public CompleteMessage(String messageId, byte[] content, String extension, String sender, String subject) {
-		this.extension = extension;
+	public CompleteMessage(String messageId, byte[] content, String mimeType, UserInfo sender, String subject) {
+		this.mimeType = mimeType;
 		setContent(content);
 		this.messageId = messageId;
 		this.sender = sender;
@@ -32,11 +34,11 @@ public class CompleteMessage {
 	}
 
 
-	public String getSender() {
+	public UserInfo getSender() {
 		return sender;
 	}
 
-	public void setSender(String sender) {
+	public void setSender(UserInfo sender) {
 		this.sender = sender;
 	}
 
@@ -61,14 +63,6 @@ public class CompleteMessage {
 		this.messageId = messageId;
 	}
 
-	public String getExtension() {
-		return extension;
-	}
-
-	public void setExtension(String extension) {
-		this.extension = extension;
-	}
-
 	public String getSubject() {
 		return subject;
 	}
@@ -77,12 +71,20 @@ public class CompleteMessage {
 		this.subject = subject;
 	}
 	
+	public String getMimeType() {
+		return mimeType;
+	}
+
+	public void setMimeType(String mimeType) {
+		this.mimeType = mimeType;
+	}
+	
 	public boolean isReady() {
 		boolean ready = true;
 		
 		ready = ready && (getContent() != null);
-		ready = ready && (getExtension() != null && !"".equals(getExtension()));
-		ready = ready && (getSender() != null && !"".equals(getSender()));
+		ready = ready && (getMimeType() != null && !"".equals(getMimeType()));
+		ready = ready && (getSender() != null && !"".equals(getSender().getName()) && !"".equals(getSender().getSipUri()));
 		ready = ready && (getSubject() != null && !"".equals(getSubject()));
 		
 		return ready;
