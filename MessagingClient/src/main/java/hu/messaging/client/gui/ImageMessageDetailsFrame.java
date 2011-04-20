@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import hu.messaging.client.Resources;
-import hu.messaging.client.model.MessageContainer;
+import hu.messaging.client.model.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -19,8 +19,8 @@ import javax.swing.JPanel;
 
 public class ImageMessageDetailsFrame extends MessageDetailsFrame {
 
-	public ImageMessageDetailsFrame(MessageContainer message, byte[] content) {
-		super(message, content);
+	public ImageMessageDetailsFrame(MessageInfoContainer messageInfoContainer, byte[] content) {
+		super(messageInfoContainer, content);
 	}
 
 	@Override

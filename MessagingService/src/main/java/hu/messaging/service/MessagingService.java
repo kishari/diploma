@@ -1,7 +1,6 @@
 package hu.messaging.service;
 
-import hu.messaging.InfoMessage;
-import hu.messaging.ObjectFactory;
+import hu.messaging.model.*;
 import hu.messaging.User;
 import hu.messaging.dao.MessagingDAO;
 import hu.messaging.msrp.*;
@@ -142,22 +141,44 @@ public class MessagingService implements Observer, MSRPListener{
 	
 	public String createNotifyMessageContent(InfoMessage info) {
 		ObjectFactory factory = new ObjectFactory();
-		InfoMessage i = factory.createInfoMessage();
+		InfoMessage infoMsg = factory.createInfoMessage();
 		
-		i.setInfoType("NOTIFY_USER");
-		InfoMessage.InfoDetail detail = factory.createInfoMessageInfoDetail();		
-		detail.setId(info.getInfoDetail().getId());
-		detail.setMimeType(info.getInfoDetail().getMimeType());
-		detail.setSubject(info.getInfoDetail().getSubject());
+		infoMsg.setInfoType(InfoMessage.notifyUser);
+		InfoMessage.DetailList detailList = factory.createInfoMessageDetailList();
+			
+		if (info.getDetailList() != null) {
+			for (InfoDetail d : info.getDetailList().getDetail()) {
+				InfoDetail detail = factory.createInfoDetail();
+				detail.setId(d.getId());
+				detail.setMimeType(d.getMimeType());
+				
+				UserInfo sender = factory.createUserInfo();
+				sender.setName(d.getSender().getName());
+				sender.setSipUri(d.getSender().getSipUri());			
+				detail.setSender(sender);
+				
+				detail.setSentAt(d.getSentAt());
+				detail.setSubject(d.getSubject());
+				
+				if (d.getRecipientList() != null) {
+					InfoDetail.RecipientList recipientList = factory.createInfoDetailRecipientList();
+					for (UserInfo r : d.getRecipientList().getRecipient()) {
+						UserInfo recipient = factory.createUserInfo();
+						recipient.setName(r.getName());
+						recipient.setSipUri(r.getSipUri());
+						recipientList.getRecipient().add(recipient);
+					}
+				}
+				
+				detailList.getDetail().add(detail);
+			}
+			
+			infoMsg.setDetailList(detailList);
+		}
+				
 		
-		InfoMessage.InfoDetail.Sender s = factory.createInfoMessageInfoDetailSender();
-		s.setName(info.getInfoDetail().getSender().getName());
-		s.setSipUri(info.getInfoDetail().getSender().getSipUri());
 		
-		detail.setSender(s);
-		i.setInfoDetail(detail);
-		
-		String xml = XMLUtils.createStringXMLFromInfoMessage(i);
+		String xml = XMLUtils.createStringXMLFromInfoMessage(infoMsg);
 		System.out.println("createNotifyMessageContent:");
 		System.out.println(xml);
 		return xml;

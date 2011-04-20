@@ -2,38 +2,86 @@ package hu.messaging.client.model;
 
 import javax.xml.bind.annotation.XmlRegistry;
 
+
+/**
+ * This object contains factory methods for each 
+ * Java content interface and Java element interface 
+ * generated in the generated package. 
+ * <p>An ObjectFactory allows you to programatically 
+ * construct new instances of the Java representation 
+ * for XML content. The Java representation of XML 
+ * content can consist of schema derived interfaces 
+ * and classes representing the binding of schema 
+ * type definitions, element declarations and model 
+ * groups.  Factory methods for each of these are 
+ * provided in this class.
+ * 
+ */
 @XmlRegistry
 public class ObjectFactory {
 
 
- public ObjectFactory() { }
+    /**
+     * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: generated
+     * 
+     */
+    public ObjectFactory() {
+    }
 
- public InfoMessage.InfoDetail createInfoMessageInfoDetail() {
-     return new InfoMessage.InfoDetail();
- }
+    /**
+     * Create an instance of {@link MessageInfoContainer }
+     * 
+     */
+    public MessageInfoContainer createMessageInfoContainer() {
+        return new MessageInfoContainer();
+    }
 
- public InfoMessage.InfoDetail.Recipients createInfoMessageInfoDetailRecipients() {
-     return new InfoMessage.InfoDetail.Recipients();
- }
+    /**
+     * Create an instance of {@link ContentDescription }
+     * 
+     */
+    public ContentDescription createContentDescription() {
+        return new ContentDescription();
+    }
 
- public InfoMessage createInfoMessage() {
-     return new InfoMessage();
- }
+    /**
+     * Create an instance of {@link InfoMessage.DetailList }
+     * 
+     */
+    public InfoMessage.DetailList createInfoMessageDetailList() {
+        return new InfoMessage.DetailList();
+    }
 
- public InfoMessage.InfoDetail.Sender createInfoMessageInfoDetailSender() {
-     return new InfoMessage.InfoDetail.Sender();
- }
+    /**
+     * Create an instance of {@link UserInfo }
+     * 
+     */
+    public UserInfo createUserInfo() {
+        return new UserInfo();
+    }
 
- public InfoMessage.InfoDetail.Recipients.Recipient createInfoMessageInfoDetailRecipientsRecipient() {
-     return new InfoMessage.InfoDetail.Recipients.Recipient();
- }
- 
- public MessageContainer createMessageContainer() {
-     return new MessageContainer();
- }
+    /**
+     * Create an instance of {@link InfoDetail }
+     * 
+     */
+    public InfoDetail createInfoDetail() {
+        return new InfoDetail();
+    }
 
- public MessageContainer.Sender createMessageContainerSender() {
-     return new MessageContainer.Sender();
- }
+    /**
+     * Create an instance of {@link InfoMessage }
+     * 
+     */
+    public InfoMessage createInfoMessage() {
+        return new InfoMessage();
+    }
+
+    /**
+     * Create an instance of {@link InfoDetail.RecipientList }
+     * 
+     */
+    public InfoDetail.RecipientList createInfoDetailRecipientList() {
+        return new InfoDetail.RecipientList();
+    }
 
 }

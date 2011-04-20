@@ -5,25 +5,26 @@ import java.util.List;
 import java.util.ArrayList;
 
 import hu.messaging.client.model.*;
-import hu.messaging.util.*;
 import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.Constants;
 
 public class MessageUtils {
 	
-	public static MessageContainer createMessageContainerFromCompleteMessage(CompleteMessage m, boolean isSent) {
+	public static MessageInfoContainer createMessageContainerFromCompleteMessage(CompleteMessage m, boolean isSent) {
 		ObjectFactory f = new ObjectFactory();
-		MessageContainer c = f.createMessageContainer();
-		c.setContentAvailable(m.getContent() != null);
+		MessageInfoContainer c = f.createMessageInfoContainer();
+		c.setContentDescription(f.createContentDescription());
+		
+		c.getContentDescription().setContentAvailable(m.getContent() != null);
 		c.setId(m.getMessageId());
-		c.setMimeType(m.getExtension());
+		c.getContentDescription().setMimeType(m.getExtension());
 		if (isSent) {
 			c.setStatus("SENT");
 		}
 		else {
 			c.setStatus("NEW");
 		}
-		MessageContainer.Sender s = new ObjectFactory().createMessageContainerSender();
+		UserInfo s = f.createUserInfo();
 		s.setName(m.getSender() + "_name");
 		s.setSipUri(m.getSender());
 		c.setSender(s);
@@ -33,19 +34,19 @@ public class MessageUtils {
 		return c;
 	}
 
-	public static void createMessageContainerFile(MessageContainer message, byte[] content) {			
+	public static void createMessageContainerFile(MessageInfoContainer message, byte[] content) {			
 		
 		File dir = new File(Constants.messagesPath);
 		dir.mkdirs();
 		File messageFile = new File(dir, message.getId() + ".message");
-		message.setContentAvailable(content != null);
+		message.getContentDescription().setContentAvailable(content != null);
 		if (content != null) {
 			try {
 				OutputStream out = null;
 				String contentDirPath = Constants.messagesPath + Constants.messagesContentsRelativePath;	
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
-				File contentFile = new File(contentDir, message.getId() + "." + message.getMimeType());
+				File contentFile = new File(contentDir, message.getId() + "." + message.getContentDescription().getMimeType());
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 				out.write(content);
@@ -56,10 +57,10 @@ public class MessageUtils {
 				e.printStackTrace();
 			}	
 		}
-		XMLUtils.createXMLFileFromMessageContainer(message, messageFile);			
+		XMLUtils.createXMLFileFromMessageInfoContainer(message, messageFile);			
 	}
 	
-	public static void updateMessageContainerFile(MessageContainer message, byte[] content) {							
+	public static void updateMessageContainerFile(MessageInfoContainer message, byte[] content) {							
 		
 		File dir = new File(Constants.messagesPath);
 		dir.mkdirs();
@@ -68,8 +69,8 @@ public class MessageUtils {
 			System.out.println("Nincs ilyen containerFile: " + message.getId() + ".message");
 		}
 		
-		MessageContainer m = XMLUtils.createMessageContainerFromFile(messageFile);
-		m.setContentAvailable(true);
+		MessageInfoContainer m = XMLUtils.createMessageInfoContainerFromFile(messageFile);
+		m.getContentDescription().setContentAvailable(true);
 		
 		if (content != null) {
 			try {
@@ -77,7 +78,7 @@ public class MessageUtils {
 				String contentDirPath = Constants.messagesPath + Constants.messagesContentsRelativePath;	
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
-				File contentFile = new File(contentDir, message.getId() + "." + m.getMimeType());
+				File contentFile = new File(contentDir, message.getId() + "." + m.getContentDescription().getMimeType());
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 				out.write(content);
@@ -88,25 +89,25 @@ public class MessageUtils {
 				e.printStackTrace();
 			}	
 		}
-		XMLUtils.createXMLFileFromMessageContainer(m, messageFile);			
+		XMLUtils.createXMLFileFromMessageInfoContainer(m, messageFile);			
 	}
 	
-	public static MessageContainer readMessageContainerFromFile(String messageId) {
+	public static MessageInfoContainer readMessageContainerFromFile(String messageId) {
 		File dir = new File(Constants.messagesPath + Constants.messagesContentsRelativePath);
 		File messageFile = new File(dir, messageId + ".message");
-		MessageContainer m = XMLUtils.createMessageContainerFromFile(messageFile);			        
+		MessageInfoContainer m = XMLUtils.createMessageInfoContainerFromFile(messageFile);			        
 		
 		return m;
 	}
 	
-	public static List<MessageContainer> loadInboxMessages() {		
-		List<MessageContainer> inbox = new ArrayList<MessageContainer>();
+	public static List<MessageInfoContainer> loadInboxMessages() {		
+		List<MessageInfoContainer> inbox = new ArrayList<MessageInfoContainer>();
 		File dir = new File(Constants.messagesPath);
 		
 		for (File f : dir.listFiles()) {
 			if (f.isFile()) {
 				System.out.println(f.getName());				
-				MessageContainer c = XMLUtils.createMessageContainerFromFile(f);
+				MessageInfoContainer c = XMLUtils.createMessageInfoContainerFromFile(f);
 				System.out.println("MessageContainer id: " + c.getId());
 				if (!"SENT".equals(c.getStatus().toUpperCase())) {
 					inbox.add(c);
@@ -116,14 +117,14 @@ public class MessageUtils {
 		return inbox;
 	}
 	
-	public static List<MessageContainer> loadSentMessages() {		
-		List<MessageContainer> sentMessages = new ArrayList<MessageContainer>();
+	public static List<MessageInfoContainer> loadSentMessages() {		
+		List<MessageInfoContainer> sentMessages = new ArrayList<MessageInfoContainer>();
 		File dir = new File(Constants.messagesPath);
 		
 		for (File f : dir.listFiles()) {
 			if (f.isFile()) {
 				System.out.println(f.getName());				
-				MessageContainer c = XMLUtils.createMessageContainerFromFile(f);
+				MessageInfoContainer c = XMLUtils.createMessageInfoContainerFromFile(f);
 				System.out.println("MessageContainer id: " + c.getId());
 				if ("SENT".equals(c.getStatus().toUpperCase())) {
 					sentMessages.add(c);
@@ -133,17 +134,22 @@ public class MessageUtils {
 		return sentMessages;
 	}
 	
-	public static MessageContainer createMessageContainerFromNotifyInfoMessage(InfoMessage info) {		
-		MessageContainer m = new ObjectFactory().createMessageContainer();
-		MessageContainer.Sender s = new ObjectFactory().createMessageContainerSender();
-		m.setId(info.getInfoDetail().getId());
-		m.setStatus("NEW");
-		m.setMimeType(info.getInfoDetail().getMimeType());
-		m.setSubject(info.getInfoDetail().getSubject());
-		m.setContentAvailable(false);
+	public static MessageInfoContainer createMessageInfoContainerFromNotifyInfoMessage(InfoMessage info) {	
+		ObjectFactory f = new ObjectFactory();
+		MessageInfoContainer m = f.createMessageInfoContainer();
+		m.setContentDescription(f.createContentDescription());
 		
-		s.setName(info.getInfoDetail().getSender().getName());
-		s.setSipUri(info.getInfoDetail().getSender().getSipUri());
+		UserInfo s = f.createUserInfo();
+		
+		InfoDetail detail = info.getDetailList().getDetail().get(0);
+		m.setId(detail.getId());
+		m.setStatus("NEW");
+		m.getContentDescription().setMimeType(detail.getMimeType());
+		m.setSubject(detail.getSubject());
+		m.getContentDescription().setContentAvailable(false);
+		
+		s.setName(detail.getSender().getName());
+		s.setSipUri(detail.getSender().getSipUri());
 		m.setSender(s);		
 					 
 		return m;

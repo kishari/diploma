@@ -21,10 +21,13 @@ import hu.messaging.msrp.CompleteMessage;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.service.*;
 import hu.messaging.util.*;
+import hu.messaging.model.*;
 
 public class MessagingSipServlet extends SipServlet {
 
+	private SipFactory sipFactory;
 	private MessagingService messagingService = null;
+	private static final long serialVersionUID = 1L;
 	
 	private String getCleanSipUri(String incomingUri) {
 		Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
@@ -32,6 +35,16 @@ public class MessagingSipServlet extends SipServlet {
 		Matcher m = sipUriPattern.matcher(incomingUri);
 		m.find();
 		return m.group(1);
+	}
+	
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		ServletContext context = config.getServletContext();
+		sipFactory = (SipFactory) context.getAttribute(SipServlet.SIP_FACTORY);
+		messagingService = new MessagingService();
+		messagingService.addMSRPListener(messagingService);
+		
+		System.out.println("MessagingSipServlet inited!");
 	}
 	
 	protected void doRegister(SipServletRequest req) throws ServletException,
@@ -43,7 +56,7 @@ public class MessagingSipServlet extends SipServlet {
 		
 		user.addObserver(this.messagingService);
 		if (this.messagingService.addUserToOnlineList(user)) {
-			//notifyUserFromItsNewMessages(req, user);
+			//notifyUserFromNewMessages(req, user);
 		}
 		
 	}
@@ -52,115 +65,6 @@ public class MessagingSipServlet extends SipServlet {
 			throws ServletException, IOException {
 		super.doErrorResponse(resp);
 		
-	}
-
-	private static final long serialVersionUID = 1L;
-	
-	/**
-	 * The SIP Factory. Can be used to create URI and requests.
-	 */
-	private SipFactory sipFactory;
-
-	public void init(ServletConfig config) throws ServletException {
-		super.init(config);
-		ServletContext context = config.getServletContext();
-		sipFactory = (SipFactory) context.getAttribute(SipServlet.SIP_FACTORY);
-		messagingService = new MessagingService();
-		messagingService.addMSRPListener(messagingService);
-		
-		System.out.println("MessagingSipServlet inited!");
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	protected void doBye(SipServletRequest req) throws ServletException, IOException {
-		//TODO: Implement this method
-		System.out.println("Server doBye");
-		req.createResponse(200).send();
-		System.out.println(getCleanSipUri(req.getFrom().toString()));
-		this.messagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
-	}
-
-	protected void doAck(SipServletRequest req)	throws ServletException, IOException {
-		System.out.println("doAck calling...");
-		System.out.println("Ack from: " + req.getFrom() );
-	}
-
-	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
-		InfoMessage info = null;
-		System.out.println("doMessage calling...");
-		//System.out.println("Incoming message: " + req.getContent() );
-		req.createResponse(200).send();
-		
-		if (req.getContent().toString().startsWith("<?xml")) {
-			info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(req.getContent().toString());
-			System.out.println(info.getInfoType());
-		}
-		 
-		if (info != null && info.getInfoType().equals("DOWNLOAD_MESSAGE")) {
-			System.out.println("download messages");
-			CompleteMessage message = messagingService.getMessagingDao().getMessageToMessageId(info.getInfoDetail().getId());
-			List<CompleteMessage> messages = new ArrayList<CompleteMessage>();
-			messages.add(message);
-			String sipURI = this.getCleanSipUri(req.getFrom().toString());
-			this.messagingService.sendMessages(messages, sipURI);
-		}
-		
-		if ("UPDATESTATUS".equals(req.getContent())) {
-			
-		}
-		
-		if (info != null && "MESSAGE_DATA".equals(info.getInfoType().toUpperCase())) {
-			InfoMessage.InfoDetail detail = info.getInfoDetail();
-			String messageId = detail.getId();
-			String extension = detail.getMimeType();
-			String sender = detail.getSender().getSipUri();
-			
-			List<Recipient> recipients = new ArrayList<Recipient>();
-			
-			for (InfoMessage.InfoDetail.Recipients.Recipient r : detail.getRecipients().getRecipient()) {				
-				Recipient recipient = new Recipient(r.getName(), r.getSipUri());
-				System.out.println("recipient name : " + recipient.getName() + " ****** uri: " + recipient.getSipURI());
-				recipients.add(recipient);
-			}
-			
-			messagingService.getMessagingDao().insertRecipients(info.getInfoDetail().getId(), recipients);
-			messagingService.getMessagingDao().updateMessage(info.getInfoDetail().getId(), 
-															 info.getInfoDetail().getMimeType(), 
-															 info.getInfoDetail().getSender().getSipUri());
-			notifyOnlineRecipients(req, info);
-		}
-	}
-
-	private void notifyUserFromItsNewMessages(SipServletRequest req, User user) throws ServletParseException, IOException {
-		System.out.println("notifyUserFromItsNewMessages");
-		SipServletRequest r = sipFactory.createRequest(sipFactory.createApplicationSession(), "MESSAGE", sipFactory.createAddress("sip:weblogic@ericsson.com") , req.getTo());
-		r.setRequestURI(sipFactory.createURI(req.getTo().toString()));
-		r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-		//r.setContent(messagingService.createNotifyMessageContent("sender", "messageId", "extension"), "text/plain");	        
-		r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
-		System.out.println(r.toString());
-		r.send();
-	}
-	
-	private void notifyOnlineRecipients(SipServletRequest req, 
-									    InfoMessage info) throws ServletParseException, IOException {
-		
-		System.out.println("notifyOnlineRecipients");
-		for (InfoMessage.InfoDetail.Recipients.Recipient recipient : info.getInfoDetail().getRecipients().getRecipient()) {
-			for (User user : this.messagingService.onlineUsers ) {
-				if (recipient.getSipUri().equals(user.getSipURI())) {					
-					SipServletRequest r = sipFactory.createRequest(req, false);
-					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
-					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-					r.setContent(messagingService.createNotifyMessageContent(info), "text/plain");	        
-					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
-					
-					r.send();
-				}
-			}			
-		}
 	}
 	
 	protected void doInvite(SipServletRequest req) throws ServletException, IOException {
@@ -210,4 +114,92 @@ public class MessagingSipServlet extends SipServlet {
 		}
 		
 	}
+
+	protected void doBye(SipServletRequest req) throws ServletException, IOException {
+		//TODO: Implement this method
+		System.out.println("Server doBye");
+		req.createResponse(200).send();
+		System.out.println(getCleanSipUri(req.getFrom().toString()));
+		this.messagingService.disposeSenderConnection(getCleanSipUri(req.getFrom().toString()));
+	}
+
+	protected void doAck(SipServletRequest req)	throws ServletException, IOException {
+		System.out.println("doAck calling...");
+		System.out.println("Ack from: " + req.getFrom() );
+	}
+
+	protected void doMessage(SipServletRequest req)	throws ServletException, IOException {		
+		InfoMessage info = null;
+		System.out.println("doMessage calling...");
+		//System.out.println("Incoming message: " + req.getContent() );
+		req.createResponse(200).send();
+		
+		if (req.getContent().toString().startsWith("<?xml")) {
+			info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(req.getContent().toString());
+			System.out.println(info.getInfoType());
+		}
+		 
+		if (info != null && info.getInfoType().equals(InfoMessage.downloadContent)) {
+			System.out.println("download messages");
+			CompleteMessage message = messagingService.getMessagingDao().getMessageToMessageId(info.getDetailList().getDetail().get(0).getId());
+			List<CompleteMessage> messages = new ArrayList<CompleteMessage>();
+			messages.add(message);
+			String sipURI = this.getCleanSipUri(req.getFrom().toString());
+			this.messagingService.sendMessages(messages, sipURI);
+		}
+		
+		if (info != null && InfoMessage.messageData.equals(info.getInfoType().toUpperCase())) {		
+			InfoMessage.DetailList detailList = info.getDetailList();
+			InfoDetail detail = detailList.getDetail().get(0);
+			
+			String messageId = detail.getId();
+			String mimeType = detail.getMimeType();
+			String sender = detail.getSender().getSipUri();
+			
+			List<Recipient> recipients = new ArrayList<Recipient>();
+			
+			for (UserInfo r : detail.getRecipientList().getRecipient()) {				
+				Recipient recipient = new Recipient(r.getName(), r.getSipUri());
+				System.out.println("recipient name : " + recipient.getName() + " ****** uri: " + recipient.getSipURI());
+				recipients.add(recipient);
+			}
+			
+			messagingService.getMessagingDao().insertRecipients(messageId, recipients);
+			messagingService.getMessagingDao().updateMessage(messageId, mimeType, sender); 
+			notifyOnlineRecipientsFromNewMessage(req, info);
+		}
+	}
+
+	private void notifyUserFromNewMessages(SipServletRequest req, User user) throws ServletParseException, IOException {
+		System.out.println("notifyUserFromItsNewMessages");
+		SipServletRequest r = sipFactory.createRequest(sipFactory.createApplicationSession(), "MESSAGE", sipFactory.createAddress("sip:weblogic@ericsson.com") , req.getTo());
+		r.setRequestURI(sipFactory.createURI(req.getTo().toString()));
+		r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
+		//r.setContent(messagingService.createNotifyMessageContent("sender", "messageId", "extension"), "text/plain");	        
+		r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
+		System.out.println(r.toString());
+		r.send();
+	}
+	
+	private void notifyOnlineRecipientsFromNewMessage(SipServletRequest req, 
+									    InfoMessage info) throws ServletParseException, IOException {
+		
+		System.out.println("notifyOnlineRecipients");
+		InfoDetail detail = info.getDetailList().getDetail().get(0);
+		for (UserInfo recipient : detail.getRecipientList().getRecipient()) {
+			for (User user : this.messagingService.onlineUsers ) {
+				if (recipient.getSipUri().equals(user.getSipURI())) {					
+					SipServletRequest r = sipFactory.createRequest(req, false);
+					r.setRequestURI(sipFactory.createURI(user.getSipURI()));
+					r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
+					r.setContent(messagingService.createNotifyMessageContent(info), "text/plain");	        
+					r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
+					
+					r.send();
+				}
+			}			
+		}
+	}
+	
+	
 }

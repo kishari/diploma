@@ -19,6 +19,7 @@ public class Constants {
 	public static final String serverSipURI = "sip:weblogic@ericsson.com";
 	public static final String messagesPath = "C:\\diploma\\testing\\messages\\";
 	public static final String messagesContentsRelativePath = "contents\\";
+	public static final boolean sendTestMessageMySelf = true;
 	
     public static final Map<Integer, String> methods = new HashMap<Integer, String>(){
 		{

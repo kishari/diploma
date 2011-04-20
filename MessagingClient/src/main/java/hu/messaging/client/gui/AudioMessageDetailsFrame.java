@@ -9,13 +9,13 @@ import javax.swing.JPanel;
 
 import hu.messaging.client.Resources;
 import hu.messaging.client.media.audio.AudioPlayer;
-import hu.messaging.client.model.MessageContainer;
+import hu.messaging.client.model.*;
 
 public class AudioMessageDetailsFrame extends MessageDetailsFrame {
 	
 	private AudioPlayer player;		
 
-	public AudioMessageDetailsFrame(MessageContainer message, byte[] content) {
+	public AudioMessageDetailsFrame(MessageInfoContainer message, byte[] content) {
 		super(message, content);
 		player = new AudioPlayer();
 	}

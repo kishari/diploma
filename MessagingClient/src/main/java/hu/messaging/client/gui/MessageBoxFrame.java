@@ -33,13 +33,13 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     private JPanel inboxPanel;
     private JPanel sentPanel;
     
-    private MessageContainer selectedMessage = null;
+    private MessageInfoContainer selectedMessage = null;
     
     private DefaultTableModel inboxMessageTableModel;
     private DefaultTableModel sentMessageTableModel;
     
-    private List<MessageContainer> inboxMessageList = new ArrayList<MessageContainer>();
-    private List<MessageContainer> sentMessageList = new ArrayList<MessageContainer>();
+    private List<MessageInfoContainer> inboxMessageList = new ArrayList<MessageInfoContainer>();
+    private List<MessageInfoContainer> sentMessageList = new ArrayList<MessageInfoContainer>();
 
     private ICPController icpController;
     
@@ -138,7 +138,7 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
               		if (event.getClickCount() == 2) {
               			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
               			//Itt kellene egy progressAblak, amiben a letöltés állapotát jelzi
-              			if (!"SENT".equals(selectedMessage.getStatus()) && !selectedMessage.isContentAvailable()) {
+              			if (!"SENT".equals(selectedMessage.getStatus()) && !selectedMessage.getContentDescription().isContentAvailable()) {
               				System.out.println("content nem elerheto. get content from server...");         				
               				try {
               					createMSRPSessionToRemote(Constants.serverSipURI);         					
@@ -146,7 +146,7 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
               				catch(Exception e) { } 
               			}
               			else {
-              				if ("MP3".equals(selectedMessage.getMimeType().toUpperCase().trim())) {
+              				if ("MP3".equals(selectedMessage.getContentDescription().getMimeType().toUpperCase().trim())) {
               					children.add(new AudioMessageDetailsFrame(selectedMessage, getMessageContent(selectedMessage)));
               				}
               				else {
@@ -211,15 +211,15 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
          messageTable.getTableHeader().getColumnModel().getColumn(checkboxIndex+1).setResizable(false);
               
          if (isInboxPanel) {        	 
-             for (MessageContainer m : this.inboxMessageList) {
-            	 MessageContainer.Sender s = m.getSender();
-            	 String senderLabelText = s.getName() != null && s.getName().trim().length() != 0 ? s.getName() : s.getSipUri();
+             for (MessageInfoContainer m : this.inboxMessageList) {
+            	 UserInfo sender = m.getSender();
+            	 String senderLabelText = sender.getName() != null && sender.getName().trim().length() != 0 ? sender.getName() : sender.getSipUri();
             	 messageTableModel.addRow(new Object[] { m.getStatus(), senderLabelText, m.getSubject(), false, m.getId() });
              }
                           
          }
          else {
-             for (MessageContainer m : this.sentMessageList)
+             for (MessageInfoContainer m : this.sentMessageList)
              {
             	 messageTableModel.addRow(new Object[] { m.getSubject(), false, m.getId() });            	 
              }  
@@ -241,8 +241,8 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
          return messageTablePanel;
     }
     
-    private MessageContainer getSelectedMessage(int row, int tabIndex) {
-    	MessageContainer m = null;
+    private MessageInfoContainer getSelectedMessage(int row, int tabIndex) {
+    	MessageInfoContainer m = null;
     	if (tabIndex == 0) {
     		System.out.println("row: " + row);
    			System.out.println("(inboxMessageList.size()): " + (inboxMessageList.size()));
@@ -254,10 +254,10 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     	return m;
     }
     
-    private byte[] getMessageContent(MessageContainer m) {
+    private byte[] getMessageContent(MessageInfoContainer m) {
 		File contentFile = new File(Constants.messagesPath + 
 									Constants.messagesContentsRelativePath + 
-									m.getId() + "." + m.getMimeType());
+									m.getId() + "." + m.getContentDescription().getMimeType());
 		byte content[] = new byte[(int) contentFile.length()];
 
 		try {
@@ -302,9 +302,9 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     			idx++;
     		}
     			
-    		List<MessageContainer> list = (tabIndex == 0) ? inboxMessageList : sentMessageList;
+    		List<MessageInfoContainer> list = (tabIndex == 0) ? inboxMessageList : sentMessageList;
     		int mIdx = 0;
-    		for (MessageContainer m : list) {    			
+    		for (MessageInfoContainer m : list) {    			
     			if (mId.equals(m.getId())) {
     				list.remove(mIdx);
     				break;
@@ -316,14 +316,21 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     
     public void fireMsrpEvent(MSRPEvent event) {
 		try {
+			
+			ObjectFactory factory = new ObjectFactory();
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :
 					System.out.println("session started event");
 					InfoMessage info = new InfoMessage();
-					info.setInfoType("DOWNLOAD_MESSAGE");
-					InfoMessage.InfoDetail detail = new ObjectFactory().createInfoMessageInfoDetail();
+					info.setInfoType(InfoMessage.downloadContent);
+					
+					InfoDetail detail = factory.createInfoDetail();
 					detail.setId(selectedMessage.getId());
-					info.setInfoDetail(detail);
+					
+					InfoMessage.DetailList detailList = factory.createInfoMessageDetailList();
+					detailList.getDetail().add(detail);
+					
+					info.setDetailList(detailList);
 					String msg = XMLUtils.createStringXMLFromInfoMessage(info);
 					icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, msg);
 					break;

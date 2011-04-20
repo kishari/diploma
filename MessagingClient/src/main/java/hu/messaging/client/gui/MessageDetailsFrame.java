@@ -16,12 +16,12 @@ import hu.messaging.client.model.*;
 
 public abstract class MessageDetailsFrame extends JFrame {
 	
-	private MessageContainer message;
+	private MessageInfoContainer messageInfoContainer;
 	private byte[] content;
 	private List<JFrame> children = new ArrayList<JFrame>();
 	
-	public MessageDetailsFrame(MessageContainer message, byte[] content) {
-		this.message = message;
+	public MessageDetailsFrame(MessageInfoContainer messageInfoContainer, byte[] content) {
+		this.messageInfoContainer = messageInfoContainer;
 		this.content = content;
 		
 		createGUI();
@@ -34,7 +34,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		
 		final JLabel senderLabel = new JLabel("Feladó: ");
 		senderLabel.setFont(new Font("", Font.BOLD, 12));
-		final JLabel s = new JLabel(message.getSender().getName() + " <" + message.getSender().getSipUri() + ">");
+		final JLabel s = new JLabel(messageInfoContainer.getSender().getName() + " <" + messageInfoContainer.getSender().getSipUri() + ">");
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0;
@@ -57,7 +57,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		
 		final JLabel subjectLabel = new JLabel("Tárgy: ");
 		subjectLabel.setFont(new Font("", Font.BOLD, 12));
-		final JLabel subj = new JLabel(message.getSubject());
+		final JLabel subj = new JLabel(messageInfoContainer.getSubject());
 		c.gridx = 0;
 		c.gridy = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -80,7 +80,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		c.gridy = 2;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		
-		final JLabel type = new JLabel(message.getMimeType());
+		final JLabel type = new JLabel(messageInfoContainer.getContentDescription().getMimeType());
 		infoPanel.add(type, c);
 		
 		return infoPanel;
@@ -126,8 +126,8 @@ public abstract class MessageDetailsFrame extends JFrame {
 		MessageDetailsFrame.this.dispose();
 	}
 	
-	public MessageContainer getMessage() {
-		return message;
+	public MessageInfoContainer getMessageInfoContainer() {
+		return messageInfoContainer;
 	}
 
 	public byte[] getContent() {

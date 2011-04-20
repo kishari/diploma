@@ -1,4 +1,4 @@
-package hu.messaging.client.model;
+package hu.messaging.model;
 
 import java.util.ArrayList;
 import java.util.List;

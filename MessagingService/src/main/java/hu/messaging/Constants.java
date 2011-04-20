@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Constants {
 
-	public static final String serverURI = "sip:weblogic@192.168.2.101";
+	public static final String serverURI = "sip:weblogic@192.168.56.101";
 	
 	
 	public static final int methodSEND = 1;
@@ -16,7 +16,6 @@ public class Constants {
 	public static final int messageIdLength = 10;
 	public static final int receiverBufferSize = 1000000;
 	public static final int onlineUserTimeOut = 60000;
-	public static final String updateStatusMessage = "UPDATESTATUS";
 	public static final int burstSize = 50;
 	public static final int unAcknoledgedChunksLimit = 25;
 	

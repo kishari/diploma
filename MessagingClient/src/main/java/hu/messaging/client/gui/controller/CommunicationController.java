@@ -154,8 +154,8 @@ public class CommunicationController {
     	System.out.println(message);
     	if (message.startsWith("<?xml")) {
     		InfoMessage info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(message);
-    		if ("NOTIFY_USER".equals(info.getInfoType().toUpperCase().trim())) {
-    			MessageContainer c = MessageUtils.createMessageContainerFromNotifyInfoMessage(info);
+    		if (InfoMessage.notifyUser.equals(info.getInfoType().toUpperCase().trim())) {
+    			MessageInfoContainer c = MessageUtils.createMessageInfoContainerFromNotifyInfoMessage(info);
     			MessageUtils.createMessageContainerFile(c, null);
     			
     		}    		
@@ -178,9 +178,13 @@ public class CommunicationController {
     public List<CompleteMessage> getIncomingNewMessages() {
     	List<CompleteMessage> newMessages = new ArrayList<CompleteMessage>();
     	for (InfoMessage descr : this.incomingNewMessageDescriptors) {
-    		CompleteMessage cm = new CompleteMessage(descr.getInfoDetail().getId(), null, descr.getInfoDetail().getMimeType(), 
-    												 descr.getInfoDetail().getSender().getSipUri(), descr.getInfoDetail().getSubject());
-        	newMessages.add(cm);    	
+    		InfoMessage.DetailList detailList = descr.getDetailList();
+    		
+    		for (InfoDetail d : detailList.getDetail()) {
+    			CompleteMessage cm = new CompleteMessage(d.getId(), null, d.getMimeType(), 
+						 d.getSender().getSipUri(), d.getSubject());
+    			newMessages.add(cm);    	
+    		}
     	}
     	
     	return newMessages;

@@ -1,6 +1,6 @@
 package hu.messaging.util;
 
-import hu.messaging.InfoMessage;
+import hu.messaging.model.*;
 import javax.xml.bind.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
