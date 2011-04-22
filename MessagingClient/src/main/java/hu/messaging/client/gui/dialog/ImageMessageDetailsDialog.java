@@ -1,4 +1,4 @@
-package hu.messaging.client.gui;
+package hu.messaging.client.gui.dialog;
 
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -17,9 +17,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-public class ImageMessageDetailsFrame extends MessageDetailsFrame {
+public class ImageMessageDetailsDialog extends MessageDetailsDialog {
 
-	public ImageMessageDetailsFrame(MessageInfoContainer messageInfoContainer, byte[] content) {
+	public ImageMessageDetailsDialog(MessageInfoContainer messageInfoContainer, byte[] content) {
 		super(messageInfoContainer, content);
 	}
 

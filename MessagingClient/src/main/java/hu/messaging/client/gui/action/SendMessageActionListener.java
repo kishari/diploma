@@ -1,7 +1,7 @@
 package hu.messaging.client.gui.action;
 
-import hu.messaging.client.gui.SendMessageFrame;
 import hu.messaging.client.gui.controller.ICPController;
+import hu.messaging.client.gui.dialog.SendMessageDialog;
 
 import java.awt.Container;
 import java.awt.event.ActionEvent;
@@ -14,7 +14,7 @@ public class SendMessageActionListener extends BuddyActionListener {
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		SendMessageFrame dialog = new SendMessageFrame(icpController);
+		SendMessageDialog dialog = new SendMessageDialog(icpController);
 		dialog.setVisible(true);
 
 	}

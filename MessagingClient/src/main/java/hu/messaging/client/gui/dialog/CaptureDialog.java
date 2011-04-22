@@ -1,4 +1,4 @@
-package hu.messaging.client.gui;
+package hu.messaging.client.gui.dialog;
 
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.util.ImageUtil;
@@ -11,14 +11,14 @@ import java.awt.event.*;
 import java.io.*;
 import javax.sound.sampled.*;
 
-public class CaptureFrame extends JFrame {
+public class CaptureDialog extends JFrame {
 
     private boolean stopCapture = false;
     private ByteArrayOutputStream tempCapturedContent;
     private byte[] capturedContent = null;
     private String capturedContentMimeType = "";
 
-    public CaptureFrame() {
+    public CaptureDialog() {
         final JButton captureBtn = new JButton(Resources.resources.get("button.capture"));
         final JButton stopBtn = new JButton(Resources.resources.get("button.stop"));
         final JButton playBtn = new JButton(Resources.resources.get("button.play"));
@@ -72,7 +72,7 @@ public class CaptureFrame extends JFrame {
 
         okButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {            	
-                CaptureFrame.this.setVisible(false);
+                CaptureDialog.this.setVisible(false);
             }
         }); 
         
@@ -204,7 +204,7 @@ public class CaptureFrame extends JFrame {
 	}
 	
     public static void main(String[] args) {
-    	CaptureFrame f = new CaptureFrame();
+    	CaptureDialog f = new CaptureDialog();
     	f.setVisible(true);
     	f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }

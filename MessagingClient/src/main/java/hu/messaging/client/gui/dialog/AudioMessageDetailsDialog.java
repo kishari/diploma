@@ -1,4 +1,4 @@
-package hu.messaging.client.gui;
+package hu.messaging.client.gui.dialog;
 
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -11,11 +11,11 @@ import hu.messaging.client.Resources;
 import hu.messaging.client.media.audio.AudioPlayer;
 import hu.messaging.client.model.*;
 
-public class AudioMessageDetailsFrame extends MessageDetailsFrame {
+public class AudioMessageDetailsDialog extends MessageDetailsDialog {
 	
 	private AudioPlayer player;		
 
-	public AudioMessageDetailsFrame(MessageInfoContainer message, byte[] content) {
+	public AudioMessageDetailsDialog(MessageInfoContainer message, byte[] content) {
 		super(message, content);
 		player = new AudioPlayer();
 	}

@@ -1,4 +1,4 @@
-package hu.messaging.client.gui;
+package hu.messaging.client.gui.dialog;
 
 import java.awt.BorderLayout;
 
@@ -14,13 +14,13 @@ import hu.messaging.client.Resources;
 import hu.messaging.client.gui.util.ImageUtil;
 import hu.messaging.client.model.*;
 
-public abstract class MessageDetailsFrame extends JFrame {
+public abstract class MessageDetailsDialog extends JFrame {
 	
 	private MessageInfoContainer messageInfoContainer;
 	private byte[] content;
 	private List<JFrame> children = new ArrayList<JFrame>();
 	
-	public MessageDetailsFrame(MessageInfoContainer messageInfoContainer, byte[] content) {
+	public MessageDetailsDialog(MessageInfoContainer messageInfoContainer, byte[] content) {
 		this.messageInfoContainer = messageInfoContainer;
 		this.content = content;
 		
@@ -32,7 +32,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		JPanel infoPanel = new JPanel();
 		infoPanel.setLayout(new GridBagLayout());
 		
-		final JLabel senderLabel = new JLabel("Feladó: ");
+		final JLabel senderLabel = new JLabel(Resources.resources.get("detail.message.sender.label"));
 		senderLabel.setFont(new Font("", Font.BOLD, 12));
 		final JLabel s = new JLabel(messageInfoContainer.getSender().getName() + " <" + messageInfoContainer.getSender().getSipUri() + ">");
 		
@@ -120,8 +120,8 @@ public abstract class MessageDetailsFrame extends JFrame {
 			f.dispose();
 		}
 		
-		MessageDetailsFrame.this.setVisible(false);
-		MessageDetailsFrame.this.dispose();
+		MessageDetailsDialog.this.setVisible(false);
+		MessageDetailsDialog.this.dispose();
 	}
 	
 	public MessageInfoContainer getMessageInfoContainer() {

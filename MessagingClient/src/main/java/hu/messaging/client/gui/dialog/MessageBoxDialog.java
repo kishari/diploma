@@ -1,14 +1,14 @@
-package hu.messaging.client.gui;
+package hu.messaging.client.gui.dialog;
 
 import java.io.*;
 
-import hu.messaging.Constants;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
+import hu.messaging.client.gui.util.ImageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
-import hu.messaging.msrp.CompleteMessage;
-import hu.messaging.msrp.event.MSRPEvent;
-import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.msrp.listener.MSRPEvent;
+import hu.messaging.msrp.listener.MSRPListener;
+import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.util.MessageUtils;
 import hu.messaging.util.XMLUtils;
 import hu.messaging.client.media.MimeHelper;
@@ -25,7 +25,7 @@ import javax.swing.table.DefaultTableModel;
 
 import com.ericsson.icp.util.ISessionDescription;
 
-public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionListener {
+public class MessageBoxDialog extends JFrame implements MSRPListener, ConnectionListener {
 
     private static final long serialVersionUID = -6048051912258339134L;
 
@@ -43,12 +43,12 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     private List<MessageInfoContainer> sentMessageList = new ArrayList<MessageInfoContainer>();
 
     private ICPController icpController;
+ 
+    private ProgressDialog progressDialog = null;
     
-    private JDesktopPane desktop;
+    private List<MessageDetailsDialog> children = new ArrayList<MessageDetailsDialog>();
     
-    private List<MessageDetailsFrame> children = new ArrayList<MessageDetailsFrame>();
-    
-    public MessageBoxFrame(ICPController icpController) {  
+    public MessageBoxDialog(ICPController icpController) {  
     	this.icpController = icpController;
     	
     	inboxMessageList = MessageUtils.loadInboxMessages();
@@ -56,14 +56,11 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     	
         setLocation(100, 100);
         setTitle(Resources.resources.get("frame.messagebox.title"));
-        setIconImage(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("hu/messaging/client/gui/logo.gif")));
+        setIconImage(ImageUtil.createImage("logo.gif"));
         setPreferredSize(new Dimension(500, 307));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        
-       // desktop = new JDesktopPane();
-       //   setContentPane(desktop);
-        
+
         inboxPanel = new JPanel();
         inboxPanel.setLayout(new BorderLayout());
         inboxPanel.add(createMessageTablePanel(true), BorderLayout.NORTH);
@@ -75,8 +72,8 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
         sentPanel.add(createButtonPanel(), BorderLayout.EAST);
         
         messagePane = new JTabbedPane();
-        messagePane.add("inbox", inboxPanel);
-        messagePane.add("sent", sentPanel);        
+        messagePane.add(Resources.resources.get("messagepane.label.inbox"), inboxPanel);
+        messagePane.add(Resources.resources.get("messagepane.label.sent"), sentPanel);        
         
         getContentPane().add(messagePane);
         
@@ -89,6 +86,7 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
         	}
         });
         	
+        progressDialog = new ProgressDialog(this, true);
         pack();                
         setVisible(true);
     }    
@@ -104,12 +102,12 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				MessageBoxFrame.this.setVisible(false);
-				for (MessageDetailsFrame f : children) {
+				MessageBoxDialog.this.setVisible(false);
+				for (MessageDetailsDialog f : children) {
         			f.setVisible(false);    
         			f.close();
         		}
-				MessageBoxFrame.this.dispose();				
+				MessageBoxDialog.this.dispose();				
 			}
 		});
 	    subPanel.add(okButton);
@@ -138,21 +136,20 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
               	public void mouseClicked(MouseEvent event) {
               		if (event.getClickCount() == 2) {
               			selectedMessage = getSelectedMessage(((JTable)event.getComponent()).getSelectedRow(), messagePane.getSelectedIndex());
-              			//Itt kellene egy progressAblak, amiben a letöltés állapotát jelzi
-              			if (!"SENT".equals(selectedMessage.getStatus()) && !selectedMessage.getContentDescription().isContentAvailable()) {
-              				System.out.println("content nem elerheto. get content from server...");         				
-              				try {
-              					createMSRPSessionToRemote(Constants.serverSipURI);         					
+              			if (!"SENT".equals(selectedMessage.getStatus()) && !selectedMessage.getContentDescription().isContentAvailable()) {         				
+              				try {              					
+              					createMSRPSessionToRemote(Resources.serverSipURI);
+              					setProgressWindowVisibily(true);
               				}
               				catch(Exception e) { } 
               			}
               			else {
-              				if ("MP3".equals(selectedMessage.getContentDescription().getMimeType().toUpperCase().trim())) {
-              					children.add(new AudioMessageDetailsFrame(selectedMessage, getMessageContent(selectedMessage)));
-              				}
-              				else {
-              					children.add(new ImageMessageDetailsFrame(selectedMessage, getMessageContent(selectedMessage)));
-              				}
+              					if ("audio/mpeg".equals(selectedMessage.getContentDescription().getMimeType().toLowerCase().trim())) {
+                  					children.add(new AudioMessageDetailsDialog(selectedMessage, getMessageContent(selectedMessage)));
+                  				}
+                  				else {
+                  					children.add(new ImageMessageDetailsDialog(selectedMessage, getMessageContent(selectedMessage)));
+                  				}              			
               			}
               		}         		
               	}
@@ -256,9 +253,8 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
     }
     
     private byte[] getMessageContent(MessageInfoContainer m) {
-		File contentFile = new File(Constants.messagesPath + 
-									Constants.messagesContentsRelativePath + 
-									m.getId() + "." + m.getContentDescription().getMimeType());
+		File contentFile = new File(Resources.messageContentsDirectory + 
+									m.getId() + "." + MimeHelper.getExtensionByMIMEType(m.getContentDescription().getMimeType()));
 		byte content[] = new byte[(int) contentFile.length()];
 
 		try {
@@ -333,13 +329,14 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
 					
 					info.setDetailList(detailList);
 					String msg = XMLUtils.createStringXMLFromInfoMessage(info);
-					icpController.getCommunicationController().sendSIPMessage(Constants.serverSipURI, msg);
+					icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, msg);
 					break;
 				case MSRPEvent.brokenTrasmission :
 					break;
 				case MSRPEvent.messageSentSuccess :
 					break;
 				case MSRPEvent.messageReceivingSuccess :
+					setProgressWindowVisibily(false);
 					CompleteMessage m = event.getCompleteMessage();
 					MessageUtils.updateMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(m, false), m.getContent());
 					
@@ -382,13 +379,35 @@ public class MessageBoxFrame extends JFrame implements MSRPListener, ConnectionL
 		System.out.println("createMSRPSessionToRemote : " + sipURI);
 		
 		ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
-		icpController.getCommunicationController().addMSRPListener(MessageBoxFrame.this);
+		icpController.getCommunicationController().addMSRPListener(MessageBoxDialog.this);
 		  
-		icpController.getSessionListener().addConnectionListener(MessageBoxFrame.this);
+		icpController.getSessionListener().addConnectionListener(MessageBoxDialog.this);
 		icpController.getCommunicationController().sendInvite(sdp);
 		icpController.getCommunicationController().addLocalSDP(sipURI, sdp.format());
 	}
 	
+	private class ProgressDialog extends JDialog {
+		public ProgressDialog(JFrame frame, boolean modal) {
+			super(frame, "Info", modal);
+			setSize(200, 70);
+			System.out.println("ProgressDialog konstruktor");
+			setLayout(new BorderLayout());
+			JPanel p = new JPanel();
+			
+			JLabel l = new JLabel("A tartalom letöltése folyamatban...");
+			p.add(l);						
+			
+			add(BorderLayout.CENTER, p);
+			setVisible(false);
+			
+		}
+	}
+	
+	private void setProgressWindowVisibily(boolean visible) {
+		progressDialog.setLocation((int)(this.getLocation().x + this.getSize().getWidth()/2 - 100), 
+								   (int)(this.getLocation().y + this.getSize().getHeight()/2 - 35));
+		progressDialog.setVisible(visible);
+	}
 	//>>>>>>>>>>>TESZT
 	public void printToFile(byte[] data, String mimeType) {
 		try {

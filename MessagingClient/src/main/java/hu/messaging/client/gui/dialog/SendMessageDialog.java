@@ -1,4 +1,4 @@
-package hu.messaging.client.gui;
+package hu.messaging.client.gui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -10,15 +10,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import hu.messaging.Constants;
 import hu.messaging.client.gui.controller.ContactListController;
 import hu.messaging.client.gui.controller.ICPController;
-import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.gui.data.Buddy;
+import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.icp.listener.ConnectionListener;
 
 import javax.swing.*;
@@ -30,21 +29,21 @@ import org.apache.commons.io.FileUtils;
 import com.ericsson.icp.util.ISessionDescription;
 
 import hu.messaging.client.Resources;
-import hu.messaging.msrp.CompleteMessage;
-import hu.messaging.msrp.event.MSRPEvent;
-import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.msrp.listener.MSRPEvent;
+import hu.messaging.msrp.listener.MSRPListener;
+import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.model.*;
 import hu.messaging.util.*;
 
-public class SendMessageFrame extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
+public class SendMessageDialog extends JFrame implements ConnectionListener, ListSelectionListener, MSRPListener {
 	
 	private static final long serialVersionUID = -211908165523434927L;
 	
 	private JList availableGroupList;
 	private JList selectedGroupList;
 	
-	private CaptureFrame cDialog = null;
+	private CaptureDialog cDialog = null;
 	
 	private JFileChooser fileChooser;
 
@@ -70,7 +69,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 	
     private boolean closing = false;
     
-    public SendMessageFrame(ICPController icpController) {
+    public SendMessageDialog(ICPController icpController) {
         this.icpController = icpController;
         this.contactListController = icpController.getContactListController();
         
@@ -95,7 +94,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 	    String[] groups = groupNames.toArray(new String[groupNames.size()]);
 	    initAvailableGroupList(groups);
 	    	 
-	    cDialog = new CaptureFrame();
+	    cDialog = new CaptureDialog();
 		pack();		
     }
 
@@ -238,7 +237,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		      public void actionPerformed(ActionEvent event) {
 		    	  UserInfo sender = new ObjectFactory().createUserInfo();
 		    	  sender.setName("Alice Kurbatov");
-		    	  sender.setSipUri(getLocalUserSipURI());
+		    	  sender.setSipUri(icpController.getLocalUser().getContact());
 		    	  completeMessage.setSender(sender);
 		    	  completeMessage.setSubject(subjectTextField.getText());
 		    	  if (fromCaptureDeviceButton.isSelected() && cDialog.getCapturedContent() != null) {
@@ -250,11 +249,11 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		    			  sendButton.setEnabled(false);
 		    			  ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
 		    			  
-		    			  icpController.getCommunicationController().addMSRPListener(SendMessageFrame.this);
-		    			  icpController.getSessionListener().addConnectionListener(SendMessageFrame.this);
+		    			  icpController.getCommunicationController().addMSRPListener(SendMessageDialog.this);
+		    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
 		    			  
 		    			  icpController.getCommunicationController().sendInvite(sdp);
-		    			  icpController.getCommunicationController().addLocalSDP(Constants.serverSipURI, sdp.format());
+		    			  icpController.getCommunicationController().addLocalSDP(Resources.serverSipURI, sdp.format());
 		    		  }
 		    		  catch(Exception e) { }		    		  		    		  
 		    	  }
@@ -269,8 +268,8 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		    JButton cancelButton = new JButton("Cancel");
 		    cancelButton.addActionListener(new ActionListener() {
 		      public void actionPerformed(ActionEvent e) {
-		    	  SendMessageFrame.this.setVisible(false);
-		    	  SendMessageFrame.this.dispose();
+		    	  SendMessageDialog.this.setVisible(false);
+		    	  SendMessageDialog.this.dispose();
 		      }
 		    });
 		    subPanel.add(cancelButton);
@@ -292,7 +291,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		  final JButton openFileButton = new JButton("Open file");
 		  openFileButton.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent event) {
-		  	  int retVal = fileChooser.showOpenDialog(SendMessageFrame.this);
+		  	  int retVal = fileChooser.showOpenDialog(SendMessageDialog.this);
 		   	  if (retVal == JFileChooser.APPROVE_OPTION) {
 		    		  File selectedFile = fileChooser.getSelectedFile();
 		    		  try {
@@ -423,7 +422,7 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 		try {
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :  
-					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Constants.serverSipURI);
+					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Resources.serverSipURI);
 					break;
 				case MSRPEvent.brokenTrasmission :
 					break;
@@ -481,16 +480,6 @@ public class SendMessageFrame extends JFrame implements ConnectionListener, List
 	protected String getFileExtension(File file) {
 		String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
 		return extension;
-	}
-	
-	protected String getLocalUserSipURI() {
-		String sipURI = null;
-		try {
-			sipURI = icpController.getProfile().getIdentity().toString();
-		}
-		catch(Exception e) { }
-		
-		return sipURI;
 	}
 	
 	public void setMessageMimeType(String mimeType) {
