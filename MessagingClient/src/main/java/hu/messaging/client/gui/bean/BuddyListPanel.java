@@ -53,8 +53,6 @@ public class BuddyListPanel extends BaseBean implements ContactManager {
 
 		contactListController.setContactManager(this);
 
-		StatusBar statusBar = new StatusBar(contactListController);
-		add(statusBar, BorderLayout.SOUTH);
 		contactListController.addContactListener(new MyContactListener());
 	}
 

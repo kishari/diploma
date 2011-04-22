@@ -1,21 +1,20 @@
 package hu.messaging.client.gui.controller;
 
-import hu.messaging.Constants;
-import hu.messaging.msrp.CompleteMessage;
+import hu.messaging.msrp.model.Constants;
 import hu.messaging.msrp.MSRPStack;
 import hu.messaging.msrp.SenderConnection;
 import hu.messaging.msrp.Session;
-import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.msrp.listener.MSRPListener;
+import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.util.*;
-import hu.messaging.client.listener.NotifyListener;
 
+import hu.messaging.client.Resources;
 import hu.messaging.client.model.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,16 +24,14 @@ import com.ericsson.icp.util.SdpFactory;
 
 public class CommunicationController {
 	
-	private List<InfoMessage> incomingNewMessageDescriptors = new ArrayList<InfoMessage>();
+	private Map<String, String> localSDPs = new HashMap<String, String>();
 	
-	private Map<String, String> localSDPs = new HashMap<String, String>();	
-	private MSRPStack msrpStack = new MSRPStack();
-	private List<NotifyListener> notifyListeners = new ArrayList<NotifyListener>();
-	
+	private MSRPStack msrpStack;	
 	private ICPController icpController;
 	
 	public CommunicationController(ICPController icpController) { 
-		this.icpController = icpController;		
+		this.icpController = icpController;	
+		msrpStack = new MSRPStack();
 	}
 	
 	public void createSenderConnection(InetAddress host, int port, String sipUri) {
@@ -52,12 +49,6 @@ public class CommunicationController {
 		}
 		catch(IOException e) {
 			e.printStackTrace();
-		}
-	}
-	
-	public void sendMessagesInMSRPSession(List<CompleteMessage> messages, String sipUri) {
-		for (CompleteMessage m : messages) {
-			sendMessageInMSRPSession(m, sipUri);
 		}
 	}
 	
@@ -86,18 +77,14 @@ public class CommunicationController {
 	}
 	
 	public String getLocalSDP(String remoteId) {
-		System.out.println("CommunicationController.getLocalSDP to: " + remoteId);
 		String sdp = localSDPs.get(remoteId);
-		//System.out.println("sdp: " + sdp );
 		return sdp;
 	}
 	
-	public Session createNewMSRPSession(URI localURI, URI remoteURI, String sipUri) {
-		SenderConnection s = getMsrpStack().getConnections().getSenderConnection(sipUri);
-		System.out.println("CommunicationController createNewMSRPSession");
+	public Session createNewMSRPSession(URI localURI, URI remoteURI, String remoteSipUri) {
+		SenderConnection s = getMsrpStack().getConnections().getSenderConnection(remoteSipUri);
 		
 		if (s == null) {
-			System.out.println("nem találtunk a sessionhoz sendert");
 			return null;
 		}
 		
@@ -117,54 +104,32 @@ public class CommunicationController {
 		getMsrpStack().removeMSRPListener(listener);
 	}
 	
-	public void addNotifyListener(NotifyListener listener) {
-		this.notifyListeners.add(listener);
-	}
-	
-	public void removeNotifyListener(NotifyListener listener) {
-		this.notifyListeners.remove(listener);
-	}
-	
-	public synchronized void notifyListeners(InfoMessage infoMessage) {
-		List<NotifyListener> temp = new ArrayList<NotifyListener>();
-		synchronized(this.notifyListeners) {
-			for (NotifyListener l : this.notifyListeners ) {
-				temp.add(l);
-			}
-		}
-		for (NotifyListener listener : temp) {					
-			listener.notifyNewMessage(infoMessage);
-		}
-	}
-	
 	public void sendSIPMessage(String to, String message) {
-        try
-        {
-           // Send the message
+        try {
             byte[] messageBytes = message.getBytes("UTF-8");
-            icpController.getService().sendMessage(icpController.getProfile().getIdentity(), to, "text/plain", messageBytes, messageBytes.length);
+            icpController.getService().sendMessage(icpController.getLocalUser().getContact(), to, "text/plain", messageBytes, messageBytes.length);
         }
-        catch (Exception e)
-        {            
+        catch (Exception e) {
+        	
         }
 	}
 	
-    public void incomingSIPMessage(String to, String message) {
-    	System.out.println(getClass().getSimpleName() + " incomingSIPMessage: ");
-    	System.out.println(message);
+    public void processIncomingSIPMessage(String to, String message) {
     	if (message.startsWith("<?xml")) {
     		InfoMessage info = (InfoMessage)XMLUtils.createInfoMessageFromStringXML(message);
+    		System.out.println(info.getInfoType());
     		if (InfoMessage.notifyUser.equals(info.getInfoType().toUpperCase().trim())) {
-    			MessageInfoContainer c = MessageUtils.createMessageInfoContainerFromNotifyInfoMessage(info);
-    			MessageUtils.createMessageContainerFile(c, null);
-    			
+    			List<MessageInfoContainer> cList = MessageUtils.createMessageInfoContainerListFromNotifyInfoMessage(info);
+    			for (MessageInfoContainer c : cList) {    				
+    				MessageUtils.createMessageContainerFile(c, null);
+    			}    				    			
     		}    		
     	}
     }
     
     public void sendInvite(ISessionDescription localSdp) throws Exception {        
-    	icpController.getSession().start(Constants.serverSipURI, localSdp, 
-    									 icpController.getProfile().getIdentity(), 
+    	icpController.getSession().start(Resources.serverSipURI, localSdp, 
+    									 icpController.getLocalUser().getContact(), 
     									 SdpFactory.createIMSContentContainer());
 	}
      
@@ -175,22 +140,7 @@ public class CommunicationController {
 		catch(Exception e) { }		
 	}
     
-    public List<CompleteMessage> getIncomingNewMessages() {
-    	List<CompleteMessage> newMessages = new ArrayList<CompleteMessage>();
-    	for (InfoMessage descr : this.incomingNewMessageDescriptors) {
-    		InfoMessage.DetailList detailList = descr.getDetailList();
-    		
-    		for (InfoDetail d : detailList.getDetail()) {
-    			CompleteMessage cm = new CompleteMessage(d.getId(), null, d.getContent().getMimeType(), 
-						 d.getSender(), d.getSubject());
-    			newMessages.add(cm);    	
-    		}
-    	}
-    	
-    	return newMessages;
-    }
-    
-	public ISessionDescription getLocalSDP() throws IOException {
+	public ISessionDescription createLocalSDP() throws IOException {
 		if (!icpController.getCommunicationController().getMsrpStack().getConnections().isReceiverConnection() ||
 			!icpController.getCommunicationController().getMsrpStack().getConnections().isRunningReceiverConnection()) {
 			
@@ -203,6 +153,15 @@ public class CommunicationController {
 		String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
 		
 		return SDPUtil.createSDP(localhost, port, sessionId);
+	}
+	
+	public void fetchNewMessageInfos() {
+		ObjectFactory f = new ObjectFactory();
+		InfoMessage m = f.createInfoMessage();
+		m.setInfoType(InfoMessage.pullNewMessageInfos);
+		m.setDetailList(f.createInfoMessageDetailList());
+		
+		this.sendSIPMessage(Resources.serverSipURI, XMLUtils.createStringXMLFromInfoMessage(m));
 	}
 
 }

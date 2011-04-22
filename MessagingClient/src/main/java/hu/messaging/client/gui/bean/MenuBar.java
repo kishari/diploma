@@ -1,11 +1,11 @@
 package hu.messaging.client.gui.bean;
 
 import hu.messaging.client.Resources;
-import hu.messaging.client.gui.MessageBoxFrame;
 import hu.messaging.client.gui.MessagingClient;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.data.Group;
+import hu.messaging.client.gui.dialog.MessageBoxDialog;
 import hu.messaging.client.gui.listener.ui.ContactSelectionListener;
 
 import java.awt.event.ActionEvent;
@@ -41,7 +41,7 @@ public class MenuBar implements ContactSelectionListener {
 		itemBox.setName("menu.messages.box");
 		itemBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				MessageBoxFrame dialog = new MessageBoxFrame(icpController);
+				MessageBoxDialog dialog = new MessageBoxDialog(icpController);
 				dialog.setVisible(true);
 			}
 		});

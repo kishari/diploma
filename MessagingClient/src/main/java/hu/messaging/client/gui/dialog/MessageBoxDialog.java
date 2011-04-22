@@ -378,7 +378,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 		
 		System.out.println("createMSRPSessionToRemote : " + sipURI);
 		
-		ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
+		ISessionDescription sdp = icpController.getCommunicationController().createLocalSDP();
 		icpController.getCommunicationController().addMSRPListener(MessageBoxDialog.this);
 		  
 		icpController.getSessionListener().addConnectionListener(MessageBoxDialog.this);

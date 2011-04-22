@@ -247,7 +247,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    	  if (completeMessage.isReady() && selectedGroupListModel.size()> 0) {		    		  
 		    		  try {
 		    			  sendButton.setEnabled(false);
-		    			  ISessionDescription sdp = icpController.getCommunicationController().getLocalSDP();
+		    			  ISessionDescription sdp = icpController.getCommunicationController().createLocalSDP();
 		    			  
 		    			  icpController.getCommunicationController().addMSRPListener(SendMessageDialog.this);
 		    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
