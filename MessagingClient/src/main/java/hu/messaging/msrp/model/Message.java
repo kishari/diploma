@@ -1,4 +1,4 @@
-package hu.messaging.msrp;
+package hu.messaging.msrp.model;
 
 import java.net.URI;
 import java.net.URISyntaxException;

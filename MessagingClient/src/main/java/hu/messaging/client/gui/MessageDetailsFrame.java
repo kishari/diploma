@@ -1,7 +1,6 @@
 package hu.messaging.client.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Toolkit;
 
 import javax.swing.*;
 
@@ -12,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.messaging.client.Resources;
+import hu.messaging.client.gui.util.ImageUtil;
 import hu.messaging.client.model.*;
 
 public abstract class MessageDetailsFrame extends JFrame {
@@ -55,7 +55,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		infoPanel.add(j, c);
 		
 		
-		final JLabel subjectLabel = new JLabel("Tárgy: ");
+		final JLabel subjectLabel = new JLabel(Resources.resources.get("detail.message.subject.label"));
 		subjectLabel.setFont(new Font("", Font.BOLD, 12));
 		final JLabel subj = new JLabel(messageInfoContainer.getSubject());
 		c.gridx = 0;
@@ -72,7 +72,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		c.gridx = 0;
 		c.gridy = 2;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		final JLabel messageTypeLabel = new JLabel("Üzenet típusa: ");
+		final JLabel messageTypeLabel = new JLabel(Resources.resources.get("detail.message.mimetype.label"));
 		messageTypeLabel.setFont(new Font("", Font.BOLD, 12));
 		infoPanel.add(messageTypeLabel, c);
 		
@@ -90,7 +90,7 @@ public abstract class MessageDetailsFrame extends JFrame {
 		setLayout(new BorderLayout());
 		setTitle(Resources.resources.get("frame.message.details.title"));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);             
-        setIconImage(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("hu/messaging/client/gui/logo.gif")));
+        setIconImage(ImageUtil.createImage("logo.gif"));
 		this.setSize(400, 150);
 		
 		this.addWindowListener(new WindowAdapter() {
@@ -111,12 +111,10 @@ public abstract class MessageDetailsFrame extends JFrame {
 	protected abstract JPanel createButtonPanel();
 	
 	protected void addChild(JFrame child) {
-		System.out.println("addChild");
 		children.add(child);
 	}
 	
 	public void close() {
-		System.out.println("close: " + children.size());
 		for (JFrame f : children) {
 			f.setVisible(false);
 			f.dispose();

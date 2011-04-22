@@ -1,4 +1,4 @@
-package hu.messaging.msrp;
+package hu.messaging.msrp.model;
 
 import hu.messaging.client.model.UserInfo;
 

@@ -19,22 +19,12 @@ public class ContactListController {
 
 	private Buddy localUser;
 
-	/**
-	 * List of contact listeners. These are notified whenever a contact is
-	 * added, removed or edited
-	 */
 	private final List<ContactListListener> contactListeners = new ArrayList<ContactListListener>();
 
-	/**
-	 * List of selection listeners. Notified when selection changed in the tree.
-	 */
 	private final List<ContactSelectionListener> selectionListeners = new ArrayList<ContactSelectionListener>();
 
 	private ContactManager contactManager;
 
-	/**
-	 * ICP controller for groups
-	 */
 	private ICPGroupListController icpGroupListController;
 
 	public ContactListController() {
@@ -166,23 +156,7 @@ public class ContactListController {
 
 	public Group getGroup(String name) {
 		return contactList.getGroupNamed(name);
-	}
-
-	public void sortAscending() {
-		contactList.sortGroupAscending();
-		for (int i = 0; i < contactList.getGroupCount(); i++) {
-			contactList.getGroup(i).sortAscending();
-		}
-		fireContactListEvent(new ContactListEvent(ContactListEventType.ListSorted));
-	}
-
-	public void sortDescending() {
-		contactList.sortGroupDescending();
-		for (int i = 0; i < contactList.getGroupCount(); i++) {
-			contactList.getGroup(i).sortDescending();
-		}
-		fireContactListEvent(new ContactListEvent(ContactListEventType.ListSorted));
-	}
+	}	
 
 	public Buddy getLocalUser() {
 		return localUser;

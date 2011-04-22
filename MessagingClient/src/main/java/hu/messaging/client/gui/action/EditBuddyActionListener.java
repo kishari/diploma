@@ -9,35 +9,27 @@ import hu.messaging.client.gui.util.SwingUtil;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 
-/**
- * Action called when a buddy is edited
- */
-public class EditBuddyActionListener extends BuddyActionListener
-{
+public class EditBuddyActionListener extends BuddyActionListener {
 
-	public EditBuddyActionListener(ICPController aIcpController, Container parent)
-	{
+	public EditBuddyActionListener(ICPController aIcpController,
+			Container parent) {
 		super(aIcpController, parent);
 	}
 
-	public void actionPerformed(ActionEvent e)
-	{
+	public void actionPerformed(ActionEvent e) {
 		Buddy buddy = controller.getSelectedBuddy();
-		if(buddy != null)
-		{
-            // Open the edition dialog
-            SimpleTextDialog dialog = new SimpleTextDialog(SwingUtil.getFrame(parent), "dialog.buddy.name.label");
-            dialog.setTitle(Resources.resources.get("dialog.buddy.edit.title"));
+		if (buddy != null) {
+			SimpleTextDialog dialog = new SimpleTextDialog(SwingUtil
+					.getFrame(parent), "dialog.buddy.name.label");
+			dialog.setTitle(Resources.resources.get("dialog.buddy.edit.title"));
 			dialog.setTextValue(buddy.getDisplayName());
-            dialog.pack();
-	        dialog.setVisible(true);
-	        // Update the name
-            String buddyName = (String) dialog.getData();
-	        if((buddyName != null) && (!buddyName.equals("")))
-	        {
-	            buddy.setDisplayName(buddyName);
-                controller.updateBuddy(buddy);
-	        }
+			dialog.pack();
+			dialog.setVisible(true);
+			String buddyName = (String) dialog.getData();
+			if ((buddyName != null) && (!buddyName.equals(""))) {
+				buddy.setDisplayName(buddyName);
+				controller.updateBuddy(buddy);
+			}
 		}
 	}
 

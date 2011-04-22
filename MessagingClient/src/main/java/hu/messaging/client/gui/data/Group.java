@@ -59,24 +59,6 @@ public class Group implements Comparable<Object> {
 	public int compareTo(Object o) {
 		return groupName.compareTo(((Group) o).getDisplayName());
 	}
-
-	public void sortAscending() {
-		Buddy[] buddyArray = buddies.toArray(new Buddy[buddies.size()]);
-		Arrays.sort(buddyArray);
-		buddies.clear();
-		for (int i = 0; i < buddyArray.length; i++) {
-			buddies.add(buddyArray[i]);
-		}
-	}
-
-	public void sortDescending() {
-		Buddy[] buddyArray = buddies.toArray(new Buddy[buddies.size()]);
-		Arrays.sort(buddyArray);
-		buddies.clear();
-		for (int i = buddyArray.length - 1; i >= 0; i--) {
-			buddies.add(buddyArray[i]);
-		}
-	}
 	
 	public List<Buddy> getBuddies() {
 		return buddies;

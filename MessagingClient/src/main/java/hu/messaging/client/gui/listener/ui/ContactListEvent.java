@@ -6,7 +6,7 @@ import hu.messaging.client.gui.data.Group;
 public class ContactListEvent {
 
 	public enum ContactListEventType {
-		BuddyAdded, BuddyModified, BuddyRemoved, GroupAdded, GroupModified, GroupRemoved, ListSorted
+		BuddyAdded, BuddyModified, BuddyRemoved, GroupAdded, GroupModified, GroupRemoved
 	};
 
 	public Group group;

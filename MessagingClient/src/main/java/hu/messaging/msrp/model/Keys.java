@@ -1,4 +1,4 @@
-package hu.messaging.msrp;
+package hu.messaging.msrp.model;
 
 public class Keys {
 	public static final String chunkList = "chunk.list";

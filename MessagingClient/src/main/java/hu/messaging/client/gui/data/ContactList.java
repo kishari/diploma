@@ -3,7 +3,6 @@ package hu.messaging.client.gui.data;
 import hu.messaging.client.Resources;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -14,24 +13,6 @@ public class ContactList {
     public void addGroup(Group group) {
     	if(getGroup(group.getName()) == null) {
     		groupList.add(group);
-    	}
-    }
-
-    public void sortGroupAscending() {
-    	Group[] groupArray = groupList.toArray(new Group[groupList.size()]);
-    	Arrays.sort(groupArray);
-    	groupList.clear();
-    	for(int i = 0; i < groupArray.length; i++) {
-    		groupList.add(groupArray[i]);
-    	}
-    }
-
-    public void sortGroupDescending() {
-    	Group[] groupArray = groupList.toArray(new Group[groupList.size()]);
-    	Arrays.sort(groupArray);
-    	groupList.clear();
-    	for(int i = groupArray.length - 1; i >= 0; i--) {
-    		groupList.add(groupArray[i]);
     	}
     }
 

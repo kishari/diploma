@@ -1,6 +1,6 @@
-package hu.messaging.msrp.event;
+package hu.messaging.msrp.listener;
 
-import hu.messaging.msrp.CompleteMessage;
+import hu.messaging.msrp.model.CompleteMessage;
 
 public class MSRPEvent {
 

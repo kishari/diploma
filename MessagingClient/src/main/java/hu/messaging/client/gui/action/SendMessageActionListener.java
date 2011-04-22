@@ -6,23 +6,17 @@ import hu.messaging.client.gui.controller.ICPController;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 
+public class SendMessageActionListener extends BuddyActionListener {
 
-public class SendMessageActionListener extends BuddyActionListener
-{
-
-	public SendMessageActionListener(ICPController aIcpController, Container parent)
-	{
+	public SendMessageActionListener(ICPController aIcpController,
+			Container parent) {
 		super(aIcpController, parent);
 	}
 
-	public void actionPerformed(ActionEvent e)
-	{
-		System.out.println(getClass().getSimpleName() + " actionPerformed...");		
-			
+	public void actionPerformed(ActionEvent e) {
 		SendMessageFrame dialog = new SendMessageFrame(icpController);
-    	dialog.setVisible(true);
-    	
-    	
+		dialog.setVisible(true);
+
 	}
 
 }

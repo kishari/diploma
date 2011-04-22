@@ -9,27 +9,17 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.JOptionPane;
 
+public class RemoveGroupActionListener extends BuddyActionListener {
 
-public class RemoveGroupActionListener extends BuddyActionListener
-{
-	/**
-	 * Constructor
-	 * @param contactListController
-	 * @param parent
-	 */
-	public RemoveGroupActionListener(ICPController aIcpController, Container parent) 
-	{
+	public RemoveGroupActionListener(ICPController aIcpController,
+			Container parent) {
 		super(aIcpController, parent);
 	}
-	
-	public void actionPerformed(ActionEvent e)
-	{
+
+	public void actionPerformed(ActionEvent e) {
 		Group group = controller.getSelectedGroup();
-		if(group!=null)
-		{
-			if(!controller.removeGroup(group))
-			{
-				//Default group cannot be deleted.
+		if (group != null) {
+			if (!controller.removeGroup(group)) {
 				JOptionPane.showMessageDialog(parent, Resources.resources.get("message.remove.group.default"));
 			}
 		}
