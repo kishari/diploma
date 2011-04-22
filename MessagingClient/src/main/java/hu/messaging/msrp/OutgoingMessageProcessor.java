@@ -1,7 +1,11 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
+import hu.messaging.msrp.model.Constants;
 import hu.messaging.client.media.MimeHelper;
+import hu.messaging.msrp.model.CompleteMessage;
+import hu.messaging.msrp.model.Keys;
+import hu.messaging.msrp.model.Message;
+import hu.messaging.msrp.model.Request;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.BufferedOutputStream;
@@ -60,6 +64,8 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	private void processOutgoingMessage(CompleteMessage completeMessage) {
 		mimeType = completeMessage.getMimeType();
 		
+		System.out.println("mimeType: " + mimeType);
+		
 		this.printToFile(completeMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 
@@ -94,6 +100,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //>>>> TESZT
 			Message mTest = MSRPUtil.createMessageFromString(req.toString());
 			Request r = (Request)mTest;
+			//System.out.println(r.getContent().length);
 			this.printToFile(Base64.decodeBase64(r.getContent()), true);
 //<<<< TESZT
 			

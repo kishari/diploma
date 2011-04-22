@@ -1,6 +1,9 @@
 package hu.messaging.msrp;
 
 
+import hu.messaging.msrp.model.CompleteMessage;
+import hu.messaging.msrp.model.Message;
+
 import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

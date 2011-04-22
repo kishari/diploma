@@ -1,7 +1,12 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
-import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.model.Constants;
+import hu.messaging.msrp.listener.MSRPEvent;
+import hu.messaging.msrp.model.CompleteMessage;
+import hu.messaging.msrp.model.Keys;
+import hu.messaging.msrp.model.Message;
+import hu.messaging.msrp.model.Request;
+import hu.messaging.msrp.model.Response;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.BufferedOutputStream;
@@ -89,7 +94,7 @@ public class TransactionManager implements Observer {
 			else if (obj instanceof Message) {
 				m = (Message) obj;
 			}
-			if (m.getMethod() == Constants.methodSEND) {
+			if (m.getMethod().equals(Message.MethodType.Send)) {
 				Request req = (Request) m;
 				this.incomingMessages.put(req.getTransactionId(), req);
 				//Nyugtát küldünk
@@ -119,7 +124,7 @@ public class TransactionManager implements Observer {
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
-			else if (m.getMethod() == Constants.method200OK) {
+			else if (m.getMethod().equals(Message.MethodType._200OK)) {
 				Response resp = (Response) m;
 				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
 				//printTo(m, true);
@@ -171,6 +176,8 @@ public class TransactionManager implements Observer {
 						session.getSenderConnection().send(data.toString().getBytes());
 						//printTo(data, false);
 						sendCounterTest++;
+						
+						Thread.sleep(Constants.senderThreadSleepTime);
 						
 						if (sendCounterTest % 100 == 0 || sendCounterTest > 4900) {
 							System.out.println("sent counter: " + sendCounterTest);

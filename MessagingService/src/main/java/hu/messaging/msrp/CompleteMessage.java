@@ -32,6 +32,16 @@ public class CompleteMessage {
 		this.sender = sender;
 		this.subject = subject;
 	}
+	
+	public CompleteMessage(String messageId, byte[] content, String mimeType, String senderName, String senderSipUri, String subject) {
+		this.mimeType = mimeType;
+		setContent(content);
+		this.messageId = messageId;
+		this.sender = new UserInfo();
+		sender.setName(senderName);
+		sender.setSipUri(senderSipUri);
+		this.subject = subject;
+	}
 
 
 	public UserInfo getSender() {

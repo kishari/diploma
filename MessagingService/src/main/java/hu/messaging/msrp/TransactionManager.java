@@ -25,6 +25,7 @@ public class TransactionManager implements Observer {
 	private int numOfUnacknowledgedChunks = 0;
 	private int sendCounterTest = 0;
 	private int incCounterTest = 0;
+	private int test = 0;
 	
 	private Map<String, Request> requestMap;
 	private List<Request> requestList;
@@ -82,7 +83,7 @@ public class TransactionManager implements Observer {
 			else if (obj instanceof Message) {
 				m = (Message) obj;
 			}
-			if (m.getMethod() == Constants.methodSEND) {
+			if (m.getMethod().equals(Message.MethodType.Send)) {
 				printTo(m, false);
 				Request req = (Request) m;
 				this.incomingMessages.put(req.getTransactionId(), req);
@@ -91,9 +92,20 @@ public class TransactionManager implements Observer {
 					System.out.println("incCounterTest: " + incCounterTest);
 				}
 				//Nyugtát küldünk
+				test++;
+				
+				printTo(map.get(Keys.createdAck), true);
+				System.out.println("nyugtát küldünk: (" + test + ")");
+				//System.out.println(map.get(Keys.createdAck));
 				this.sender.getSenderQueue().add(map.get(Keys.createdAck));
 				
 				if (req.getEndToken() == '$') {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 					System.out.println("Utolso csomag is megjott...");
 					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, "complete message arrived", null);
 					event.setMessageId(req.getMessageId());
@@ -118,7 +130,7 @@ public class TransactionManager implements Observer {
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
-			else if (m.getMethod() == Constants.method200OK) {
+			else if (m.getMethod().equals(Message.MethodType._200OK)) {
 				Response resp = (Response) m;
 
 				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
@@ -168,6 +180,7 @@ public class TransactionManager implements Observer {
 						
 						
 						session.getSenderConnection().send(data.toString().getBytes());
+						Thread.sleep(Constants.senderThreadSleepTime);
 						sendCounterTest++;						
 						if (sendCounterTest % 250 == 0 || sendCounterTest > 4900) {
 							System.out.println("sent counter: " + sendCounterTest);

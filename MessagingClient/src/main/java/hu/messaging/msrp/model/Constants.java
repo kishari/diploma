@@ -11,6 +11,7 @@ public class Constants {
 	public static final int messageIdLength = 15;
 	public static final int receiverBufferSize = 1000000;	
 	public static final int unAcknoledgedChunksLimit = 25;
+	public static final int senderThreadSleepTime = 50; //ms
 	
     public static final Map<Message.MethodType, String> methods = new HashMap<Message.MethodType, String>(){
 		{

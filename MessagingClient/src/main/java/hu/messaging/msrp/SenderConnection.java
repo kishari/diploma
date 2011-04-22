@@ -1,6 +1,6 @@
 package hu.messaging.msrp;
 
-import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.listener.MSRPEvent;
 
 import java.io.IOException;
 import java.net.InetAddress;

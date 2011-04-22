@@ -1,5 +1,7 @@
 package hu.messaging;
 
+import hu.messaging.msrp.Message;
+
 import java.util.*;
 
 public class Constants {
@@ -18,11 +20,12 @@ public class Constants {
 	public static final int onlineUserTimeOut = 60000;
 	public static final int burstSize = 50;
 	public static final int unAcknoledgedChunksLimit = 25;
+	public static final int senderThreadSleepTime = 50;
 	
-    public static final Map<Integer, String> methods = new HashMap<Integer, String>(){
+    public static final Map<Message.MethodType, String> methods = new HashMap<Message.MethodType, String>(){
 		{
-            put(methodSEND, "SEND");
-            put(method200OK, "200 OK");
+            put(Message.MethodType.Send, "SEND");
+            put(Message.MethodType._200OK, "200 OK");
         }
     };
 }

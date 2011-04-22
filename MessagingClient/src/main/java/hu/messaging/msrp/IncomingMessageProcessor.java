@@ -1,6 +1,10 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
+import hu.messaging.msrp.model.Constants;
+import hu.messaging.msrp.model.Keys;
+import hu.messaging.msrp.model.Message;
+import hu.messaging.msrp.model.Request;
+import hu.messaging.msrp.model.Response;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +40,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	}
 	
 	private void processIncomingMessage(Message chunk) throws IOException {		
-		if (chunk.getMethod() == Constants.methodSEND) {
+		if (chunk.getMethod().equals(Message.MethodType.Send)) {
 			Request req = (Request) chunk;
 			Response ack = createAcknowledgement(req);
 			
@@ -48,7 +52,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 			this.notifyObservers(map);
 			
 		}
-		else if ( chunk.getMethod() == Constants.method200OK ){
+		else if ( chunk.getMethod().equals(Message.MethodType._200OK)){
 			Response resp = (Response) chunk;
 			this.setChanged();
 			this.notifyObservers(resp);
@@ -58,7 +62,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	private Response createAcknowledgement(Request incomingMessage) {
 		Response ack = new Response();
 		
-		ack.setMethod(Constants.method200OK);
+		ack.setMethod(Message.MethodType._200OK);
 		ack.setToPath(incomingMessage.getFromPath());
 		ack.setFromPath(incomingMessage.getToPath());
 		ack.setTransactionId(incomingMessage.getTransactionId());

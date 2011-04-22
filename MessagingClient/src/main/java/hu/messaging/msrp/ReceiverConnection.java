@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import hu.messaging.msrp.model.Message;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.IOException;
