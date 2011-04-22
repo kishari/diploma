@@ -27,7 +27,7 @@ public class MessagingDAO {
 	 											  "messagingdb.messages(message_id, content, content_size) " + 
 	 											  "VALUES (?, ?, ?)";
 	 private static final String UPDATE_MESSAGE = "UPDATE messagingdb.messages " + "" +
-	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ? " +
+	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ? " +
 	 											  "WHERE message_id = ?";
 	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri) values (?, ?, ?)";
 	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
@@ -35,6 +35,10 @@ public class MessagingDAO {
 	 																	"SELECT message_id " +
 	 																	"FROM messagingdb.recipients " + 
 	 																	"WHERE sip_uri = ?)";
+	 
+	 private static final String SELECT_CONTENT_TO_MESSAGE_ID = "SELECT message_id, content, subject, sender_name, sender_sip_uri, mime_type " +
+	 															"FROM messagingdb.messages " + 
+	 															"WHERE message_id = ?";
 	
 	 public MessagingDAO() {
 		 init();
@@ -87,7 +91,7 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri ) {
+	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -97,7 +101,8 @@ public class MessagingDAO {
 	            pstmt.setString(1, senderName);
 	            pstmt.setString(2, senderSIPUri);
 	            pstmt.setString(3, mimeType);
-	            pstmt.setString(4, messageId);
+	            pstmt.setString(4, subject);
+	            pstmt.setString(5, messageId);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
@@ -125,29 +130,30 @@ public class MessagingDAO {
 	    }
 	 
 	 	public CompleteMessage getMessageToMessageId(String messageId) {	    	
-
-	 		String sql = "SELECT messageId, content, sender, extension FROM messagingdb.messages " + 
-			 			 "WHERE messageId = '" + StringEscapeUtils.escapeSql(messageId) + "'";
-	 		
-	 		System.out.println(sql);
+	 			 		
 	    	Connection conn = null;
-	        Statement stmt = null;
+	    	PreparedStatement pstmt = null;
 	        ResultSet rs = null;
 	        
 	        List<CompleteMessage> result = new ArrayList<CompleteMessage>();
 	        	        
 	        try {
 	        	conn = getConnection();
-	        	stmt = conn.createStatement();
-		        rs = stmt.executeQuery(sql);
+	        	pstmt = conn.prepareStatement(SELECT_CONTENT_TO_MESSAGE_ID);
+	        	pstmt.setString(1, messageId);
+		        rs = pstmt.executeQuery();
 		            while (rs.next()) {  
 		            	String msgId = rs.getString(1);
-		            	String extension = rs.getString(4);
+		            	String subject = rs.getString(3);
+		            	String senderName = rs.getString(4);
+		            	String senderSipUri = rs.getString(5);
+		            	String mimeType = rs.getString(6);
 		            	InputStream is = rs.getBlob(2).getBinaryStream();
 	            	
 		            	try {
 		            		byte[] content = IOUtils.toByteArray(is);
-		            		CompleteMessage msg = new CompleteMessage(msgId, content, extension);
+		            		
+		            		CompleteMessage msg = new CompleteMessage(msgId, content, mimeType, senderName, senderSipUri,  subject);
 		            		result.add(msg);
 		            	} catch (IOException e) {
 		            		e.printStackTrace();
@@ -156,7 +162,7 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	        	closeAll(rs, null, stmt, conn);
+	        	closeAll(rs, null, pstmt, conn);
 			}
 	        
 	        return result.get(0);

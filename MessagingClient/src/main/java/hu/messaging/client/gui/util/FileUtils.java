@@ -5,8 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class FileUtils {
-	  
+	
 	public static byte[] readFileToByteArray(File file) {
+		return readFileToByteArray(file, false);
+    }
+	
+	public static byte[] readFileToByteArray(File file, boolean deleteFileAfterRead) {		
 		  byte[] fileAsByteArray = null;
 		  FileInputStream fis = null;
 		  try {
@@ -16,7 +20,7 @@ public class FileUtils {
 			  fis.read(fileAsByteArray);
 		  }
 		  catch (IOException e) {
-			  
+			  e.printStackTrace();
 		  }
 		  finally {	    		
 			  if (fis != null)
@@ -25,6 +29,11 @@ public class FileUtils {
 				  }
 			  	catch (IOException e) {}
 		  }
+		  
+		  if (deleteFileAfterRead) {
+			  file.delete();
+		  }
+		  
 		  return fileAsByteArray;
 	  }
 	

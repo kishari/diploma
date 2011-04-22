@@ -48,10 +48,6 @@ public class ContactList {
     public int getGroupCount() {
         return groupList.size();
     }
-
-    public void addBuddy(Buddy contact) {
-        getDefaultGroup().addBuddy(contact);
-    }
     
     public void addBuddy(Group group, Buddy contact) {
         Group realGroup = getGroup(group.getName());
@@ -72,11 +68,7 @@ public class ContactList {
         }
         return group;
     }
-    /**
-     * Retrieve a group by its display name
-     * @param name The group display name
-     * @return The group
-     */
+
     public Group getGroupNamed(String displayName)
     {
         Group group = null;
@@ -91,87 +83,13 @@ public class ContactList {
         }
         return group;
     }
-    /**
-     * Get a group at a given index
-     * @param i The index
-     * @return The group at this index
-     */
-    public Group getGroup(int i)
-    {
+
+    public Group getGroup(int i){
         return groupList.get(i);
     }
-
-    /**
-     * Get the total number of contacts
-     * @return The total number of contacts
-     */
-    public int getBuddyCount()
-    {
-        int nbContacts = 0;
-        for(int groupIndex=0; groupIndex<groupList.size(); groupIndex++)
-        {
-            Group group = groupList.get(groupIndex);
-            nbContacts += group.getBuddiesCount();
-        }
-        return nbContacts;
-    }
-    /**
-     * Get ta contact by its name
-     * @param buddyName The name to find
-     * @return The contact
-     */
-	public Buddy getBuddy(String buddyName)
-	{
-		Buddy buddy = null;
-        for(Group group : groupList)
-        {
-            buddy = group.getBuddy(buddyName);
-            if (buddy != null)
-            {
-                break;
-            }
-        }
-        return buddy;
-	}
-    /**
-     * Get ta contact by its name
-     * @param buddyName The name to find
-     * @return The contact
-     */
-    public Buddy getBuddyNamed(String buddyName)
-    {
-        Buddy buddy = null;
-        for(Group group : groupList)
-        {
-            buddy = group.getBuddy(buddyName);
-            if (buddy != null)
-            {
-                break;
-            }
-        }
-        return buddy;
-    }
-    /**
-     * Retirve the default group
-     * @return The default group
-     */
+    
 	public Group getDefaultGroup()
     {
       return getGroup(DEFAULT_GROUP_NAME);
-    }
-    /**
-     * Retrieve all the buddies in the contact list
-     * @return A list of <code>Buddy</code>
-     */
-	public List<Buddy> getBuddies()
-    {
-        ArrayList<Buddy> buddies = new ArrayList<Buddy>();
-        
-        for(int groupIndex=0; groupIndex<groupList.size(); groupIndex++)
-        {
-            Group group = groupList.get(groupIndex);
-            buddies.addAll(group.getBuddies());
-        }
-        return buddies;
     }
 }

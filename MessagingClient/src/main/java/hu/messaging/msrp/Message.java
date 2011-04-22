@@ -5,7 +5,11 @@ import java.net.URISyntaxException;
 
 public class Message {
 
-	private int method = 0; //undefined
+	public enum MethodType {
+		Undefined, Send, _200OK
+	};
+	
+	private MethodType method = MethodType.Undefined; //undefined
 	private String transactionId = "";
 	private URI fromPath = null;
 	private URI toPath = null;
@@ -19,10 +23,10 @@ public class Message {
 		this.fromPath = new URI(uri);
 	}
 	
-	public int getMethod() {
+	public MethodType getMethod() {
 		return method;
 	}
-	public void setMethod(int method) {
+	public void setMethod(MethodType method) {
 		this.method = method;
 	}
 	public String getTransactionId() {

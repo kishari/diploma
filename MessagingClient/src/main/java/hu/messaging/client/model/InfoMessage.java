@@ -58,6 +58,7 @@ public class InfoMessage {
 	public static final String downloadContent = "DOWNLOAD_CONTENT";
 	public static final String notifyUser = "NOTIFY_USER";
 	public static final String messageData = "MESSAGE_DATA";
+	public static final String pullNewMessageInfos = "PULL_NEW_MESSAGES_INFO";
 	
     @XmlElement(name = "info_type", required = true)
     protected String infoType;

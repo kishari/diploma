@@ -1,5 +1,8 @@
 package hu.messaging.client.gui;
 
+import hu.messaging.client.Resources;
+import hu.messaging.client.gui.util.ImageUtil;
+import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.media.audio.AudioConverter;
 
 import javax.swing.*;
@@ -11,25 +14,23 @@ import javax.sound.sampled.*;
 public class CaptureFrame extends JFrame {
 
     private boolean stopCapture = false;
-    private ByteArrayOutputStream baos;
-    private AudioFormat audioFormat;
-    private TargetDataLine targetDataLine;
-    private AudioInputStream audioInputStream;
-    private SourceDataLine sourceDataLine;
+    private ByteArrayOutputStream tempCapturedContent;
     private byte[] capturedContent = null;
     private String capturedContentMimeType = "";
 
     public CaptureFrame() {
-        final JButton captureBtn = new JButton("Capture");
-        final JButton stopBtn = new JButton("Stop");
-        final JButton playBtn = new JButton("Playback");
-        final JButton okButton = new JButton("OK");
+        final JButton captureBtn = new JButton(Resources.resources.get("button.capture"));
+        final JButton stopBtn = new JButton(Resources.resources.get("button.stop"));
+        final JButton playBtn = new JButton(Resources.resources.get("button.play"));
+        final JButton okButton = new JButton(Resources.resources.get("button.ok"));
 
         captureBtn.setEnabled(true);
         stopBtn.setEnabled(false);
         playBtn.setEnabled(false);
         okButton.setEnabled(false);
 
+        setIconImage(ImageUtil.createImage("record_24x24.png"));
+        
         captureBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 captureBtn.setEnabled(false);
@@ -50,10 +51,10 @@ public class CaptureFrame extends JFrame {
                 stopCapture = true;
                 AudioConverter converter = new AudioConverter();                
                 try {
-                	capturedContent = converter.encodeStream(baos.toByteArray(), "c:\\diploma\\testing\\Mp3.mp3");
-                	capturedContentMimeType = "audio/mpeg";
+                	capturedContent = converter.encodeStream(tempCapturedContent.toByteArray(), Resources.messagesDirectory + "captured.mp3");
+                	capturedContentMimeType = MimeHelper.getMIMETypeByExtension("captured.mp3");
                 } catch (Exception e1) {
-                    e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    e1.printStackTrace();
                 }
             }
         });
@@ -78,7 +79,7 @@ public class CaptureFrame extends JFrame {
         getContentPane().add(okButton);
         
         getContentPane().setLayout(new FlowLayout());
-        setTitle("Capture window");
+        setTitle(Resources.resources.get("capture.window.title"));
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setSize(300, 100);
         setVisible(false);
@@ -86,13 +87,13 @@ public class CaptureFrame extends JFrame {
 
     private void captureAudio() {
         try {
-            audioFormat = getAudioFormat();
+        	AudioFormat audioFormat = getAudioFormat();
             DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) AudioSystem.getLine(dataLineInfo);
+            TargetDataLine targetDataLine = (TargetDataLine) AudioSystem.getLine(dataLineInfo);
             targetDataLine.open(audioFormat);
             targetDataLine.start();
 
-            Thread captureThread = new Thread(new CaptureThread());
+            Thread captureThread = new Thread(new CaptureThread(targetDataLine));
             captureThread.start();
         } catch (Exception e) {
             System.out.println(e);
@@ -102,18 +103,18 @@ public class CaptureFrame extends JFrame {
 
     private void playAudio() {
         try {
-            byte audioData[] = baos.toByteArray();
+            byte audioData[] = tempCapturedContent.toByteArray();
             InputStream byteArrayInputStream = new ByteArrayInputStream(audioData);
             AudioFormat audioFormat = getAudioFormat();
-            audioInputStream = new AudioInputStream(byteArrayInputStream,
+            AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream,
                     audioFormat,
                     audioData.length / audioFormat.getFrameSize());
             DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
-            sourceDataLine = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
+            SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
             sourceDataLine.open(audioFormat);
             sourceDataLine.start();
 
-            Thread playThread = new Thread(new PlayThread());
+            Thread playThread = new Thread(new PlayThread(audioInputStream, sourceDataLine));
             playThread.start();
         } catch (Exception e) {
             System.out.println(e);
@@ -142,18 +143,23 @@ public class CaptureFrame extends JFrame {
 
     class CaptureThread extends Thread {
         byte tempBuffer[] = new byte[10000];
-
+        
+        TargetDataLine targetDataLine = null;
+        public CaptureThread(TargetDataLine targetDataLine) {
+        	this.targetDataLine = targetDataLine;
+        }
+        
         public void run() {
-            baos = new ByteArrayOutputStream();
+        	tempCapturedContent = new ByteArrayOutputStream();
             stopCapture = false;
             try {
                 while (!stopCapture) {
                     int cnt = targetDataLine.read(tempBuffer, 0, tempBuffer.length);
                     if (cnt > 0) {
-                        baos.write(tempBuffer, 0, cnt);
+                    	tempCapturedContent.write(tempBuffer, 0, cnt);
                     }
                 }
-                baos.close();
+                tempCapturedContent.close();
             } catch (Exception e) {
                 System.out.println(e);
                 System.exit(0);
@@ -164,6 +170,14 @@ public class CaptureFrame extends JFrame {
     class PlayThread extends Thread {
         byte tempBuffer[] = new byte[10000];
 
+        private AudioInputStream audioInputStream = null;
+        private SourceDataLine sourceDataLine;
+        
+        public PlayThread(AudioInputStream audioInputStream, SourceDataLine sourceDataLine) {
+        	this.audioInputStream = audioInputStream;
+        	this.sourceDataLine = sourceDataLine;
+        }
+        
         public void run() {
             try {
                 int cnt;
@@ -181,11 +195,6 @@ public class CaptureFrame extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-        new CaptureFrame();
-    }
-
 	public byte[] getCapturedContent() {
 		return capturedContent;
 	}
@@ -193,6 +202,12 @@ public class CaptureFrame extends JFrame {
 	public String getCapturedContentMimeType() {
 		return capturedContentMimeType;
 	}
+	
+    public static void main(String[] args) {
+    	CaptureFrame f = new CaptureFrame();
+    	f.setVisible(true);
+    	f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
 
 }
 

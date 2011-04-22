@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import hu.messaging.Constants;
+import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.icp.listener.ConnectionListener.ConnectionState;
 import hu.messaging.msrp.SenderConnection;
@@ -27,18 +27,16 @@ public class SessionListener extends BaseListener implements ISessionListener{
 		log(getClass().getSimpleName() + ": processSessionStarted");
 		try {
         	int mCount = sdpBody.getMediaDescriptionCount();
-        	//log(Integer.toString(mCount));
-        	//log(sdpBody.format());
             for (int i = 0; i < mCount; i++) {
             	SessionDescription remoteSdp = SDPUtil.parseSessionDescription(sdpBody.format());
             	
             	icpController.getCommunicationController().createSenderConnection(remoteSdp.getHost(), 
             											remoteSdp.getPort(), 
-            											Constants.serverSipURI);
-            	SenderConnection s = icpController.getCommunicationController().getMsrpStack().getConnections().getSenderConnection(Constants.serverSipURI);
-            	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Constants.serverSipURI));
+            											Resources.serverSipURI);
+            	SenderConnection s = icpController.getCommunicationController().getMsrpStack().getConnections().getSenderConnection(Resources.serverSipURI);
+            	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Resources.serverSipURI));
             	
-            	icpController.getCommunicationController().createNewMSRPSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);
+            	icpController.getCommunicationController().createNewMSRPSession(localSdp.getPath(), remoteSdp.getPath(), Resources.serverSipURI);
             	s.start();
             }
         }
@@ -55,6 +53,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	
 	public void processSessionCancelled() {
 		log(getClass().getSimpleName() + ": processSessionCancelled");
+		notifyListeners(ConnectionState.Refused);
 	}
 
 	
