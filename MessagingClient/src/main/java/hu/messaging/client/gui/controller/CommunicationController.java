@@ -2,8 +2,6 @@ package hu.messaging.client.gui.controller;
 
 import hu.messaging.msrp.model.Constants;
 import hu.messaging.msrp.MSRPStack;
-import hu.messaging.msrp.SenderConnection;
-import hu.messaging.msrp.Session;
 import hu.messaging.msrp.listener.MSRPListener;
 import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.msrp.util.MSRPUtil;
@@ -14,7 +12,6 @@ import hu.messaging.client.model.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,41 +31,15 @@ public class CommunicationController {
 		msrpStack = new MSRPStack();
 	}
 	
-	public void createSenderConnection(InetAddress host, int port, String sipUri) {
-		try {
-			getMsrpStack().createSenderConnection(host, port, sipUri);	
-		}
-		catch(IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void createReceiverConnection(InetAddress host) {
-		try {
-			getMsrpStack().createReceiverConnection(host);
-		}
-		catch(IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public void sendMessageInMSRPSession(CompleteMessage completeMessage, String sipUri) {
 		getMsrpStack().sendMessage(completeMessage, sipUri);
-	}
-	
-	public boolean isRunningReceiverConnection() {
-		return getMsrpStack().getConnections().isRunningReceiverConnection();
-	}
-	
-	public boolean isReceiverConnection() {
-		return getMsrpStack().getConnections().isReceiverConnection();
 	}
 
 	public MSRPStack getMsrpStack() {
 		return msrpStack;
 	}
 	
-	public void addLocalSDP(String remoteId, String sdp) {
+	private void addLocalSDP(String remoteId, String sdp) {
 		localSDPs.put(remoteId, sdp);
 	}
 	
@@ -79,21 +50,6 @@ public class CommunicationController {
 	public String getLocalSDP(String remoteId) {
 		String sdp = localSDPs.get(remoteId);
 		return sdp;
-	}
-	
-	public Session createNewMSRPSession(URI localURI, URI remoteURI, String remoteSipUri) {
-		SenderConnection s = getMsrpStack().getConnections().getSenderConnection(remoteSipUri);
-		
-		if (s == null) {
-			return null;
-		}
-		
-		Session newSession = new Session(localURI, remoteURI, s, msrpStack);
-		getMsrpStack().putNewSession(newSession);
-		
-		s.setSession(newSession);
-		
-		return newSession;
 	}
 	
 	public void addMSRPListener(MSRPListener listener) {
@@ -127,29 +83,28 @@ public class CommunicationController {
     	}
     }
     
-    public void sendInvite(ISessionDescription localSdp) throws Exception {        
-    	icpController.getSession().start(Resources.serverSipURI, localSdp, 
+    public void sendInvite(String remoteSipURI) throws Exception {
+    	System.out.println("sendInvite");
+    	ISessionDescription localSdp = createLocalSDP();
+    	icpController.getSession(remoteSipURI).start(remoteSipURI, localSdp, 
     									 icpController.getLocalUser().getContact(), 
     									 SdpFactory.createIMSContentContainer());
+    	
+    	addLocalSDP(remoteSipURI, localSdp.format());
 	}
      
-	public void sendBye() {
+	public void sendBye(String remoteSipURI) {
 		try {
-			icpController.getSession().end();
+			icpController.getSession(remoteSipURI).end();
 		}
 		catch(Exception e) { }		
 	}
     
-	public ISessionDescription createLocalSDP() throws IOException {
-		if (!icpController.getCommunicationController().getMsrpStack().getConnections().isReceiverConnection() ||
-			!icpController.getCommunicationController().getMsrpStack().getConnections().isRunningReceiverConnection()) {
-			
-			icpController.getCommunicationController().getMsrpStack().getConnections().createReceiverConnection(InetAddress.getLocalHost());
-			icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().start();
-		}
+	private ISessionDescription createLocalSDP() throws IOException {
 		
-		InetAddress localhost = icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().getHostAddress();
-		int port = icpController.getCommunicationController().getMsrpStack().getConnections().getReceiverConnection().getPort();
+		InetAddress localhost = getMsrpStack().getReceiverConnectionHostAddress();
+		int port = getMsrpStack().getReceiverConnectionPort();
+		
 		String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
 		
 		return SDPUtil.createSDP(localhost, port, sessionId);

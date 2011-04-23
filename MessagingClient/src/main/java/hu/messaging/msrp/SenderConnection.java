@@ -131,7 +131,7 @@ public class SenderConnection extends Observable implements Runnable {
 		}		
 		socketChannel.register(this.selector, SelectionKey.OP_READ);
 		setConnected(true);
-		this.msrpStack.notifyListeners(new MSRPEvent(MSRPEvent.sessionStarted));
+		this.msrpStack.notifyListeners(new MSRPEvent(MSRPEvent.sessionStarted, this.getSipUri()));
 	}
 	
 	private Selector initSelector() throws IOException {

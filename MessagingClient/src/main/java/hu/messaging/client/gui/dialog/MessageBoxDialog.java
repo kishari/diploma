@@ -6,6 +6,7 @@ import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.util.ImageUtil;
 import hu.messaging.client.icp.listener.ConnectionListener;
+import hu.messaging.client.icp.listener.ConnectionStateType;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
 import hu.messaging.msrp.model.CompleteMessage;
@@ -317,7 +318,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 			ObjectFactory factory = new ObjectFactory();
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :
-					System.out.println("session started event");
+					System.out.println("session started event: " + event.getRemoteSipUri());
 					InfoMessage info = new InfoMessage();
 					info.setInfoType(InfoMessage.downloadContent);
 					
@@ -329,7 +330,8 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					
 					info.setDetailList(detailList);
 					String msg = XMLUtils.createStringXMLFromInfoMessage(info);
-					icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, msg);
+					icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, msg);					
+					
 					break;
 				case MSRPEvent.brokenTrasmission :
 					break;
@@ -342,7 +344,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					
 					this.printToFile(m.getContent(), m.getMimeType());
 					
-					icpController.getCommunicationController().sendBye();
+					icpController.getCommunicationController().sendBye(Resources.serverSipURI);
 					this.selectedMessage = null;
 					break;
 			}
@@ -352,8 +354,8 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
     	}
     }
 
-    public void connectionChanged(ConnectionState event) {
-    	switch (event) {
+    public void connectionChanged(ConnectionStateType event) {
+    	switch (event.getConnectionState()) {
             case Connecting:
                 break;
             case Connected:      
@@ -366,7 +368,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
                 break;    
             case ConnectionFinished:
             	icpController.getCommunicationController().removeMSRPListener(this);
-				icpController.getSessionListener().removeConnectionListener(this);
+				icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
 				icpController.getCommunicationController().getMsrpStack().disposeResources();
             	break;
             case RecipientsSentSuccessful:
@@ -378,12 +380,10 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 		
 		System.out.println("createMSRPSessionToRemote : " + sipURI);
 		
-		ISessionDescription sdp = icpController.getCommunicationController().createLocalSDP();
-		icpController.getCommunicationController().addMSRPListener(MessageBoxDialog.this);
-		  
-		icpController.getSessionListener().addConnectionListener(MessageBoxDialog.this);
-		icpController.getCommunicationController().sendInvite(sdp);
-		icpController.getCommunicationController().addLocalSDP(sipURI, sdp.format());
+		icpController.getCommunicationController().addMSRPListener(MessageBoxDialog.this);	
+		icpController.createNewSipSession(Resources.serverSipURI);
+		icpController.getSessionListener(Resources.serverSipURI).addConnectionListener(MessageBoxDialog.this);
+		icpController.getCommunicationController().sendInvite(sipURI);	
 	}
 	
 	private class ProgressDialog extends JDialog {

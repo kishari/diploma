@@ -1,5 +1,9 @@
 package hu.messaging.client.gui.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.icp.listener.PlatformListener;
 import hu.messaging.client.icp.listener.ProfileListener;
@@ -14,13 +18,14 @@ import com.ericsson.icp.IProfile;
 import com.ericsson.icp.IService;
 import com.ericsson.icp.ISession;
 
+import java.util.Map;
+
 public class ICPController {
 	private IPlatform icpPlatform;
 	private IProfile profile;
 	private IService service;
-	private ISession session;
-
-	private SessionListener sessionListener;
+	private Map<String, ISession> sessions;
+	private List<SessionListener> sessionListeners;
 
 	private Buddy localUser;
 
@@ -55,16 +60,26 @@ public class ICPController {
 		service = profile.createService(SERVICE_ID, APPLICATION_ID);
 		service.addListener(new ServiceListener(this));
 		
-		session = service.createSession();
-		sessionListener = new SessionListener(this);
-		session.addListener(sessionListener);
+		sessions = new HashMap<String, ISession>();
+		sessionListeners = new ArrayList<SessionListener>();
 	}
 
+	public ISession createNewSipSession(String remoteSipUri) throws Exception {
+		ISession session = service.createSession();
+		SessionListener sessionListener = new SessionListener(this, remoteSipUri);
+		session.addListener(sessionListener);
+		sessions.put(remoteSipUri, session);
+		sessionListeners.add(sessionListener);
+		return session;
+	}
 	public void release() {
 		try {
 			icpGroupListController.release();
 
-			IcpUtils.release(session);
+			for (String s : sessions.keySet()) {
+				IcpUtils.release(sessions.get(s));
+			}
+			
 			IcpUtils.release(service);
 			IcpUtils.release(icpPlatform);
 		} catch (Exception e) {
@@ -84,16 +99,22 @@ public class ICPController {
 		return profile;
 	}
 
-	public ISession getSession() {
-		return session;
+	public ISession getSession(String sipUri) {
+		return sessions.get(sipUri);
 	}
 
 	public CommunicationController getCommunicationController() {
 		return communicationController;
 	}
 	
-	public SessionListener getSessionListener() {
-		return sessionListener;
+	public SessionListener getSessionListener(String sipUri) {
+		System.out.println("getSessionListener");
+		for (SessionListener s : sessionListeners) {
+			if (s.getRemoteSipUri().equals(sipUri)) {
+				return s;
+			}
+		}
+		return null;
 	}
 
 	public Buddy getLocalUser() {

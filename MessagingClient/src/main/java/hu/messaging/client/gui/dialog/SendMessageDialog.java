@@ -19,6 +19,7 @@ import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.gui.data.Group;
 import hu.messaging.client.icp.listener.ConnectionListener;
+import hu.messaging.client.icp.listener.ConnectionStateType;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -98,8 +99,8 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		pack();		
     }
 
-    public void connectionChanged(ConnectionState event){
-        switch (event) {
+    public void connectionChanged(ConnectionStateType event){
+        switch (event.getConnectionState()) {
             case Connecting:
                 break;
             case Connected:      
@@ -120,14 +121,14 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
                 }
                 break;           
             case RecipientsSentSuccessful:
-        		icpController.getCommunicationController().sendBye();
+        		icpController.getCommunicationController().sendBye(Resources.serverSipURI);
         		if (!Constants.sendTestMessageMySelf) {
         			MessageUtils.createMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(completeMessage, true), completeMessage.getContent());
         		}
             	break;
             case ConnectionFinished:
             	icpController.getCommunicationController().removeMSRPListener(this);
-            	icpController.getSessionListener().removeConnectionListener(this);
+            	icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
         		icpController.getCommunicationController().getMsrpStack().disposeResources();        		
         }
     }
@@ -246,14 +247,12 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    	  }
 		    	  if (completeMessage.isReady() && selectedGroupListModel.size()> 0) {		    		  
 		    		  try {
-		    			  sendButton.setEnabled(false);
-		    			  ISessionDescription sdp = icpController.getCommunicationController().createLocalSDP();
-		    			  
+		    			  sendButton.setEnabled(false);		    			  
 		    			  icpController.getCommunicationController().addMSRPListener(SendMessageDialog.this);
-		    			  icpController.getSessionListener().addConnectionListener(SendMessageDialog.this);
+		    			  icpController.createNewSipSession(Resources.serverSipURI);
+		    			  icpController.getSessionListener(Resources.serverSipURI).addConnectionListener(SendMessageDialog.this);
 		    			  
-		    			  icpController.getCommunicationController().sendInvite(sdp);
-		    			  icpController.getCommunicationController().addLocalSDP(Resources.serverSipURI, sdp.format());
+		    			  icpController.getCommunicationController().sendInvite(Resources.serverSipURI);
 		    		  }
 		    		  catch(Exception e) { }		    		  		    		  
 		    	  }
@@ -422,14 +421,15 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		try {
 			switch(event.getCode()) {
 				case MSRPEvent.sessionStarted :  
+					System.out.println("session started event: " + event.getRemoteSipUri());
 					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Resources.serverSipURI);
 					break;
 				case MSRPEvent.brokenTrasmission :
 					break;
 				case MSRPEvent.messageSentSuccess :
-					System.out.println("message sent successful event");
+					System.out.println("message sent successful event: " + event.getRemoteSipUri());
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
-					icpController.getSession().sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
+					icpController.getSession(Resources.serverSipURI).sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
 					break;
 				case MSRPEvent.messageReceivingSuccess :
 					break;

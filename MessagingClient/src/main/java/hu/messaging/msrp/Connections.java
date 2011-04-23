@@ -18,21 +18,20 @@ public class Connections implements Observer{
 		this.msrpStack = msrpStack;
 	}
 	
-	public void createReceiverConnection(InetAddress localhost) throws IOException {
+	protected void createReceiverConnection(InetAddress localhost) throws IOException {
 		System.out.println("MessagingService.createReceiverConnection");
-		this.setReceiverConnection(new ReceiverConnection(localhost, msrpStack));
+		this.receiverConnection = new ReceiverConnection(localhost, msrpStack);
 	}
 	
-	public SenderConnection createSenderConnection(InetAddress addr, int port, 
+	protected SenderConnection createSenderConnection(InetAddress addr, int port, 
 												   String sipUri, MSRPStack msrpStack) throws IOException {
 
 		SenderConnection c = new SenderConnection(addr, port, sipUri, msrpStack);
 		senderConnections.put(sipUri, c);
-		
 		return c;
 	}
 	
-	public void deleteSenderConnection(String sipUri) {
+	protected void deleteSenderConnection(String sipUri) {
 		SenderConnection c = senderConnections.get(sipUri);
 		if (c != null) {
 			c.stop();
@@ -40,7 +39,7 @@ public class Connections implements Observer{
 		}
 	}
 	
-	public void deleteSenderConnections() {
+	protected void deleteSenderConnections() {
 		for (String key : this.senderConnections.keySet()) {
 			SenderConnection s = senderConnections.get(key);
 			s.stop();
@@ -48,31 +47,23 @@ public class Connections implements Observer{
 		isFinishedAllSenderConnections = true;
 	}
 	
-	public SenderConnection getSenderConnection(String sipUri) {
+	protected SenderConnection getSenderConnection(String sipUri) {
 		return senderConnections.get(sipUri);
 	}
-
-	public void setReceiverConnection(ReceiverConnection receiverConnection) {
-		this.receiverConnection = receiverConnection;
-	}
-
-	public ReceiverConnection getReceiverConnection() {
+	
+	protected ReceiverConnection getReceiverConnection() {
 		return receiverConnection;
 	}
 	
-	public boolean isReceiverConnection() {
+	protected boolean isReceiverConnection() {
 		return (getReceiverConnection() != null);
 	}
 	
-	public boolean isRunningReceiverConnection() {
+	protected boolean isRunningReceiverConnection() {
 		if ( isReceiverConnection() ) {
 			return getReceiverConnection().isRunning();
 		}			
 		return false;
-	}
-	
-	public MSRPStack getMsrpStack() {
-		return msrpStack;
 	}
 	
 	public void update(Observable o, Object obj) {

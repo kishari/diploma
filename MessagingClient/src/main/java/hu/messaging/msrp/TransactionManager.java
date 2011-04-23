@@ -102,7 +102,7 @@ public class TransactionManager implements Observer {
 				
 				if (req.getEndToken() == '$') {
 					System.out.println("Utolso csomag is megjott...");
-					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, "complete message arrived", null);
+					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, this.session.getSenderConnection().getSipUri());
 					event.setMessageId(req.getMessageId());
 					
 					List<Request> chunks = new ArrayList<Request>();

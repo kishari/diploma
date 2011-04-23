@@ -9,32 +9,25 @@ public class MSRPEvent {
 	public static final int sessionStarted = 3;
 	public static final int messageReceivingSuccess = 4;
 	
-	private String description;
+	private String remoteSipUri;
 	private String messageId;
 	private CompleteMessage completeMessage;
 	private int code;
+	
 
 	public MSRPEvent(int code) {
 		this.code = code;		
 	}
 	
-	public MSRPEvent(int code, String description) {
+	public MSRPEvent(int code, String remoteSipUri) {
 		this.code = code;
-		this.description = description;		
+		this.remoteSipUri = remoteSipUri;
 	}
-	
-	public MSRPEvent(int code, String description, CompleteMessage completeMessage) {
+		
+	public MSRPEvent(int code, String remoteSipUri, CompleteMessage completeMessage) {
 		this.code = code;
-		this.description = description;
+		this.remoteSipUri = remoteSipUri;
 		this.completeMessage = completeMessage;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
 	}
 
 	public int getCode() {
@@ -59,5 +52,13 @@ public class MSRPEvent {
 
 	public void setCompleteMessage(CompleteMessage completeMessage) {
 		this.completeMessage = completeMessage;
+	}
+
+	public String getRemoteSipUri() {
+		return remoteSipUri;
+	}
+
+	public void setRemoteSipUri(String remoteSipUri) {
+		this.remoteSipUri = remoteSipUri;
 	}
 }
