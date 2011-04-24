@@ -2,7 +2,7 @@ package hu.messaging.msrp;
 
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
-import hu.messaging.msrp.model.CompleteMessage;
+import hu.messaging.msrp.model.FullMSRPMessage;
 import hu.messaging.util.SessionDescription;
 
 import java.io.IOException;
@@ -22,10 +22,10 @@ public class MSRPStack implements Observer {
 	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
 	private List<MSRPListener> msrpListeners = new ArrayList<MSRPListener>();
 	
-	public void sendMessage(CompleteMessage completeMessage, String remoteSipUri) {
+	public void sendMessage(FullMSRPMessage fullMSRPMessage, String remoteSipUri) {
 		SenderConnection s = getConnections().getSenderConnection(remoteSipUri);
 		Session session = s.getSession();
-		session.sendMessage(completeMessage);
+		session.sendMessage(fullMSRPMessage);
 	}
 	
 	public InetAddress getReceiverConnectionHostAddress() {

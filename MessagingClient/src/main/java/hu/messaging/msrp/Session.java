@@ -1,8 +1,6 @@
 package hu.messaging.msrp;
 
-
-import hu.messaging.msrp.model.CompleteMessage;
-import hu.messaging.msrp.model.Message;
+import hu.messaging.msrp.model.*;
 
 import java.net.URI;
 import java.util.Observable;
@@ -18,7 +16,7 @@ public class Session implements java.util.Observer{
 	private MSRPStack msrpStack;
 	
 	private BlockingQueue<Message> incomingMessageQueue = new LinkedBlockingQueue<Message>();
-	private BlockingQueue<CompleteMessage> outgoingMessageQueue = new LinkedBlockingQueue<CompleteMessage>();
+	private BlockingQueue<FullMSRPMessage> outgoingMessageQueue = new LinkedBlockingQueue<FullMSRPMessage>();
 
 	private TransactionManager transactionManager = null;
 
@@ -31,9 +29,9 @@ public class Session implements java.util.Observer{
 		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, this);
 	}
 	
-	protected void sendMessage(CompleteMessage completeMessage) {		
+	protected void sendMessage(FullMSRPMessage fullMessage) {		
 		try {
-			putMessageIntoOutgoingMessageQueue(completeMessage);
+			putMessageIntoOutgoingMessageQueue(fullMessage);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -43,7 +41,7 @@ public class Session implements java.util.Observer{
 		this.incomingMessageQueue.put(message);
 	}
 	
-	protected void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
+	protected void putMessageIntoOutgoingMessageQueue(FullMSRPMessage message) throws InterruptedException {
 		this.outgoingMessageQueue.put(message);
 	}
 	

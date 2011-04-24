@@ -1,6 +1,5 @@
-package hu.messaging.msrp.model;
+package hu.messaging.client.model;
 
-import hu.messaging.client.model.UserInfo;
 
 import org.apache.commons.codec.binary.Base64;
 

@@ -1,11 +1,6 @@
 package hu.messaging.msrp;
 
-import hu.messaging.msrp.model.Constants;
-import hu.messaging.client.media.MimeHelper;
-import hu.messaging.msrp.model.CompleteMessage;
-import hu.messaging.msrp.model.Keys;
-import hu.messaging.msrp.model.Message;
-import hu.messaging.msrp.model.Request;
+import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.BufferedOutputStream;
@@ -30,14 +25,13 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //TESZTHEZ START
 	private File contentFile = null;
 	private File recreatedContentFile = null;
-	private String mimeType = null;
 //TESZTHEZ END
 	
 	private boolean running = false;
-	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
+	private BlockingQueue<FullMSRPMessage> outgoingMessageQueue;
 	private TransactionManager transactionManager;
 	
-	public OutgoingMessageProcessor(BlockingQueue<CompleteMessage> outgoingMessageQueue, 
+	public OutgoingMessageProcessor(BlockingQueue<FullMSRPMessage> outgoingMessageQueue, 
 									TransactionManager transactionManager) {
 		this.outgoingMessageQueue = outgoingMessageQueue;
 		this.transactionManager = transactionManager;
@@ -49,7 +43,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			try {
 				//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
 				//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
-				CompleteMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+				FullMSRPMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 				if (data != null) {
 					processOutgoingMessage(data);
 				}				
@@ -62,17 +56,14 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void processOutgoingMessage(CompleteMessage completeMessage) {
-		mimeType = completeMessage.getMimeType();
-		
-		System.out.println("mimeType: " + mimeType);
-		
-		this.printToFile(completeMessage.getContent(), false);
+	private void processOutgoingMessage(FullMSRPMessage fullMessage) {
+
+		this.printToFile(fullMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 
 		int chunkSize = Constants.chunkSize;
 		
-		Map<String, Object> map = splitMessageToChunks(completeMessage, chunkSize);
+		Map<String, Object> map = splitMessageToChunks(fullMessage, chunkSize);
 		
 		List<byte[]> chunks = (List<byte[]>)map.get(Keys.chunkList);
 		int totalContentLength = (Integer)map.get(Keys.contentLength);
@@ -114,7 +105,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		this.notifyObservers(requestList); //Átküldjük a TransactionManagernek a requestList-et
 	}
 	
-	private Map<String, Object> splitMessageToChunks(CompleteMessage message, int chunkSize) {
+	private Map<String, Object> splitMessageToChunks(FullMSRPMessage message, int chunkSize) {
 		List<byte[]> chunks = new ArrayList<byte[]>();
 		
 		byte[] base64EncodedContent = Base64.encodeBase64(message.getContent());
@@ -159,11 +150,11 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		try {
 			OutputStream out = null;
 			if (!recreated) {
-				contentFile = new File("c:\\diploma\\testing\\clientContentFile." + MimeHelper.getExtensionByMIMEType(mimeType));
+				contentFile = new File("c:\\diploma\\testing\\clientContentFile.mp3");
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			}
 			else {
-				recreatedContentFile = new File("c:\\diploma\\testing\\clientRecreatedContentFile." + MimeHelper.getExtensionByMIMEType(mimeType));
+				recreatedContentFile = new File("c:\\diploma\\testing\\clientRecreatedContentFile.mp3");
 				out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			}
 			

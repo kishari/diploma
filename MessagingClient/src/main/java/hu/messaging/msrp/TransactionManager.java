@@ -1,12 +1,8 @@
 package hu.messaging.msrp;
 
-import hu.messaging.msrp.model.Constants;
+import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.listener.MSRPEvent;
-import hu.messaging.msrp.model.CompleteMessage;
-import hu.messaging.msrp.model.Keys;
-import hu.messaging.msrp.model.Message;
-import hu.messaging.msrp.model.Request;
-import hu.messaging.msrp.model.Response;
+import hu.messaging.msrp.listener.MSRPEvent.MSRPEventType;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.BufferedOutputStream;
@@ -28,8 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class TransactionManager extends Observable implements Observer {
 
-	private int numOfUnacknowledgedChunks = 0;	
-	private int sendCounterTest = 0;
+	private int numOfUnacknowledgedChunks = 0;
 	
 	private Map<String, Request> requestMap;
 	private List<Request> requestList;
@@ -47,12 +42,12 @@ public class TransactionManager extends Observable implements Observer {
 	
 	
 	public TransactionManager(BlockingQueue<Message> incomingMessageQueue, 
-			  				  BlockingQueue<CompleteMessage> outgoingMessageQueue,
+			  				  BlockingQueue<FullMSRPMessage> outgoingMessageQueue,
 			  				  Session session) {
 		
 			this.session = session;
 			this.addObserver(session);
-			outgoingMessageProcessor = new OutgoingMessageProcessor(outgoingMessageQueue, session, this);
+			outgoingMessageProcessor = new OutgoingMessageProcessor(outgoingMessageQueue, this);
 			outgoingMessageProcessor.start();
 			outgoingMessageProcessorStopped = false;
 			
@@ -126,7 +121,7 @@ public class TransactionManager extends Observable implements Observer {
 				
 				if (req.getEndToken() == '$') {
 					System.out.println("Utolso csomag is megjott...");
-					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, this.session.getSenderConnection().getRemoteSipUri());
+					MSRPEvent event = new MSRPEvent(MSRPEvent.MSRPEventType.messageReceivingSuccess, this.session.getSenderConnection().getRemoteSipUri());
 					event.setMessageId(req.getMessageId());
 					
 					List<Request> chunks = new ArrayList<Request>();
@@ -144,7 +139,7 @@ public class TransactionManager extends Observable implements Observer {
 						}
 					}
 					*/
-					event.setCompleteMessage(new CompleteMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
+					event.setFullMessage(new FullMSRPMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
@@ -161,7 +156,7 @@ public class TransactionManager extends Observable implements Observer {
 				
 				if (isAckedTotalSentMessage(ackedReq)) {
 					System.out.println("minden nyugtazva...");
-					MSRPEvent event = new MSRPEvent(MSRPEvent.messageSentSuccess);
+					MSRPEvent event = new MSRPEvent(MSRPEvent.MSRPEventType.messageSentSuccess);
 					event.setMessageId(ackedReq.getMessageId());
 					this.session.getMsrpStack().notifyListeners(event);
 				}
@@ -207,18 +202,9 @@ public class TransactionManager extends Observable implements Observer {
 						
 						session.getSenderConnection().send(data.toString().getBytes());
 						//printTo(data, false);
-						sendCounterTest++;
 						
 						Thread.sleep(Constants.senderThreadSleepTime);
 						
-						if (sendCounterTest % 100 == 0 || sendCounterTest > 4900) {
-							System.out.println("sent counter: " + sendCounterTest);
-							if (sendCounterTest > 4910) {
-								//Request r = (Request)data;
-								//System.out.println(data.toString());
-							}
-						}
-
 						if (!isAck && (numOfUnacknowledgedChunks)  > Constants.unAcknoledgedChunksLimit) {
 							do {
 								Thread.sleep(100);
@@ -304,4 +290,8 @@ public class TransactionManager extends Observable implements Observer {
 		}		
 	}
 //<<<<<<<<<<<<<<TESZT
+
+	public Session getSession() {
+		return session;
+	}
 }

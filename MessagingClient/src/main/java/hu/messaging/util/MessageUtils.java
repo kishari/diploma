@@ -4,9 +4,10 @@ import java.io.*;
 import java.util.List;
 import java.util.ArrayList;
 
+import hu.messaging.client.Resources;
+import hu.messaging.client.gui.util.StringUtil;
+import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.model.*;
-import hu.messaging.msrp.CompleteMessage;
-import hu.messaging.Constants;
 
 public class MessageUtils {
 	
@@ -25,8 +26,10 @@ public class MessageUtils {
 			c.setStatus("NEW");
 		}
 		UserInfo s = f.createUserInfo();
-		s.setName(m.getSender().getName());
-		s.setSipUri(m.getSender().getSipUri());
+		if (m.getSender() != null) {
+			s.setName(m.getSender().getName());
+			s.setSipUri(m.getSender().getSipUri());
+		}		
 		c.setSender(s);
 		
 		c.setSubject(m.getSubject());
@@ -36,17 +39,17 @@ public class MessageUtils {
 
 	public static void createMessageContainerFile(MessageInfoContainer message, byte[] content) {			
 		
-		File dir = new File(Constants.messagesPath);
+		File dir = new File(Resources.messagesDirectory);
 		dir.mkdirs();
 		File messageFile = new File(dir, message.getId() + ".message");
 		message.getContentDescription().setContentAvailable(content != null);
 		if (content != null) {
 			try {
 				OutputStream out = null;
-				String contentDirPath = Constants.messagesPath + Constants.messagesContentsRelativePath;	
+				String contentDirPath = Resources.messageContentsDirectory;	
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
-				File contentFile = new File(contentDir, message.getId() + "." + message.getContentDescription().getMimeType());
+				File contentFile = new File(contentDir, message.getId() + "." + MimeHelper.getExtensionByMIMEType(message.getContentDescription().getMimeType()));
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 				out.write(content);
@@ -62,7 +65,7 @@ public class MessageUtils {
 	
 	public static void updateMessageContainerFile(MessageInfoContainer message, byte[] content) {							
 		
-		File dir = new File(Constants.messagesPath);
+		File dir = new File(Resources.messagesDirectory);
 		dir.mkdirs();
 		File messageFile = new File(dir, message.getId() + ".message");
 		if (!messageFile.exists()) {
@@ -75,10 +78,10 @@ public class MessageUtils {
 		if (content != null) {
 			try {
 				OutputStream out = null;
-				String contentDirPath = Constants.messagesPath + Constants.messagesContentsRelativePath;	
+				String contentDirPath = Resources.messageContentsDirectory;		
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
-				File contentFile = new File(contentDir, message.getId() + "." + m.getContentDescription().getMimeType());
+				File contentFile = new File(contentDir, message.getId() + "." + MimeHelper.getExtensionByMIMEType(m.getContentDescription().getMimeType()));
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 				out.write(content);
@@ -93,7 +96,7 @@ public class MessageUtils {
 	}
 	
 	public static MessageInfoContainer readMessageContainerFromFile(String messageId) {
-		File dir = new File(Constants.messagesPath + Constants.messagesContentsRelativePath);
+		File dir = new File(Resources.messagesDirectory);
 		File messageFile = new File(dir, messageId + ".message");
 		MessageInfoContainer m = XMLUtils.createMessageInfoContainerFromFile(messageFile);			        
 		
@@ -102,10 +105,10 @@ public class MessageUtils {
 	
 	public static List<MessageInfoContainer> loadInboxMessages() {		
 		List<MessageInfoContainer> inbox = new ArrayList<MessageInfoContainer>();
-		File dir = new File(Constants.messagesPath);
+		File dir = new File(Resources.messagesDirectory);
 		
 		for (File f : dir.listFiles()) {
-			if (f.isFile()) {
+			if (f.isFile() && StringUtil.getFileExtension(f.getName()).equals("message")) {
 				System.out.println(f.getName());				
 				MessageInfoContainer c = XMLUtils.createMessageInfoContainerFromFile(f);
 				System.out.println("MessageContainer id: " + c.getId());
@@ -119,10 +122,10 @@ public class MessageUtils {
 	
 	public static List<MessageInfoContainer> loadSentMessages() {		
 		List<MessageInfoContainer> sentMessages = new ArrayList<MessageInfoContainer>();
-		File dir = new File(Constants.messagesPath);
+		File dir = new File(Resources.messagesDirectory);
 		
 		for (File f : dir.listFiles()) {
-			if (f.isFile()) {
+			if (f.isFile() && StringUtil.getFileExtension(f.getName()).equals("message")) {
 				System.out.println(f.getName());				
 				MessageInfoContainer c = XMLUtils.createMessageInfoContainerFromFile(f);
 				System.out.println("MessageContainer id: " + c.getId());
@@ -134,24 +137,29 @@ public class MessageUtils {
 		return sentMessages;
 	}
 	
-	public static MessageInfoContainer createMessageInfoContainerFromNotifyInfoMessage(InfoMessage info) {	
+	public static List<MessageInfoContainer> createMessageInfoContainerListFromNotifyInfoMessage(InfoMessage info) {		
 		ObjectFactory f = new ObjectFactory();
-		MessageInfoContainer m = f.createMessageInfoContainer();
-		m.setContentDescription(f.createContentDescription());
+		List<MessageInfoContainer> cList = new ArrayList<MessageInfoContainer>();
 		
-		UserInfo s = f.createUserInfo();
-		
-		InfoDetail detail = info.getDetailList().getDetail().get(0);
-		m.setId(detail.getId());
-		m.setStatus("NEW");
-		m.getContentDescription().setMimeType(detail.getContent().getMimeType());
-		m.setSubject(detail.getSubject());
-		m.getContentDescription().setContentAvailable(false);
-		
-		s.setName(detail.getSender().getName());
-		s.setSipUri(detail.getSender().getSipUri());
-		m.setSender(s);		
+		for (InfoDetail d : info.getDetailList().getDetail()) {
+			System.out.println("csinálom a dolgom");
+			MessageInfoContainer m = f.createMessageInfoContainer();
+			m.setContentDescription(f.createContentDescription());
+			UserInfo s = f.createUserInfo();
+			
+			m.setId(d.getId());
+			m.setStatus("NEW");
+			m.getContentDescription().setMimeType(d.getContent().getMimeType());
+			m.setSubject(d.getSubject());
+			m.getContentDescription().setContentAvailable(false);
+			
+			s.setName(d.getSender().getName());
+			s.setSipUri(d.getSender().getSipUri());
+			m.setSender(s);		
+			
+			cList.add(m);
+		}				
 					 
-		return m;
+		return cList;
 	}
 }

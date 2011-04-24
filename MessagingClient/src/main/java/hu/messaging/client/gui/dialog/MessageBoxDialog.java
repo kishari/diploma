@@ -9,7 +9,7 @@ import hu.messaging.client.icp.listener.ConnectionListener;
 import hu.messaging.client.icp.listener.ConnectionStateType;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
-import hu.messaging.msrp.model.CompleteMessage;
+import hu.messaging.msrp.model.FullMSRPMessage;
 import hu.messaging.util.MessageUtils;
 import hu.messaging.util.XMLUtils;
 import hu.messaging.client.media.MimeHelper;
@@ -337,10 +337,8 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					break;
 				case messageReceivingSuccess :
 					setProgressWindowVisibily(false);
-					CompleteMessage m = event.getCompleteMessage();
-					MessageUtils.updateMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(m, false), m.getContent());
-					
-					this.printToFile(m.getContent(), m.getMimeType());
+					FullMSRPMessage fullMessage = event.getFullMessage();					
+					MessageUtils.updateMessageContainerFile(MessageUtils.readMessageContainerFromFile(fullMessage.getMessageId()), fullMessage.getContent());					
 					
 					icpController.getCommunicationController().sendBye(Resources.serverSipURI);
 					this.selectedMessage = null;

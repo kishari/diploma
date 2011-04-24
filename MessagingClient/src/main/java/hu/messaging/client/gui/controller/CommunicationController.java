@@ -1,9 +1,9 @@
 package hu.messaging.client.gui.controller;
 
 import hu.messaging.msrp.model.Constants;
+import hu.messaging.msrp.model.FullMSRPMessage;
 import hu.messaging.msrp.MSRPStack;
 import hu.messaging.msrp.listener.MSRPListener;
-import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.util.*;
 
@@ -32,7 +32,7 @@ public class CommunicationController {
 	}
 	
 	public void sendMessageInMSRPSession(CompleteMessage completeMessage, String sipUri) {
-		getMsrpStack().sendMessage(completeMessage, sipUri);
+		getMsrpStack().sendMessage(new FullMSRPMessage(completeMessage.getMessageId(), completeMessage.getContent()), sipUri);
 	}
 
 	public MSRPStack getMsrpStack() {

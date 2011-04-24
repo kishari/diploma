@@ -30,7 +30,6 @@ import org.apache.commons.io.FileUtils;
 import hu.messaging.client.Resources;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
-import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.model.*;
 import hu.messaging.util.*;
