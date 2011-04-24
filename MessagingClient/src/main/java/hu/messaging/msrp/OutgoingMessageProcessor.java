@@ -35,13 +35,12 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	
 	private boolean running = false;
 	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
-	private Session session;
+	private TransactionManager transactionManager;
 	
 	public OutgoingMessageProcessor(BlockingQueue<CompleteMessage> outgoingMessageQueue, 
-									Session session,
-									TransactionManager transactionManager ) {
+									TransactionManager transactionManager) {
 		this.outgoingMessageQueue = outgoingMessageQueue;
-		this.session = session;
+		this.transactionManager = transactionManager;
 		this.addObserver(transactionManager);
 	}
 	
@@ -94,7 +93,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 				endToken = '$';
 			}
 			
-			Request req = MSRPUtil.createRequest(chunk, session.getLocalUri(), session.getRemoteUri(),
+			Request req = MSRPUtil.createRequest(chunk, transactionManager.getSession().getLocalUri(), transactionManager.getSession().getRemoteUri(),
 												  tId, messageId, 
 												  offset, chunk.length, totalContentLength,
 												  endToken);
@@ -145,12 +144,12 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		return map;
 	}
 	
-	public void start() {
+	protected void start() {
 		this.running = true;
 		new Thread(this).start();
 	}
 	
-	public void stop() {
+	protected void stop() {
 		this.running = false;
 	}	
 	

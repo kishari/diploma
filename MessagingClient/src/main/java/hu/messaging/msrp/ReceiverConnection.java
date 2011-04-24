@@ -78,7 +78,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 		notifyObservers(this);
 	}
 	
-	private synchronized int getUnboundPort() throws IOException {
+	private synchronized int getFreePort() throws IOException {
 		ServerSocketChannel channel = ServerSocketChannel.open();
 		ServerSocket s = channel.socket();
 		int randomPort = 0;
@@ -170,7 +170,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	    this.serverSocketChannel = ServerSocketChannel.open();
 	    serverSocketChannel.configureBlocking(false);
 
-	    this.port = getUnboundPort();
+	    this.port = getFreePort();
 	    InetSocketAddress isa = new InetSocketAddress(this.hostAddress, this.port);
 	    serverSocketChannel.socket().bind(isa);
 

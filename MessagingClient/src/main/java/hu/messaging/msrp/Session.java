@@ -31,7 +31,7 @@ public class Session implements java.util.Observer{
 		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, this);
 	}
 	
-	public void sendMessage(CompleteMessage completeMessage) {		
+	protected void sendMessage(CompleteMessage completeMessage) {		
 		try {
 			putMessageIntoOutgoingMessageQueue(completeMessage);
 		} catch (InterruptedException e) {
@@ -39,44 +39,31 @@ public class Session implements java.util.Observer{
 		}
 	}
 	
-	public void putMessageIntoIncomingMessageQueue(Message message) throws InterruptedException {
+	protected void putMessageIntoIncomingMessageQueue(Message message) throws InterruptedException {
 		this.incomingMessageQueue.put(message);
 	}
 	
-	public void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
+	protected void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
 		this.outgoingMessageQueue.put(message);
 	}
 	
-	public URI getLocalUri() {
+	protected URI getLocalUri() {
 		return localUri;
 	}
-	public void setLocalUri(URI localUri) {
-		this.localUri = localUri;
-	}
-	public URI getRemoteUri() {
+
+	protected URI getRemoteUri() {
 		return remoteUri;
 	}
-	public void setRemoteUri(URI remoteUri) {
-		this.remoteUri = remoteUri;
-	}
 
-	public String getId() {
+	protected String getId() {
 		return id;
 	}
 	
-	public SenderConnection getSenderConnection() {
+	protected SenderConnection getSenderConnection() {
 		return senderConnection;
 	}
 
-	public void setSenderConnection(SenderConnection senderConnection) {
-		this.senderConnection = senderConnection;
-	}
-
-	public TransactionManager getTransactionManager() {
-		return transactionManager;
-	}
-
-	public MSRPStack getMsrpStack() {
+	protected MSRPStack getMsrpStack() {
 		return msrpStack;
 	}
 	

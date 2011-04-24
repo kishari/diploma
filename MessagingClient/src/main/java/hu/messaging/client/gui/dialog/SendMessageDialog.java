@@ -27,8 +27,6 @@ import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.io.FileUtils;
 
-import com.ericsson.icp.util.ISessionDescription;
-
 import hu.messaging.client.Resources;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
@@ -419,19 +417,19 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 	public void fireMsrpEvent(MSRPEvent event) {
 		System.out.println(getClass().getSimpleName() + " fireMSRPEvent...");
 		try {
-			switch(event.getCode()) {
-				case MSRPEvent.sessionStarted :  
+			switch(event.getEventType()) {
+				case sessionStarted :  
 					System.out.println("session started event: " + event.getRemoteSipUri());
 					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Resources.serverSipURI);
 					break;
-				case MSRPEvent.brokenTrasmission :
+				case brokenTrasmission :
 					break;
-				case MSRPEvent.messageSentSuccess :
+				case messageSentSuccess :
 					System.out.println("message sent successful event: " + event.getRemoteSipUri());
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
 					icpController.getSession(Resources.serverSipURI).sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
 					break;
-				case MSRPEvent.messageReceivingSuccess :
+				case messageReceivingSuccess :
 					break;
 			}
 		}

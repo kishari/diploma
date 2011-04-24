@@ -24,8 +24,6 @@ import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-import com.ericsson.icp.util.ISessionDescription;
-
 public class MessageBoxDialog extends JFrame implements MSRPListener, ConnectionListener {
 
     private static final long serialVersionUID = -6048051912258339134L;
@@ -316,8 +314,8 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 		try {
 			
 			ObjectFactory factory = new ObjectFactory();
-			switch(event.getCode()) {
-				case MSRPEvent.sessionStarted :
+			switch(event.getEventType()) {
+				case sessionStarted :
 					System.out.println("session started event: " + event.getRemoteSipUri());
 					InfoMessage info = new InfoMessage();
 					info.setInfoType(InfoMessage.downloadContent);
@@ -333,11 +331,11 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, msg);					
 					
 					break;
-				case MSRPEvent.brokenTrasmission :
+				case brokenTrasmission :
 					break;
-				case MSRPEvent.messageSentSuccess :
+				case messageSentSuccess :
 					break;
-				case MSRPEvent.messageReceivingSuccess :
+				case messageReceivingSuccess :
 					setProgressWindowVisibily(false);
 					CompleteMessage m = event.getCompleteMessage();
 					MessageUtils.updateMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(m, false), m.getContent());

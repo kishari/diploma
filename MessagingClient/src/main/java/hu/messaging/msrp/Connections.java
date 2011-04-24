@@ -52,10 +52,10 @@ public class Connections extends Observable implements Observer{
 	
 	public void update(Observable o, Object obj) {
 		if (o.toString().contains(SenderConnection.class.getSimpleName())) {
-			System.out.println("SenderConnection dispose finished!");
+			System.out.println(getClass().getSimpleName() + " SenderConnection dispose finished!");
 			SenderConnection conn = (SenderConnection) obj;
 			senderConnections.remove(conn.getRemoteSipUri());			
-			
+			System.out.println(getClass().getSimpleName() + senderConnections.size());
 			this.setChanged();
 			this.notifyObservers(conn);
 		}

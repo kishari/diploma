@@ -19,7 +19,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	private boolean running = false;
 	
 	public IncomingMessageProcessor(BlockingQueue<Message> incomingMessageQueue, 
-									TransactionManager transactionManager ) {
+									TransactionManager transactionManager) {
 		this.incomingMessageQueue = incomingMessageQueue;
 		this.addObserver(transactionManager);
 	}
@@ -61,24 +61,24 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 		}		
 	}
 	
-	private Response createAcknowledgement(Request incomingMessage) {
+	private Response createAcknowledgement(Request chunk) {
 		Response ack = new Response();
 		
 		ack.setMethod(Message.MethodType._200OK);
-		ack.setToPath(incomingMessage.getFromPath());
-		ack.setFromPath(incomingMessage.getToPath());
-		ack.setTransactionId(incomingMessage.getTransactionId());
+		ack.setToPath(chunk.getFromPath());
+		ack.setFromPath(chunk.getToPath());
+		ack.setTransactionId(chunk.getTransactionId());
 		ack.setEndToken('$');
 				
 		return ack;
 	}
 	
-	public void start() {
+	protected void start() {
 		this.running = true;
 		new Thread(this).start();
 	}
 	
-	public void stop() {
+	protected void stop() {
 		this.running = false;
 	}
 

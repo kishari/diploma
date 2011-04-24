@@ -68,7 +68,7 @@ public class MSRPStack implements Observer {
 		}
 		
 		Session newSession = new Session(localSDP.getPath(), remoteSDP.getPath(), s, this);
-		putNewSession(newSession);
+		activeSessions.put(newSession.getId(), newSession);
 		
 		s.setSession(newSession);
 		s.start();
@@ -80,16 +80,8 @@ public class MSRPStack implements Observer {
 			try {
 				getConnections().createReceiverConnection(host);
 			}
-			catch(IOException e) { }
-			
+			catch(IOException e) { }			
 		}		
-	}
-	
-	private void putNewSession(Session session) {
-		if ( findSession( session.getId() ) != null ) {
-			return;
-		}
-		activeSessions.put(session.getId(), session);
 	}
 	
 	protected Session findSession(String sessionId) {
@@ -97,10 +89,6 @@ public class MSRPStack implements Observer {
 			return activeSessions.get(sessionId);
 		}
 		return null;
-	}
-	
-	protected void removeSession(String sessionId) {
-		activeSessions.remove(sessionId);
 	}
 	
 	protected void stopSession(String remoteSipUri) {
@@ -149,7 +137,9 @@ public class MSRPStack implements Observer {
 			if (obj instanceof SenderConnection) {
 				System.out.println(getClass().getSimpleName() + " update: senderConnection stopped");
 				SenderConnection s = (SenderConnection)obj;
-				this.removeSession(s.getSession().getId());
+				activeSessions.remove(s.getSession().getId());
+				
+				System.out.println(getClass().getSimpleName() + this.activeSessions.size());
 			}
 			else if (obj instanceof ReceiverConnection) {
 				System.out.println(getClass().getSimpleName() + " update: ReceiverConnection stopped");
