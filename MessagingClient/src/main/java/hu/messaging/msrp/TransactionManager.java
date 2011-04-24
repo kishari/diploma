@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class TransactionManager implements Observer {
+public class TransactionManager extends Observable implements Observer {
 
 	private int numOfUnacknowledgedChunks = 0;	
 	private int sendCounterTest = 0;
@@ -41,19 +41,26 @@ public class TransactionManager implements Observer {
 	private OutgoingMessageProcessor outgoingMessageProcessor;
 	private IncomingMessageProcessor incomingMessageProcessor;
 	
+	private boolean incomingMessageProcessorStopped = true;
+	private boolean outgoingMessageProcessorStopped = true;
+	private boolean senderStopped = true;
+	
 	
 	public TransactionManager(BlockingQueue<Message> incomingMessageQueue, 
 			  				  BlockingQueue<CompleteMessage> outgoingMessageQueue,
 			  				  Session session) {
 		
 			this.session = session;
+			this.addObserver(session);
 			outgoingMessageProcessor = new OutgoingMessageProcessor(outgoingMessageQueue, session, this);
 			outgoingMessageProcessor.start();
+			outgoingMessageProcessorStopped = false;
 			
 			incomingMessageProcessor = new IncomingMessageProcessor(incomingMessageQueue, this);
 			incomingMessageProcessor.start();
+			incomingMessageProcessorStopped = false;
 			
-			sender = new SenderThread();
+			sender = new SenderThread(this);
 			sender.start();
 			
 	}
@@ -62,29 +69,46 @@ public class TransactionManager implements Observer {
 		this.outgoingMessageProcessor.stop();
 		this.incomingMessageProcessor.stop();
 		this.sender.stop();
+		
+		(new Thread() {
+			public void run() {
+				do {
+					try {
+						Thread.sleep(50);
+					}
+					catch(InterruptedException e) {}					
+				}while(!incomingMessageProcessorStopped || !outgoingMessageProcessorStopped || !senderStopped);
+				
+				TransactionManager.this.setChanged();
+				TransactionManager.this.notifyObservers();
+			}
+		}).start();
 	}
 
 	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object obj) {
 		if (o.toString().contains(OutgoingMessageProcessor.class.getSimpleName())) {
-			requestList = (List<Request>) obj;
+			if (obj == null) {
+				outgoingMessageProcessorStopped = true;
+				return;
+			}
 			
+			requestList = (List<Request>) obj;			
 			requestMap = new HashMap<String, Request>();
 			
 			for (Request r : requestList) {
 				requestMap.put(r.getTransactionId(), r);
 			}
 			
-			//this.sender.getSenderQueue().add(requestList.get(0));
-/*			if (requestMap.size() > Constants.burstSize) {
-				this.sender.getSenderQueue().addAll(requestList.subList(0, Constants.burstSize));
-			}
-			else {
-*/				this.sender.getSenderQueue().addAll(requestList);
-//			}
+			this.sender.getSenderQueue().addAll(requestList);
 			
 		}
 		else if (o.toString().contains(IncomingMessageProcessor.class.getSimpleName())) {	
+			if (obj == null) {
+				incomingMessageProcessorStopped = true;
+				return;
+			}
+			
 			Map<String, Message> map = null;
 			Message m = null;
 			if (obj instanceof Map<?, ?>) {
@@ -102,7 +126,7 @@ public class TransactionManager implements Observer {
 				
 				if (req.getEndToken() == '$') {
 					System.out.println("Utolso csomag is megjott...");
-					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, this.session.getSenderConnection().getSipUri());
+					MSRPEvent event = new MSRPEvent(MSRPEvent.messageReceivingSuccess, this.session.getSenderConnection().getRemoteSipUri());
 					event.setMessageId(req.getMessageId());
 					
 					List<Request> chunks = new ArrayList<Request>();
@@ -142,7 +166,10 @@ public class TransactionManager implements Observer {
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}
-		}		
+		}	
+		else if (o.toString().contains(SenderThread.class.getSimpleName())) {	
+			senderStopped = true;
+		}
 	}
 
 	private boolean isAckedTotalSentMessage(Request ackedReq) {
@@ -155,13 +182,18 @@ public class TransactionManager implements Observer {
 		return t;
 	}
 	
-	private class SenderThread implements Runnable {
+	private class SenderThread extends Observable implements Runnable {
 		
 		private BlockingQueue<Message> senderQueue = new LinkedBlockingQueue<Message>();
 		private boolean isRunning = false;
 		boolean isAck = false;
-		boolean firstRound = true;
+		
+		public SenderThread(TransactionManager tManager) {
+			this.addObserver(tManager);
+		}
+		
 		public void run() {
+			senderStopped = false;
 			while (isRunning) {
 				try {
 					
@@ -198,6 +230,8 @@ public class TransactionManager implements Observer {
 				catch(IOException e) {}
 				catch(InterruptedException e) {}				
 			}
+			this.setChanged();
+			this.notifyObservers();
 		}
 
 		public void start() {

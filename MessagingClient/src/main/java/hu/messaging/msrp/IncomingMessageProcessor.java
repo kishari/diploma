@@ -37,6 +37,8 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		this.setChanged();
+		this.notifyObservers();
 	}
 	
 	private void processIncomingMessage(Message chunk) throws IOException {		

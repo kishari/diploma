@@ -58,6 +58,8 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			catch(InterruptedException e) {}
 			
 		}
+		this.setChanged();
+		this.notifyObservers();
 	}
 	
 	@SuppressWarnings("unchecked")

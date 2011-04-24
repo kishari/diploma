@@ -13,8 +13,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
-public class MSRPStack {
+public class MSRPStack implements Observer {
 
 	private Connections connections = new Connections(this);
 	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
@@ -101,13 +103,22 @@ public class MSRPStack {
 		activeSessions.remove(sessionId);
 	}
 	
+	protected void stopSession(String remoteSipUri) {
+		Session s = getConnections().getSenderConnection(remoteSipUri).getSession();
+		s.stop();
+	}
+	
 	protected Connections getConnections() {
 		return connections;
 	}
 	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		getConnections().deleteSenderConnections();
+		for (String id : activeSessions.keySet()) {
+			Session s = activeSessions.get(id);
+			s.stop();		
+		}
+		
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}
@@ -131,6 +142,20 @@ public class MSRPStack {
 		for (MSRPListener listener : temp) {					
 			listener.fireMsrpEvent(event);
 		}
+	}
+	
+	public void update(Observable o, Object obj) {
+		if (o.toString().contains(Connections.class.getSimpleName())) {
+			if (obj instanceof SenderConnection) {
+				System.out.println(getClass().getSimpleName() + " update: senderConnection stopped");
+				SenderConnection s = (SenderConnection)obj;
+				this.removeSession(s.getSession().getId());
+			}
+			else if (obj instanceof ReceiverConnection) {
+				System.out.println(getClass().getSimpleName() + " update: ReceiverConnection stopped");
+			}
+		}
+		
 	}
 	
 }

@@ -38,7 +38,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	}
 
 	public void run() {
-		setRunning(true);
+		running = true;
 		
 		while (isRunning()) {
 			try {
@@ -151,7 +151,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 		for (String m : messages) {
 		  	Message msg = MSRPUtil.createMessageFromString(m);
 		 	try {
-		 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
+		 		Session s = msrpStack.findSession(msg.getToPath().toString()+msg.getFromPath().toString());
 		 		if (s != null) {
 		 			s.putMessageIntoIncomingMessageQueue(msg);
 		 		}
@@ -170,7 +170,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	    this.serverSocketChannel = ServerSocketChannel.open();
 	    serverSocketChannel.configureBlocking(false);
 
-	    setPort(getUnboundPort());
+	    this.port = getUnboundPort();
 	    InetSocketAddress isa = new InetSocketAddress(this.hostAddress, this.port);
 	    serverSocketChannel.socket().bind(isa);
 
@@ -271,7 +271,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 		return messages;
 	}
 	
-	public void start() {
+	protected void start() {
 		if (!isRunning()) {
 			System.out.println("ReceiverConnection start! listen on: " + this.hostAddress.getHostAddress() + ":" + this.port);
 			Thread t = new Thread(this);
@@ -279,41 +279,21 @@ public class ReceiverConnection extends Observable implements Runnable {
 		}
 	}
 	
-	public void stop() {
-		setRunning(false);
+	protected void stop() {
+		running = false;
 		this.selector.wakeup();
 	}
 
-	public boolean isRunning() {
+	protected boolean isRunning() {
 		return running;
 	}
 
-	public void setRunning(boolean running) {
-		this.running = running;
-	}
-
-	public InetAddress getHostAddress() {
+	protected InetAddress getHostAddress() {
 		return hostAddress;
 	}
 
-	public void setHostAddress(InetAddress hostAddress) {
-		this.hostAddress = hostAddress;
-	}
-
-	public int getPort() {
+	protected int getPort() {
 		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public MSRPStack getMsrpStack() {
-		return msrpStack;
-	}
-	
-	public Map<SocketChannel, String> getSaveBuffers() {
-		return saveBuffers;
 	}
 
 }

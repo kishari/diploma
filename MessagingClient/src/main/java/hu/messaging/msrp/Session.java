@@ -5,10 +5,11 @@ import hu.messaging.msrp.model.CompleteMessage;
 import hu.messaging.msrp.model.Message;
 
 import java.net.URI;
+import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Session {
+public class Session implements java.util.Observer{
 
 	private URI localUri;
 	private URI remoteUri;	
@@ -77,5 +78,17 @@ public class Session {
 
 	public MSRPStack getMsrpStack() {
 		return msrpStack;
+	}
+	
+	protected void stop() {
+		transactionManager.stop();
+	}
+	
+	public void update(Observable o, Object obj) {
+		if (o.toString().contains(TransactionManager.class.getSimpleName())) {
+			System.out.println("TransactionManager stopped");
+			this.senderConnection.stop();
+		}
+		
 	}
 }
