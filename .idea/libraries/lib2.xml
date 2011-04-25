@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="lib2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/activation.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/j2ee.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/nist-sdp-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/jaxb-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/jaxb-xjc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/log4j-1.2.15.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/jaxb-impl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/web/WEB-INF/lib/jaxp-api-1.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

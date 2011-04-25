@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="lib3">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/lib/xom-1.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/lib/commons-io-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/lib/substance.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/lib/commons-codec-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/lib/activation.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

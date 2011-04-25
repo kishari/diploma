@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="lib1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/MessagingService/lib/commons-codec-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/lib/commons-lang-2.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/MessagingService/lib/commons-io-1.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -18,6 +18,7 @@
                             <xs:enumeration value="NOTIFY_USER"/>
                             <xs:enumeration value="MESSAGE_DATA"/>
                             <xs:enumeration value="DOWNLOAD_CONTENT"/>
+                            <xs:enumeration value="PULL_NEW_MESSAGES_INFO"/>
                         </xs:restriction>
                     </xs:simpleType>
                 </xs:element>
@@ -108,7 +109,7 @@
                     </xs:simpleType>
                 </xs:element>
                 <!-- A tartalom mérete bájtokban -->
-                <xs:element name="size" type="xs:unsignedLong"/>
+                <xs:element name="size" type="xs:int" minOccurs="0"/>
                 <!-- A multimédia tartalom elérhető fájlrendszeren? -->
                 <xs:element name="content_available" type="xs:boolean" minOccurs="0"/>
             </xs:sequence>        

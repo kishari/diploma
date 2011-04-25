@@ -1,10 +1,47 @@
 \setcounter{tocdepth}{5}
 
 \section{Tervezés}
+\label{sec:tervezes}
 
 \subsection{Bevezető}
 
-Ebben a részben elsőként leírom, illetve összehasonlítom a multimédia üzenetküldő rendszer megvalósítási lehetőségeit, majd az általam kiválasztott módszer funkcionális egységeit,  részletesen tárgyalva azok szerepét és egymással való kapcsolatát.
+Ebben a részben elsőként specifikálom a csoportos multimédia üzenetküldéssel szemben támasztott követelményeket, meghatározom a rendszer funkcionális egységeit, majd leírom, illetve összehasonlítom a rendszer megvalósításának lehetőségeit. Végül részletesen tárgyalom az általam kiválasztott megvalósítás funkcionális egységeit, a egyes részek feladatát, illetve egymással való kapcsolatát.
+
+\subsection{A csoportos üzenetküldés}
+
+A csoportos üzenetküldés lényege, hogy a felhasználók egy üzenetet nem egyetlen címzettnek szeretnék elküldeni, hanem egy általuk meghatározott felhasználói csoport minden tagjának. Az üzenet típusa lehet az egyszerű szöveg, de lehet bármilyen más adattípus is, mint például audiovizuális tartalom. 
+
+Először is, a szolgáltatásban a csoportok kezelésére szükség van olyan kiegészítő funkcióra, amely a csoportok menedzselését végzi. Ez része lehet magának az üzenetküldő szolgáltatásnak, de célszerű inkább egy, az IMS-ben már meglévő, adott célra létrehozott szolgáltatást használni. Ilyen például az Ericsson által nyújtott IMS-ben megtalálható PGM (Presence, Group and Data Management - jelenlét és csoport és adatmenedzsment) szolgáltatás \cite{ericsson_pgm}.
+
+A PGM egy értéknövelt szolgáltatás, amely lehetősége ad arra, hogy az IMS alkalmazások egyszerűen kiegészüljenek jelenlét és csoportkezelési funkciókkal. Előnye, hogy az egymástól különböző alkalmazások közös erőforrásokat használnak, ezáltal a hálózat könnyebben skálázhatóvá válik, illetve egyszerűsödik az új alkalmazások implementációja és integrációja. A jelenlét funkció lehetővé teszi személyek, alkalmazások státusz infomációinak tárolását, kezelését, valamint az infomációk publikálását mások felé.
+A publikálás mellett lehetőség van feliratkozni mások jelenlét infomációira, így a minden információ változásról értesülhetünk. Az információ lehet személyhez kötődőek (elérhetőség, hangulat), készülékhez kötődőek (technikai képesség) vagy szolgáltatáshoz kötődőek (hely információ).
+
+A PGM szolgáltatás másik része az adat és csoportmenedzsmentet ellátó funkció. Segítségével módunkban áll egy tulajdonoshoz (felhasználó vagy tetsződleges szolgáltatás) kapcsolódó címlistákat, csoportokat létrehozni, kezelni. A listák, csoportok tulajdonos specifikusak, azaz tulajdonosonként különböző információkat tartalmazhatnak. Az adatok hálózatról elérhetőek, módosíthatóak. Természetesen az adatok védettek, így azok eléréséhez megfelelő jogosultsággal kell rendelkezni. A funkció széles spektrumon felhasználható, például telefonkönyv kapcsolatok kezelésére, vagy esetemben a csoportos üzenetküldés során. 
+
+Visszatérve a csoportos üzenetküldéshez, előfordulhat, hogy az üzenet küldésekor a címzett csoport tagjai közül néhány felhasználó éppen nem kapcsolódik a hálózathoz, azaz nem elérhető. Mivel a címzettnek szánt üzenetek nem veszhetnek el, amíg ő maga nem elérhető, így a szolgáltatásnak késleltetett üzenetkézbesítési funkciókat is el kell látnia. Utóbbi azt jelenti, hogy amíg az adott felhasználó nem elérhető, addig a neki szánt új üzeneteket átmenetileg el kell tárolni.
+
+Az üzenetküldés magasszintű folyamata \aref{fig:group_messaging}.~ábrán látható. A küldő felhasználót \emph{A-val} jelöltem, aki a \emph{B-vel}, \emph{C-vel} és \emph{D-vel} jelölt felhasználókat tartalmazó csoportnak küld üzenetet. A \emph{B} és \emph{C} felhasználók a küldés pillanatában kapcsolódnak a hálózathoz, azaz elérhetőek, de a \emph{D} felhasználó nem. Esetében az üzenetet el kell tárolni, amely késleltetve kerül továbbításra, amikor a felhasználó elérhetővé válik.
+
+\begin{figure}[htbp]
+\center
+\resizebox{9cm}{!}{
+\includegraphics{img/group_messaging.eps}}
+\caption{A csoportos üzenetküldés}
+\label{fig:group_messaging}
+\end{figure}
+
+Hogyan valósulhat meg a késleltetett üzenettovábbítás? Kétféle módszer lehetséges:
+
+\begin{itemize}\itemsep1pt
+\item	A szolgáltatás a kézbesítetlen üzeneteket akkor továbbítja a kliensnek, amikor az regisztrál a hálózaton, azaz elérhetővé válik.
+\item Amikor a felhasználó kapcsolódik a hálózathoz, nincs automatikus értesítés, hanem a felhasználó igény szerint lekérdezi az új üzeneteit.
+\end{itemize} 
+
+Az első esetben a szolgáltatás felelőssége az új üzenetekről értesíteni a felhasználót (push jelleg), amíg a második esetben a kliens alkalmazásban kell a logikát megvalósítani (pull jelleg). Véleményem szerint az üzenetküldő szolgáltatás funkciójából fakadóan az első megoldás a javasolt, mivel a szolgáltatást használó kliens oldali alkalmazások így egyszerűbbek lehetnek, amely jelentősen egyszerűsíti a kliens oldali alkalmazások fejlesztését.
+
+{\color{red}(HONNAN TUDJA, hogy elérhető a user? EGyéb szöveg?)}
+
+A következő fejezetben megvizsgáljuk, hogy milyen lehetőségek vannak a csoportos üzenetküldés megvalósítására.
 
 \subsection{A megvalósítási lehetőségek}
 
@@ -13,17 +50,26 @@ Nézzük meg, hogy az IMS használata esetén milyen lehetőségek kínálkoznak
 \subsubsection{SIP MESSAGE üzenetek használata}
 \label{sec:sip_message}
 
-Első megoldásként kézenfekvőnek tűnhet, hogy a SIP protokoll által nyújtott MESSAGE típusú üzenet törzsében küldjük el a multimédia üzenetet a címzetteknek. Ennek a megoldásnak az az előnye, hogy nem kell másik protokollt használni az üzenetek átviteléért, hanem a SIP protokoll nyújtotta funkciókat alkalmazzuk. A megoldás előnye viszont eltörpül a hátrányok mellett. Először is a MESSAGE típusú üzenetnek nem adható meg egynél több címzett, így minden címzettnek különálló MESSAGE üzenetben kellene elküldeni ugyanazt a tartalmat. Ez a megszorítás redundanciához vezet, mivel a feladónak ugyanazt az üzenetet minden címzettnek külön-külön el kell küldenie, ami a válaszidőt is jelentősen megnöveli. Erre a problémára megoldást jelenthet, ha az üzenetet egy alkalmazás szerveren keresztül küldjük, ahol a szerver feladata az üzenet továbbítása az a címzetteknek. Ebben az esetben a feladó és a szerver között csak egyszer kerülne átküldésre az üzenet, ami a szűkebb sávszélességű felhasználói hálózatok esetén hatalmas előnyt jelent a többszörös küldéshez képest. Ahhoz, hogy ez a megvalósítás működhessen, a felhasználókból csoportokat kell létrehozni, és a MESSAGE üzenetet a címzettek URI-ja (Uniform Resource Identifier) helyett a csoport URI-jával címezni. Amikor az alkalmazás szerver megkapja ezt az üzenetet, a csoport azonosító alapján valamilyen módon -- pl. saját adatbázisból -- megkeresi azokat a felhasználókat, akik tagjai a csoportnak, és mindegyik csoporttagnak egyesével elküldi a kapott üzenet másolatát. Ebben az esetben szükség van az alkalmazás szerver oldalán egy olyan funkcióra, ami a csoportkezelést megvalósítja.
-További problémát jelent, ha a küldött multimédia mérete meghaladja a MESSAGE üzenet törzsébe maximálisan megadható 1300 oktetet\footnote{RFC 3428 - Session Initiation Protocol Extension for Instant Messaging \cite{rfc3428}}. Ilyenkor a tartalmat a küldő oldalon kisebb darabokra kell tördelni, a darabokat külön üzenetekben elküldeni, majd a vevő oldalon a kisebb részekből a teljes üzenetet rekonstruálni. A probléma gyökere, hogy a SIP MESSAGE üzenettípus nem támogatja egy üzenet több darabban való átvitelét. A MESSAGE üzenet fejlécében nincs lehetőség olyan paramétert megadni, amiből a vevő egyértelműen el tudja dönteni, hogy a beérkező MESSAGE üzenetek közül melyik hordozza ugyanazon tartalom egy-egy darabját, és melyik nem, amiből következően rekonstruálni sem tudja azt. További gond, hogy az üzenetek nem sorszámozottak, így az eredeti küldési sorrendet sem tudnánk visszaállítani. Ezek a problémák abból fakadnak, hogy a MESSAGE üzenet használatát elsősorban rövid szöveges üzenetek továbbítására találták ki, és nem nagy multimédia tartalmakhoz. 
-A megoldás hátrányainak sorát bővíti az is, hogy nem támogatott a késleltetett üzenetküldést sem. Utóbbi problémát -- hasonlóan a többszörös küldéshez -- orvosolhatnánk az alkalmazás szerver használatával, amely eltárolná azokat az üzeneteket, amelyek a nem elérhető címzetteknek mennek, és a szerver akkor kézbesítené azt, amikor a címzett elérhetővé válik.
+Első megoldásként kézenfekvőnek tűnhet, hogy a SIP protokoll által nyújtott MESSAGE típusú üzenet törzsében küldjük el a multimédia üzenetet a címzetteknek. Ennek a megoldásnak az az előnye, hogy nem kell másik protokollt használni az üzenetek átvitelére, hanem a SIP protokoll nyújtotta funkciókat alkalmazzuk. 
 
-{\color{red}(IDE MÉG RFC3428-ból PÁR DOLOG)
-(Leírni még, hogy a vevők válasza többször jön, stb...)}
+A SIP MESSAGE üzenetek fejlécében az SIP protokoll szerint egyetlen címzett adható meg. Ez a megszorítás a csoportos üzenetküldés során erős megszorítást jelent, mivel minden címzettnek külön-külön kellene elküldeni a ugyanazt a törzset tartalmazó MESSAGE üzenetet, ami jelentős redundanciához vezet. Utóbbi tény a szűk sávszélességű hozzáférési hálózatokon nem célravezető. A SIP protokoll fejlesztői felismerték ezt a problémát, és kidolgoztak egy megoldást a több címzettek rendelkező üzenetek kezelésére.
+A megoldás lényege, hogy létrehoztak egy szolgáltatást, amely az üzenet címzettekhez való továbbításáért felelős. A szolgáltatást a továbbiakban URI-lista szolgáltatásnak nevezem~\cite{rfc5365}. A működés lényege, hogy a SIP MESSAGE kérés törzsét két részre bontották. Az egyik részben továbbra is a hagyományos üzenet tartalom (tartalom rész), míg a másik részben a címzettek listája kerül átvitelre (címzett lista rész). A feladó a SIP MESSAGE üzenet fejlécében a címzett mezőbe az URI-lista szolgáltatás URI-ját adja meg, majd az üzenet törzsében a tartalom részben megadja az üzenet tartalmát, a címzett lista részben pedig elhelyezi a címzetteket. A feladó az így létrehozott MESSAGE kérést a URI-lista szolgáltatásnak küldi el. A szolgáltatás, miután megkapta a kérést, a törzsben található listában szereplő minden címzettre létrehoz egy új MESSAGE kérést. Az új kérés fejlécében a feladó (From) mezőben az eredeti üzenet feladóját, míg a címzett mezőben (To) a címzett azonosítóját adja meg. A kérés törzsébe a tartalom részbe egy az egyben átmásolja az eredeti üzenet tartalmi részét, a címzett lista részt pedig bizonyos módosítások után teszi az új üzenet címzett lista részébe. Az így létrehozott kéréseket minden címzettnek elküldi. A megoldás kiküszöböli az a problémát, hogy a feladónak egyesével minden címzettre, többször kellene ugyanazt az üzenetet elküldenie. A megoldásnak viszont hátrányai is vannak. Egyrészt a késleltetett üzenetkézbesítésre nem nyújt semmilyen megoldást. Mivel a kérések feladójának az eredeti feladó van beállítva, ezért az URI-lista szolgáltatás nem értesül a sikertelen kézbesítésről, valamint azt sem tudja, hogy a címzettek közül ki elérhető, és ki nem az. Ha egy címzett a hálózaton nem elérhető, akkor a neki küldött üzenet elvész. További problémát jelent, hogy a SIP MESSAGE kérés törzsének maximális mérete 1300 oktet\footnote{RFC 3428 - Session Initiation Protocol Extension for Instant Messaging \cite{rfc3428}}, amely tartalmazza a címzettek listáját is. A multimédia üzenet mérete rendszerint meghaladja ezt a limitet, így a tartalmat a küldő oldalon kisebb darabokra kell tördelni, a darabokat külön üzenetekben elküldeni, majd a vevő oldalon a kisebb részekből a teljes üzenetet rekonstruálni. A SIP protokoll kétféle módszert támogat MESSAGE kérések küldésére:
+
+\begin{enumerate}\itemsep1pt
+\item	Egymástól független MESSAGE kérések küldése a felek előzetes kapcsolatfelépítése nélkül.
+\item Előzetes kapcsolatfelépítés (session) után a sessionben küldött MESSAGE kérések küldése. 
+\end{enumerate}
+
+Az első esetben a probléma gyökere, hogy a MESSAGE üzenettípus önmagában nem támogatja egy üzenet több darabban való átvitelét. A MESSAGE üzenet fejlécében nincs lehetőség olyan paramétert megadni, amiből a vevő egyértelműen el tudja dönteni, hogy a beérkező MESSAGE kérések közül melyik hordozza ugyanazon tartalom egy-egy darabját, és melyik nem, amiből következően rekonstruálni sem tudja azt. Utóbbi állítás abban az esetben igaz, amikor a küldő és fogadó fél között a tartalom átvitelére nem építünk fel SIP session-t (INVITE-200OK-ACK SIP tranzakció segítségével), hanem különálló SIP MESSAGE kérésekben küldjünk az egyes multimédia tartalom darabjait. 
+
+A második esetben, amikor a tartalom darabjainak átvitele SIP session felépítése után a sessionben küldött MESSAGE kérések segítségével történik, a kérés fejlécében a \emph{Call-ID} mező értéke minden kérés esetén megegyezik a session egyedi azonosítójával, tehát a küldött kérésekre azonos. Értéke alapján meghatározható az összefüggő MESSAGE kérések halmaza, azaz azok a kérések, amelyek ugyanazon tartalom egy-egy darabját hordozzák. A kérések küldési sorrendje a kérés fejlécében a \emph{CSEQ} mező értéke szerint meghatározható, mivel a \emph{CSEQ} mező értéke a küldési sorrend szerint növekszik. 
+
+Az említett két eset közül az első megoldási javaslat az említett problémák miatt nem alkalmas egy nagyobb multimédia üzenet több darabban való átvitelére, mivel a vételi oldal nem képes rekonstruálni az eredetileg küldött multimédia üzenetet. A második megvalósítás, azaz a SIP session-t használó megoldás alkalmas lehet a nagyobb multimédia tartalom részekben történő átvitelére, hátránya viszont az, hogy minden egyes címzettel külön-külön fel kell építeni egy SIP sessiont, amely sok címzett esetén rengeteg kapcsolatot igényel. Utóbbi problémára megoldást jelenthet, ha a küldő felhasználó nem a címzettekkel hoz létre külön-külön egy-egy session-t, hanem egy, az IMS hálózatban lévő alkalmazás szerveren futó szolgáltatással. A multimédia tartalom a kliens és a szerver között egyszer kerülne átvitelre, amely jelentősen csökkenti a szükséges kapcsolatok számát. A tartalom átvitele során az URI-lista szolgáltatáshoz hasonlóan a kliens egy további MESSAGE kérés törzsében elküldené a szerver oldali szolgáltatásnak a címzettek listáját, így a szolgáltatás feladata lenne a multimédia üzenet címzetteknek való kézbesítése. Az említett szolgáltatás megoldást jelentene a késleltetett üzenetkézbesítésre is. További hátrány a MESSAGE kérések törzsének erősen limitált mérete, amely egy nagyobb méretű multimédia tartalom esetén jelentősen megnöveli a MESSAGE kérések számát, amely az átvitel hatékonysága, sebessége szempontjából nem előnyös.
 
 \subsubsection{Több címzettel rendelkező üzenetek használata}
 \label{sec:mr_message}
 
-Mint ahogy \aref{sec:sip_message}.~fejezetben láthattuk, a SIP specifikáció nem nyújt hatékony megoldást a több címzettű üzenetek továbbítására. Ebben az alpontban leírt megoldás abban tér el az előzőhöz képest, hogy az üzenet fejlécben lehetőség van több címzettet megadni. A folytatásban az ilyen típusú üzenetet több címzettel rendelkező, azaz MR (Multi Recipient) üzenetnek fogom nevezni. A több címzett megadásának a lehetősége jelentős előnyt jelent az alap SIP MESSAGE-et használó megoldáshoz képest. Először is, a feladónak elég csak egyszer elküldeni az üzenetet a CSCF felé, és nem annyiszor, ahány címzettje van az üzenetnek. Ez jelentősen lecsökkenti a hálózati erőforrások használatát. Másodszor, mivel a címzettek az MR üzenet fejlécében helyezkednek el, így az erre alkalmas hálózati szerverek a fejléc adatokat felhasználva képesek az üzeneteket hatékonyan eljuttatni az összes címzettnek anélkül, hogy az üzenet törzsét meg kellene vizsgálniuk. Tegyük fel, hogy a feladó hálózatában lévő S-CSCF, miután megkapja feladótól az MR üzenetet, annak minden címzettjére meghatározza az adott címzett felé vezető következő állomást (next hop CSCF), ahová továbbítani kell azt. Abban az esetben, ha kettő vagy több címzett esetén ugyanaz a next hop, akkor az S-CSCF abba az irányba MR üzenetként küldi tovább az üzenetet. Ha minden címzett next hop CSCF-je különbözik egymástól, akkor a szerver az egyes next hop-oknak hagyományos üzenetben küldi el annak egy-egy másolatát. Mivel a hálózatban található összes CSCF hasonlóan viselkedik, mint a feladót kiszolgáló S-CSCF, ezzel a módszerrel két szerver között ugyanaz az üzenet pontosan egyszer kerül átvitelre. Az üzenet terjedésének folyamatát \aref{fig:mrflow}.~ábrán követhetjük nyomon. Jól látható, hogy ezzel a módszerrel minden linken kizárólag egyszer küldjük át ugyanazt az üzenetet, ellentétben az aktuális IMS javaslattal, miszerint több címzett esetén egy linken többször kellene átküldeni ugyanazt az üzenetet (Például a III-as, IV-es és V-ös linken). Abban az esetben, ha egy olyan CSCF vesz egy MR üzenetet, amely nem képes MR üzeneteket kezelni, akkor a küldő CSCF felé hibaüzenetet küld. Ilyenkor a küldő CSCF újra elküldi az üzenetet hagyományos SIP üzenetként, minden címzettre külön-külön. 
+Ebben a pontban leírt megoldás abban tér el \aref{sec:sip_message}.~fejezetben leírt megoldáshoz képest, hogy az üzenet fejlécben lehetőség van több címzettet megadni. A folytatásban az ilyen típusú üzenetet több címzettel rendelkező, azaz MR (Multi Recipient) üzenetnek fogom nevezni. A több címzett megadásának a lehetősége jelentős előnyt jelent az alap SIP MESSAGE-et használó megoldáshoz képest. Először is, a feladónak elég csak egyszer elküldeni az üzenetet a CSCF felé, és nem annyiszor, ahány címzettje van az üzenetnek. Ez jelentősen lecsökkenti a hálózati erőforrások használatát. Másodszor, mivel a címzettek az MR üzenet fejlécében helyezkednek el, így az erre alkalmas hálózati szerverek a fejléc adatokat felhasználva képesek az üzeneteket hatékonyan eljuttatni az összes címzettnek anélkül, hogy az üzenet törzsét meg kellene vizsgálniuk. Tegyük fel, hogy a feladó hálózatában lévő S-CSCF, miután megkapja feladótól az MR üzenetet, annak minden címzettjére meghatározza az adott címzett felé vezető következő állomást (next hop CSCF), ahová továbbítani kell azt. Abban az esetben, ha kettő vagy több címzett esetén ugyanaz a next hop, akkor az S-CSCF abba az irányba MR üzenetként küldi tovább az üzenetet. Ha minden címzett next hop CSCF-je különbözik egymástól, akkor a szerver az egyes next hop-oknak hagyományos üzenetben küldi el annak egy-egy másolatát. Mivel a hálózatban található összes CSCF hasonlóan viselkedik, mint a feladót kiszolgáló S-CSCF, ezzel a módszerrel két szerver között ugyanaz az üzenet pontosan egyszer kerül átvitelre. Az üzenet terjedésének folyamatát \aref{fig:mrflow}.~ábrán követhetjük nyomon. Jól látható, hogy ezzel a módszerrel minden linken kizárólag egyszer küldjük át ugyanazt az üzenetet, ellentétben az aktuális IMS javaslattal, miszerint több címzett esetén egy linken többször kellene átküldeni ugyanazt az üzenetet (Például a III-as, IV-es és V-ös linken). Abban az esetben, ha egy olyan CSCF vesz egy MR üzenetet, amely nem képes MR üzeneteket kezelni, akkor a küldő CSCF felé hibaüzenetet küld. Ilyenkor a küldő CSCF újra elküldi az üzenetet hagyományos SIP üzenetként, minden címzettre külön-külön. 
 
 \begin{figure}[htbp]
 \center
@@ -33,14 +79,9 @@ Mint ahogy \aref{sec:sip_message}.~fejezetben láthattuk, a SIP specifikáció n
 \label{fig:mrflow}
 \end{figure}
 
-Mivel egy multimédia üzenet viszonylag nagy méretű is lehet, nagy valószínűséggel nem fér bele egyetlen MR üzenet törzsébe. Utóbbi probléma abból ered, hogy az IP hálózatokban maximalizálva van a hálózatba küldhető csomag mérete (MTU - Maximum Transmission Unit\footnote{IPV4-nél ez mekkora? Minimum 576 byte}). Hasonlóan a SIP MESSAGE üzeneteket használó megoldáshoz, itt is darabolni kellene a multimédia üzenetet több kisebb csomagra. Mivel az MR csomagok akár különböző útvonalon is eljuthatnak a címzettnek, a vételi oldalon való a csomagok eredeti sorrendjének visszaállíthatónak kell lennie. Amennyiben az MR üzenet fejlécében lehetőség lenne elhelyezni olyan mezőket, amelyek a helyes sorrend visszaállítását szolgálják, akkor a megoldás jelentősen jobb lenne, mint a SIP MESSAGE-et használó megvalósítás. Itt is általános feladatként jelentkezik a késleltett üzenetkézbesítés problémája, ami egy köztes alkalmazás szerver használatával megvalósítható lenne.
+Mivel egy multimédia üzenet viszonylag nagy méretű is lehet, nagy valószínűséggel nem fér bele egyetlen MR üzenet törzsébe. Utóbbi probléma abból ered, hogy az IP hálózatokban maximalizálva van a hálózatba küldhető csomag mérete (MTU - Maximum Transmission Unit\footnote{IPV4-nél ez mekkora? Minimum 576 byte}). Hasonlóan a SIP MESSAGE üzeneteket használó megoldáshoz, itt is darabolni kellene a multimédia üzenetet több kisebb csomagra. Mivel az MR csomagok akár különböző útvonalon is eljuthatnak a címzetthez, a vételi oldalon a csomagok eredeti sorrendjének visszaállíthatónak kell lennie. Amennyiben az MR üzenet fejlécében lehetőség lenne elhelyezni olyan mezőket, amelyek a helyes sorrend visszaállítását szolgálják, akkor a megoldás jelentősen jobb lenne, mint a SIP MESSAGE-et használó megvalósítás. Itt is általános feladatként jelentkezik a késleltett üzenetkézbesítés problémája, ami egy köztes alkalmazás szerver használatával megvalósítható lenne.
 
 A vételi oldalon a kliensek, miután megkapták az MR kéréseket, nyugtázzák azokat. A cél itt is az, hogy a nyugták küldéséből eredő, a feladó és az őt kiszolgáló S-CSCF közötti linken folyó üzenetforgalmat minél jobban lecsökkentsük anélkül, hogy az IMS komponensek viselkedését alapvetően megváltoztatnánk. Ha a feladót kiszolgáló S-CSCF nem kompatibilis az MR üzenetekkel, akkor minden egyes nyugtát a hagyományos módon, egyesével továbbít a feladónak. Abban az esetben viszont, amikor az említett S-CSCF képes kezelni az MR üzeneteket, a hozzá beérkező, azonos típusú nyugtákra -- pl. 200 OK -- adott időtartamig vár, majd a nyugtákból összeállít egy MR választ, és csak ezt küldi el a feladónak, amivel jelentősen csökkenti a kérdéses link forgalmát.
-
-\subsubsection{Üzenet továbbítása RTP protokoll segítségével -- {\color{red}IDE LEHET A VXML-es MRF-es megoldást kellene írni}}
-
-{\color{red}Ezzel az a baj, hogy a video formátum erősen limitált. csak 3gp. Nem tudom, hogyan lehet képet átvinni. Ez főleg az interakciók miatt jó. max átvitt hang hossz is asszem limitált. Nem tudom, hogy erről kellene-e egyáltalán írni.}
-
 
 \subsubsection{Üzenet továbbítása MSRP protokollal}
 \label{sec:msrp_message}
@@ -52,7 +93,7 @@ Mivel a címzettek csoportjában lehet olyan felhasználó, aki az üzenet küld
 
 {\color{red} (... üzenet kézbesítés, előny, hátrány)}
 \\
-A dolgozatban a szolgáltatás fejlesztése során a fentebb leírt megoldások közül a legutolsó, MSRP protokollt használó megoldás használata mellett döntöttem. A SIP MESSAGE üzenetek használata nem célszerű \aref{sec:sip_message}.~fejezetben leírt számos hátránya miatt. \Aref{sec:mr_message}.~fejezetben tárgyalt MR üzenetet használó csoportos üzenetküldési megoldás jelenleg csak ajánlás formájában létezik, bárminemű szabványosítási eljárás jelenleg nincs folyamatban a témával kapcsolatban. Az MSRP protokollal való megvalósítás előnye a többi megoldási javaslattal szemben, hogy -- az IMS-ben jelen lévő --szabványosított eszközök használatára épít, illetve az adatátvitel kapcsolatorientált jellege következtében megbízható üzenetküldés valósítható meg. 
+A dolgozatban a szolgáltatás fejlesztése során a fentebb leírt megoldások közül a legutolsó, MSRP protokollt használó megoldás használata mellett döntöttem. A SIP MESSAGE üzenetek használata nem célszerű \aref{sec:sip_message}.~fejezetben leírt hátrányok miatt. \Aref{sec:mr_message}.~fejezetben tárgyalt MR üzenetet használó csoportos üzenetküldési megoldás jelenleg csak ajánlás formájában létezik, bárminemű szabványosítási eljárás jelenleg nincs folyamatban a témával kapcsolatban. Az MSRP protokollal való megvalósítás előnye a többi megoldási javaslattal szemben, hogy -- az IMS-ben jelen lévő --szabványosított eszközök használatára épít, illetve az adatátvitel kapcsolatorientált jellege következtében megbízható üzenetküldés valósítható meg. 
 
 \subsection{Funkcionális terv}
 
@@ -80,11 +121,9 @@ A következő fejezetekben az egyes elemek funkciójának részletes tárgyalás
 \subsubsection{Kliens}
 \label{sec:kliens_pc}
 
-A felhasználó ezen keresztül éri el az IMS hálózatot, azaz magát az üzenetküldő szolgáltatást is, ebből fakadóan a PC eszköznek rendelkeznie kell hálózati kapcsolattal. Miután a kliens oldali üzenetküldő szolgáltatást használó alkalmazás elindult, a felhasználó SIP URI-ját tartalmazó üzenetet periodikusan elküld a szerver oldalnak. Ez a periodikus ,,regisztráció'' azért szükséges, hogy a szerver oldal tisztában legyen azzal, hogy pillanatnyilag melyik felhasználó érhető el. A szerver amikor új multimédia üzenetet kap egy felhasználótól, értesíteni tudja a címzettek közül azokat, akik aktuálisan elérhető állapotban vannak. Az alkalmazás bezárásakor a kliens oldal ,,leiratkozó'' értesítést küld a szerver felé arról, hogy innentől kezdve a szóban forgó kliens nem elérhető. A regisztrációs üzenet küldésének periodikus jellege azért fontos, mert a kliens alkalmazás bármilyen hibás leállása esetén nem garantált az említett leiratkozó üzenet továbbítása a szerver felé. Utóbbi esetben az adott felhasználó elérhető kliensek listájáról való törlését a periódusidő lejárta után autómatikusan elvégzi a szerver oldal.
+A felhasználó ezen keresztül éri el az IMS hálózatot, azaz magát az üzenetküldő szolgáltatást is, ebből fakadóan a kliens eszköznek rendelkeznie kell hálózati kapcsolattal. Miután a kliens oldali üzenetküldő szolgáltatást használó alkalmazás elindult, a felhasználó SIP URI-ját tartalmazó üzenetet periodikusan elküld a szerver oldalnak. Ez a periodikus ,,regisztráció'' azért szükséges, hogy a szerver oldal tisztában legyen azzal, hogy pillanatnyilag melyik felhasználó érhető el. A szerver amikor új multimédia üzenetet kap egy felhasználótól, értesíteni tudja a címzettek közül azokat, akik aktuálisan elérhető állapotban vannak. Az alkalmazás bezárásakor a kliens oldal ,,leiratkozó'' értesítést küld a szerver felé arról, hogy innentől kezdve a szóban forgó kliens nem elérhető. A regisztrációs üzenet küldésének periodikus jellege azért fontos, mert a kliens alkalmazás bármilyen hibás leállása esetén nem garantált az említett leiratkozó üzenet továbbítása a szerver felé. Utóbbi esetben az adott felhasználó elérhető kliensek listájáról való törlését a periódusidő lejárta után autómatikusan elvégzi a szerver oldal.
 
-A felhasználó multimédia üzenetet küldhet más, általa ismert felhasználók csoportjának. Az elküldendő multimédia üzenet többféleképpen állhat a kliens rendelkezésére. Egyik lehetséges opció, hogy az elküldenő üzenethez tartozó multimédia tartalom fájlrendszeren már a felhasználó rendelkezésére áll kép, hang vagy videó fájl formájában. Ebben az esetben a küldő kliens fájlrendszeren való tallózással választhatja ki a multimédia tartalmat. A tartalom létrehozásának egy másik lehetséges módja, hogy a felhasználó a számítógépéhez kapcsolódó audiovizuális eszközökkel (mikrofon és kamera) maga készíti el a multimédia üzenethez multimédia felvételt. Miután az elküldendő multimédia üzenethez a tartalom a felhasználó rendelkezésére áll, valamilyen módon el kell küldeni a szerver oldalnak. A tartalom kliens-szerver közötti átvitele MSRP protokoll szerint történik.
-
-{\color{red}Ezeket inkább a megvalósítási tervbe kellene tenni. Vagy nem?}
+A felhasználó multimédia üzenetet küldhet más, általa ismert felhasználók csoportjának. Az elküldendő multimédia üzenet többféleképpen állhat a kliens rendelkezésére. Egyik lehetséges opció, hogy az elküldenő üzenethez tartozó multimédia tartalom fájlrendszeren már a felhasználó rendelkezésére áll kép, hang vagy videó fájl formájában. Ebben az esetben a küldő kliens fájlrendszeren való tallózással választhatja ki a multimédia tartalmat. A tartalom létrehozásának egy másik lehetséges módja, hogy a felhasználó a számítógépéhez kapcsolódó audiovizuális eszközökkel (mikrofon és kamera) maga készíti el a multimédia üzenethez a multimédia felvételt. Miután az elküldendő multimédia üzenethez a tartalom a felhasználó rendelkezésére áll, valamilyen módon el kell küldeni a szerver oldalnak. A tartalom kliens-szerver közötti átvitele MSRP protokollal történik.
 
 Az üzenetküldés folyamatát \aref{fig:sending_proc}.~ábrán láthatjuk. A folyamat első lépéseként a küldő kliens és a szerver között fel kell építeni egy MSRP kapcsolatot, amelyen keresztül a multimédia üzenet átvitele történik. Egy MSRP kapcsolat minden esetben egy kliens és a szerver között épül fel, két kliens közvetlenül egymáshoz soha nem csatlakozik. Amikor az MSRP kapcsolat sikeresen felépült, a feladó ezen kapcsolaton keresztül MSRP csomagok\footnote{Az MSRP csomag felépítése \aref{sec:msrp_chunks}.~fejezetben található} formájában továbbítja a multimédia üzenetet a szervernek. A szerver minden MSRP csomag vételét nyugtázza a küldő kliens felé. Miután a teljes üzenet sikeresen megérkezett a szerver oldalra, a a kliens bontja az MSRP kapcsolatot. A folyamat utolsó lépéseként a felhasználó egy SIP MESSAGE típusú üzenet törzsében elküldi a szervernek a címzettek listáját, illetve opcionálisan egyéb, az elküldött multimédia üzenetre jellemző információt. A címzett lista, illetve a kiegészítő információk XML (Extensible Markup Language) formátumban kerülnek átvitelre. Mivel az említett XML rövid, így az belefér egyetlen SIP MESSAGE üzenetbe. Miután a szerver sikeresen megkapta az XML-t tartalmazó üzenetet, a multimédia tartalommal együtt adatbázisban eltárolja azt, majd nyugtázza a sikeres vételt a feladó felé.
 
@@ -158,11 +197,6 @@ A küldő felhasználótól az alkalmazás szerveren keresztül érkező üzenet
 \item A küldés dátuma
 \end{itemize}
 
-\subsection{Üzemeltetési terv}
-\label{sec:uzemeltetesi_terv}
-
-Ide talán jöhetne use-case diagram, annak leírása... Vagy nem kell? Minden, ami ide jönne, már le van írva máshol is. 
-
 \subsection{Interfész terv}
 \label{sec:interfesz_terv}
 
@@ -232,73 +266,7 @@ A kliens oldal a 200 OK sikeres vétele után egy SIP ACK küldésével nyugtáz
 \paragraph{SIP MESSAGE üzenetek felépítése\\}
 \label{sec:sip_message}
 
-A jelen dokumentumban leírt rendszerben a SIP MESSAGE típusú üzeneteket a kliensek és a szerver közötti kommunikáció során használom. Az üzenet törzsében, jól definiált XML formátumban kerülnek elküldésre a szükséges információk, mint az üzenet típusa, a feladó neve és SIP URI-ja, címzett neve és SIP URI-ja, a multimédia tartalom típusa, az üzenet tárgya, stb. Az XML tartalom az alábbi séma szerint kerül megadásra:
-\fontsize{10}{10}
-\begin{verbatim}
-<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
-<xs:element name="information">
-   <xs:complexType>
-      <xs:sequence>
-          <!-- A üzenet típusa -->
-          <xs:element name="request_type">
-             <xs:simpleType>
-                <xs:restriction base="xs:string">                        
-                   <xs:enumeration value="STATUS_UPDATE"/>
-                   <xs:enumeration value="NOTIFY"/>
-                   <xs:enumeration value="DELETE_MESSAGE"/>
-                   <xs:enumeration value="MESSAGE_DATA"/>
-                </xs:restriction>
-             </xs:simpleType>
-          </xs:element>                                    
-          <xs:element name="message" maxOccurs="unbounded">
-             <xs:complexType>                    
-                <xs:sequence>
-                   <!-- STATUS_UPDATE esetén regisztráció vagy törlés -->
-                   <xs:element name="status" type="xs:string" minOccurs="0"/>
-                   <!-- A küldö adatai -->
-                   <xs:element name="sender" minOccurs="0">
-                      <xs:complexType>
-                         <xs:sequence>
-                            <xs:element name="name" type="xs:string"/>
-                            <xs:element name="sip_uri" type="xs:string"/>
-                         </xs:sequence>
-                      </xs:complexType>
-                   </xs:element>
-                   <!-- Az üzenet azonosítója -->
-                   <xs:element name="msrp_id" type="xs:string" minOccurs="0"/>
-                   <!-- A multimédia tartalom típusa -->
-                   <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
-                   <!-- Az üzenet tárgya -->
-                   <xs:element name="subject" type="xs:string" minOccurs="0"/>
-                   <!-- A küldés dátuma -->
-                   <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
-                   <!-- Címzettek listája -->
-                   <xs:element name="recipients" minOccurs="0">
-                      <xs:complexType>
-                         <xs:sequence>
-                            <xs:element name="recipient" maxOccurs="unbounded">
-                               <xs:complexType>
-                                  <xs:sequence>
-                                     <xs:element name="name" type="xs:string"/>
-                                     <xs:element name="sip_uri" type="xs:string"/>
-                                  </xs:sequence>
-                               </xs:complexType>
-                            </xs:element>
-                         </xs:sequence>                    
-                      </xs:complexType>                
-                   </xs:element>            
-                </xs:sequence>
-             </xs:complexType>
-          </xs:element>            
-       </xs:sequence>
-    </xs:complexType>
-</xs:element>
-</xs:schema>
-\end{verbatim}
-\fontsize{12}{12} 
-
-A szóban forgó üzeneteket az alábbi esetekben használom:
+A jelen dokumentumban leírt rendszerben a SIP MESSAGE típusú üzeneteket a kliensek és a szerver közötti kommunikáció során használom. Az üzenet törzsében, jól definiált XML formátumban kerülnek elküldésre a szükséges információk, mint az üzenet típusa, a feladó neve és SIP URI-ja, címzett neve és SIP URI-ja, a multimédia tartalom típusa, az üzenet tárgya, stb. Az XML üzenet sémája megtalálható \aref{sec:sipMsgXmlFuggelek}.~függelékben. A szóban forgó üzeneteket az alábbi esetekben használom:
 \begin{mydescription}
 \item[Kliens regisztráció, regisztráció törlés:] a kliens oldali alkalmazás elindulása után az al\-kal\-ma\-zás azonnal, majd periodikusan ismételve üzenetet küld a szerver oldalnak jelezvén azt, hogy a felhasználó elérhető a hálózaton. Az üzenet törzse XML formátumban tartalmazza az üzenet típusát (STATUS\_UPDATE), az üzenethez tartozó státuszt (REGISTER) valamint a felhasználó nevét és SIP URI-ját. A szerver alkalmazás a regisztrációs üzenet hatására hozzáadja a felhasználót az elérhető kliensek listájához, vagy újraindítja a listán már meglévő felhasználóhoz tartozó időzítőt. Minden felhasználóhoz tartozik egy időzítő, amely a periódusidő+$\Delta$t időtartamról számol visszafelé. A $\Delta$t egy pozitív szám, amely a változó hálózati késleltetés miatt egy biztonsági sávot nyújt az időzítőnek. Abban az esetben, ha egy periódus alatt nem érkezik egy felhasználótól ilyen regisztrációs üzenet, azaz az időzítő lejár, a szerver törli az adott felhasználót az elérhető kliensek listájából. A kliens alkalmazás bezárása esetén is ilyen típusú üzenetben értesül a szerver a kilépés eseményéről, amelynek határása szintén eltávolítja az adott klienst az elérhető felhasználókat tartalmazó listából. Utóbbi esetben az XML-ben a status mező értéke EXIT lesz.
 \item[Multimédia üzenet adatainak küldése a szervernek:] az MSRP kap\-cso\-la\-ton elküldött multimédia tartalom címzetteinek adatai, illetve egyéb az üzenethez kapcsolódó információk átvitele is ilyen típusú üzenetben történik. Ebben az esetben a kliens oldal a SIP MESSAGE üzenetet azután küldi el a szerver oldalnak, miután a multimédia üzenethez kapcsolódó tartalom az MSRP kapcsolaton sikeresen továbbítódott.
@@ -387,26 +355,8 @@ A következőkben ezen pontok részletezésére kerül sor.
 
 \paragraph*{A multimédia üzenet tárolása\\}
 
-Az alábbi szerkezetű tábla szükséges az egyes multimédia üzenethez kapcsolódó adatok tárolásához:
-\fontsize{10}{10}
-\begin{verbatim}
-CREATE TABLE MESSAGES
-(
-  ID INT NOT NULL AUTO_INCREMENT,
-  MSRP_MESSAGE_ID VARCHAR(200) NOT NULL,
-  CONTENT BLOB
-  SENDER_NAME VARCHAR(150)
-  SENDER_SIP_URI VARCHAR(150)
-  SENT_AT DATE
-  SUBJECT VARCHAR(250)
-  CONTENT_TYPE VARCHAR(50),
-  CONSTRAINT pk_messages PRIMARY KEY(ID),
-  CONSTRAINT uq_msrp_message_id UNIQUE(MSRP_MESSAGE_ID)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-\end{verbatim}
-\fontsize{12}{12}
+Az  egyes multimédia üzenethez kapcsolódó adatok tárolásához a következő mezők szükségesek:
 
-Az egyes adatmezők jelentése:
 \begin{mydescription}
 \item[ID:] a tábla sorainak egyértelmű azonosítására szolgál, a tábla elsődleges kulcsa. Értelemszerűen nem vehet fel NULL értéket.
 \item[MSRP\_MESSAGE\_ID:] az MSRP kapcsolaton átvitt multimédia tartalom MSRP azonosítója, amely egy véletlen karakterlánc. A mező alapján egyértelműen visszakereshető a multimédia üzenet. Értéke egyedi a táblában, továbbá nem vehet fel NULL értéket. A multimédia tartalom MSRP kapcsolaton történő sikeres átvitele után ezen azonosító alapján küldi el az üzenethez kapcsolódó további adatokat, mint a címzettek, az üzenet tárgya, a tartalom formátuma, stb. (lásd. \ref{sec:appserver}.~ fejezet) 
@@ -421,21 +371,7 @@ Az egyes adatmezők jelentése:
 
 \paragraph*{A multimédia üzenet címzettjeinek tárolása\\}
 
-A címzettek tárolásához a következő szerkezetű tábla szükséges:
-\fontsize{10}{10}
-\begin{verbatim}
-CREATE TABLE RECIPIENTS
-(
-  ID INT NOT NULL AUTO_INCREMENT,
-  MESSAGE_ID INT NOT NULL,
-  NAME VARCHAR(150)
-  SIP_URI VARCHAR(150)
-  DELIVERY_STATUS VARCHAR(30)
-  CONSTRAINT pk_recipients PRIMARY KEY (ID)
-  CONSTRAINT fk_messages FOREIGN KEY (MESSAGE_ID) REFERENCES MESSAGES(ID)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-\end{verbatim}
-\fontsize{12}{12}
+A címzettek tárolásához a következő mezők szükségesek:
 
 Az egyes adatmezők jelentése:
 \begin{mydescription}
@@ -446,6 +382,7 @@ Az egyes adatmezők jelentése:
 \item[DELIVERY\_STATUS:] az adott címzetthez rendelt multimédia üzenet kézbesítési állapotát írja le. Értéke új és még kézbesítetlen üzenet esetén NEW. Abban az esetben, ha az alkalmazás szerver sikeresen értesítette a címzettet az új multimédia üzenetről, a státusz értéke NOTIFIED értéket kap. Ha a címzett ezek után kezdeményezte, majd MSRP kapcsolaton keresztül sikeresen letöltötte a multimédia üzenetet, értéke SENT állapotba kerül. Végül, ha a címzett előzetes átvitel nélkül jelezte a szerver felé, hogy nem kívánja letölteni az üzenetet, amely így törölhető, a mező DELETED értéket kap.
 \end{mydescription}
 
+A konkrét adatbázis táblákat létrehozó SQL utasítások \aref{sec:sql_utasitasok_fuggelek}.~függelékben találhatóak.
 \medskip
 
 \subsection{Megvalósítási terv}
@@ -459,6 +396,13 @@ Ide jönnek majd az állapotgépek, működés leírása...
 \subsubsection{A szerver megvalósítása}
 \label{sec:szervermegvalositas}
 
+\begin{figure}[htbp]
+\center
+\resizebox{14cm}{!}{
+\includegraphics{img/server_statemachine_full.eps}}
+\caption{A szerver állapotgépe}
+\label{fig:server_statemachine_full}
+\end{figure}
 
 \subsection{Összefoglalás}
 

@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="MessagingClient">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/PGMJni.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/PoCJni.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/VoipJni.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/MessagingClient.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/WeShareJni.jar!/" />
+      <root url="jar://$PROJECT_DIR$/messageClientApp/MessagingClient/IcpJni.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

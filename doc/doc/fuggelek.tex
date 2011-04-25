@@ -2,4 +2,113 @@
 \appendix
 
 \section{Függelék}
-\label{sec:fuggelek}
+\label{sec:sipMsgXmlFuggelek}
+
+\noindent
+{\bf SIP MESSAGE üzenet törzsében átvitt XML tartalom sémája}
+\fontsize{10}{10}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
+<xs:element name="information">
+   <xs:complexType>
+      <xs:sequence>
+          <!-- A üzenet típusa -->
+          <xs:element name="request_type">
+             <xs:simpleType>
+                <xs:restriction base="xs:string">                        
+                   <xs:enumeration value="STATUS_UPDATE"/>
+                   <xs:enumeration value="NOTIFY"/>
+                   <xs:enumeration value="DELETE_MESSAGE"/>
+                   <xs:enumeration value="MESSAGE_DATA"/>
+                </xs:restriction>
+             </xs:simpleType>
+          </xs:element>                                    
+          <xs:element name="message" maxOccurs="unbounded">
+             <xs:complexType>                    
+                <xs:sequence>
+                   <!-- STATUS_UPDATE esetén regisztráció vagy törlés -->
+                   <xs:element name="status" type="xs:string" minOccurs="0"/>
+                   <!-- A küldö adatai -->
+                   <xs:element name="sender" minOccurs="0">
+                      <xs:complexType>
+                         <xs:sequence>
+                            <xs:element name="name" type="xs:string"/>
+                            <xs:element name="sip_uri" type="xs:string"/>
+                         </xs:sequence>
+                      </xs:complexType>
+                   </xs:element>
+                   <!-- Az üzenet azonosítója -->
+                   <xs:element name="msrp_id" type="xs:string" minOccurs="0"/>
+                   <!-- A multimédia tartalom típusa -->
+                   <xs:element name="mime_type" type="xs:string" minOccurs="0"/>
+                   <!-- Az üzenet tárgya -->
+                   <xs:element name="subject" type="xs:string" minOccurs="0"/>
+                   <!-- A küldés dátuma -->
+                   <xs:element name="sent_at" type="xs:date" minOccurs="0"/>
+                   <!-- Címzettek listája -->
+                   <xs:element name="recipients" minOccurs="0">
+                      <xs:complexType>
+                         <xs:sequence>
+                            <xs:element name="recipient" maxOccurs="unbounded">
+                               <xs:complexType>
+                                  <xs:sequence>
+                                     <xs:element name="name" type="xs:string"/>
+                                     <xs:element name="sip_uri" type="xs:string"/>
+                                  </xs:sequence>
+                               </xs:complexType>
+                            </xs:element>
+                         </xs:sequence>                    
+                      </xs:complexType>                
+                   </xs:element>            
+                </xs:sequence>
+             </xs:complexType>
+          </xs:element>            
+       </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>
+\end{verbatim}
+\fontsize{12}{12} 
+
+
+\section{Függelék}
+\label{sec:sql_utasitasok_fuggelek}
+
+\noindent
+{\bf Az adatbázis táblákat létrehozó SQL utasítások}
+
+\fontsize{10}{10}
+\begin{verbatim}
+CREATE TABLE MESSAGES
+(
+  ID INT NOT NULL AUTO_INCREMENT,
+  MSRP_MESSAGE_ID VARCHAR(200) NOT NULL,
+  CONTENT BLOB
+  SENDER_NAME VARCHAR(150)
+  SENDER_SIP_URI VARCHAR(150)
+  SENT_AT DATE
+  SUBJECT VARCHAR(250)
+  CONTENT_TYPE VARCHAR(50),
+  CONSTRAINT pk_messages PRIMARY KEY(ID),
+  CONSTRAINT uq_msrp_message_id UNIQUE(MSRP_MESSAGE_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+\end{verbatim}
+\fontsize{12}{12}
+
+\fontsize{10}{10}
+\begin{verbatim}
+CREATE TABLE RECIPIENTS
+(
+  ID INT NOT NULL AUTO_INCREMENT,
+  MESSAGE_ID INT NOT NULL,
+  NAME VARCHAR(150)
+  SIP_URI VARCHAR(150)
+  DELIVERY_STATUS VARCHAR(30)
+  CONSTRAINT pk_recipients PRIMARY KEY (ID)
+  CONSTRAINT fk_messages FOREIGN KEY (MESSAGE_ID) REFERENCES MESSAGES(ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+\end{verbatim}
+\fontsize{12}{12}
+
+
