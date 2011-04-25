@@ -1,9 +1,6 @@
 package hu.messaging.msrp.util;
 
-import hu.messaging.Constants;
-import hu.messaging.msrp.Message;
-import hu.messaging.msrp.Request;
-import hu.messaging.msrp.Response;
+import hu.messaging.msrp.model.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;

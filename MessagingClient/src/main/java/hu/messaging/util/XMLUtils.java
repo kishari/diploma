@@ -66,6 +66,9 @@ public class XMLUtils {
 	
 	public static MessageInfoContainer createMessageInfoContainerFromFile(File xmlFile) {	      	    
 		MessageInfoContainer msg = null;
+		if (xmlFile == null) {
+			System.out.println("XMLUtils createMessageInfoContainerFromFile file null");
+		}
 	    try {
 	    	Unmarshaller um = messageContext.createUnmarshaller();
 	    	msg = (MessageInfoContainer)um.unmarshal(xmlFile);
@@ -73,6 +76,10 @@ public class XMLUtils {
 	    catch (JAXBException e) {
 	    	
 	    }
+	    
+	    System.out.println("createMessageInfoContainerFromFile return");
+	    if (msg == null)
+	    	System.out.println("baj van baj");
 	    
 		return msg;
 	}

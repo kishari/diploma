@@ -1,4 +1,5 @@
-package hu.messaging.msrp.event;
+package hu.messaging.msrp.listener;
+
 
 public interface MSRPListener {
 

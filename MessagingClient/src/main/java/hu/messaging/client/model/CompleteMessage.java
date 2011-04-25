@@ -82,10 +82,13 @@ public class CompleteMessage {
 		boolean ready = true;
 		
 		ready = ready && (getContent() != null);
+		System.out.println(ready);
 		ready = ready && (getMimeType() != null && !"".equals(getMimeType()));
+		System.out.println(ready);
 		ready = ready && (getSender() != null && !"".equals(getSender().getName()) && !"".equals(getSender().getSipUri()));
 		ready = ready && (getSubject() != null && !"".equals(getSubject()));
 		
+		System.out.println("isReady: " + ready);
 		return ready;
 	}
 

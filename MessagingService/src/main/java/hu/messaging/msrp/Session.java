@@ -1,10 +1,13 @@
 package hu.messaging.msrp;
 
+import hu.messaging.msrp.model.*;
+
 import java.net.URI;
+import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Session {
+public class Session implements java.util.Observer{
 
 	private URI localUri;
 	private URI remoteUri;	
@@ -13,7 +16,7 @@ public class Session {
 	private MSRPStack msrpStack;
 	
 	private BlockingQueue<Message> incomingMessageQueue = new LinkedBlockingQueue<Message>();
-	private BlockingQueue<CompleteMessage> outgoingMessageQueue = new LinkedBlockingQueue<CompleteMessage>();
+	private BlockingQueue<CompleteMSRPMessage> outgoingMessageQueue = new LinkedBlockingQueue<CompleteMSRPMessage>();
 
 	private TransactionManager transactionManager = null;
 
@@ -26,52 +29,51 @@ public class Session {
 		this.transactionManager = new TransactionManager(incomingMessageQueue, outgoingMessageQueue, this);
 	}
 	
-	public void sendMessage(CompleteMessage completeMessage) {		
+	protected void sendMessage(CompleteMSRPMessage fullMessage) {		
 		try {
-			putMessageIntoOutgoingMessageQueue(completeMessage);
+			putMessageIntoOutgoingMessageQueue(fullMessage);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void putMessageIntoIncomingMessageQueue(Message message) throws InterruptedException {
+	protected void putMessageIntoIncomingMessageQueue(Message message) throws InterruptedException {
 		this.incomingMessageQueue.put(message);
 	}
 	
-	public void putMessageIntoOutgoingMessageQueue(CompleteMessage message) throws InterruptedException {
+	protected void putMessageIntoOutgoingMessageQueue(CompleteMSRPMessage message) throws InterruptedException {
 		this.outgoingMessageQueue.put(message);
 	}
 	
-	public URI getLocalUri() {
+	protected URI getLocalUri() {
 		return localUri;
 	}
-	public void setLocalUri(URI localUri) {
-		this.localUri = localUri;
-	}
-	public URI getRemoteUri() {
+
+	protected URI getRemoteUri() {
 		return remoteUri;
 	}
-	public void setRemoteUri(URI remoteUri) {
-		this.remoteUri = remoteUri;
-	}
 
-	public String getId() {
+	protected String getId() {
 		return id;
 	}
 	
-	public SenderConnection getSenderConnection() {
+	protected SenderConnection getSenderConnection() {
 		return senderConnection;
 	}
 
-	public void setSenderConnection(SenderConnection senderConnection) {
-		this.senderConnection = senderConnection;
-	}
-
-	public TransactionManager getTransactionManager() {
-		return transactionManager;
-	}
-
-	public MSRPStack getMsrpStack() {
+	protected MSRPStack getMsrpStack() {
 		return msrpStack;
+	}
+	
+	protected void stop() {
+		transactionManager.stop();
+	}
+	
+	public void update(Observable o, Object obj) {
+		if (o.toString().contains(TransactionManager.class.getSimpleName())) {
+			System.out.println("TransactionManager stopped");
+			this.senderConnection.stop();
+		}
+		
 	}
 }

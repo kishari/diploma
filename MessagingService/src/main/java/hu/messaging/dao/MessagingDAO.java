@@ -1,7 +1,7 @@
 package hu.messaging.dao;
 
 import hu.messaging.Recipient;
-import hu.messaging.msrp.CompleteMessage;
+import hu.messaging.model.CompleteMessage;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,7 +111,7 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void insertMessage( CompleteMessage message ) {
+	 	public void insertMessage( CompleteMessage message) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;

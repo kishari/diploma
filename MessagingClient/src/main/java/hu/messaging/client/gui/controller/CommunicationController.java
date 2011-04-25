@@ -8,6 +8,7 @@ import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.util.*;
 
 import hu.messaging.client.Resources;
+import hu.messaging.client.icp.listener.ConnectionStateType;
 import hu.messaging.client.model.*;
 
 import java.io.IOException;
@@ -19,8 +20,8 @@ import java.util.Map;
 import com.ericsson.icp.util.ISessionDescription;
 import com.ericsson.icp.util.SdpFactory;
 
-public class CommunicationController {
-	
+public class CommunicationController implements hu.messaging.client.icp.listener.ConnectionListener {
+
 	private Map<String, String> localSDPs = new HashMap<String, String>();
 	
 	private MSRPStack msrpStack;	
@@ -60,6 +61,13 @@ public class CommunicationController {
 		getMsrpStack().removeMSRPListener(listener);
 	}
 	
+	public void sendSIPMessageInSIPSession(String to, String message) {
+		try {
+			icpController.getSession(to).sendMessage("text/plain", message.getBytes(), message.getBytes().length);
+		}
+		catch(Exception e) {e.printStackTrace();}
+		
+	}
 	public void sendSIPMessage(String to, String message) {
         try {
             byte[] messageBytes = message.getBytes("UTF-8");
@@ -90,6 +98,7 @@ public class CommunicationController {
     									 icpController.getLocalUser().getContact(), 
     									 SdpFactory.createIMSContentContainer());
     	
+    	icpController.getCommunicationController().getMsrpStack().startReceiverConnection();
     	addLocalSDP(remoteSipURI, localSdp.format());
 	}
      
@@ -97,7 +106,7 @@ public class CommunicationController {
 		try {
 			icpController.getSession(remoteSipURI).end();
 		}
-		catch(Exception e) { }		
+		catch(Exception e) { }				
 	}
     
 	private ISessionDescription createLocalSDP() throws IOException {
@@ -117,6 +126,28 @@ public class CommunicationController {
 		m.setDetailList(f.createInfoMessageDetailList());
 		
 		this.sendSIPMessage(Resources.serverSipURI, XMLUtils.createStringXMLFromInfoMessage(m));
+	}
+	
+	@Override
+	public void connectionChanged(ConnectionStateType event) {
+		switch (event.getConnectionState()) {
+        case Connecting:
+            break;
+        case Connected:      
+            break;
+        case Refused:
+            break;
+        case ConnectionFailed:           
+            break;
+        case Disconnected:
+            break;    
+        case ConnectionFinished:
+        	icpController.deleteSipSession(event.getRemoteSipUri());
+        	removeLocalSDP(event.getRemoteSipUri());
+        	break;
+        case RecipientsSentSuccessful:
+        	break;            
+    }
 	}
 
 }

@@ -3,7 +3,7 @@ package hu.messaging.msrp;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
 import hu.messaging.msrp.model.CompleteMSRPMessage;
-import hu.messaging.util.SessionDescription;
+import hu.messaging.msrp.util.SessionDescription;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -46,13 +46,15 @@ public class MSRPStack implements Observer {
 		return getConnections().getReceiverConnection().getPort();
 	}
 	
-	public void createMSRPSession(SessionDescription localSDP, SessionDescription remoteSDP, String remoteSipUri) {
-				
+	public void startReceiverConnection() {
 		if (!getConnections().isRunningReceiverConnection()) {
 			if (getConnections().isReceiverConnection()) {
 				getConnections().getReceiverConnection().start();
 			}
 		}
+	}
+	
+	public void createMSRPSession(SessionDescription localSDP, SessionDescription remoteSDP, String remoteSipUri) {
 		
 		SenderConnection s = null;
 		
@@ -71,6 +73,7 @@ public class MSRPStack implements Observer {
 		activeSessions.put(newSession.getId(), newSession);
 		
 		s.setSession(newSession);
+		
 		s.start();
 				
 	}

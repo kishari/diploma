@@ -67,6 +67,7 @@ public class MessageUtils {
 		
 		File dir = new File(Resources.messagesDirectory);
 		dir.mkdirs();
+		System.out.println("MessageUtils messageId: " + message.getId());
 		File messageFile = new File(dir, message.getId() + ".message");
 		if (!messageFile.exists()) {
 			System.out.println("Nincs ilyen containerFile: " + message.getId() + ".message");

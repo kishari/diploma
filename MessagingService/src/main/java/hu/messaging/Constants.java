@@ -1,6 +1,6 @@
 package hu.messaging;
 
-import hu.messaging.msrp.Message;
+import hu.messaging.msrp.model.*;
 
 import java.util.*;
 

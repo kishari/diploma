@@ -7,7 +7,7 @@ import java.util.List;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.icp.listener.ConnectionStateType;
-import hu.messaging.util.SessionDescription;
+import hu.messaging.msrp.util.SessionDescription;
 import hu.messaging.util.SDPUtil;
 
 import com.ericsson.icp.ISessionListener;
@@ -31,7 +31,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
             for (int i = 0; i < mCount; i++) {
             	SessionDescription remoteSdp = SDPUtil.parseSessionDescription(sdpBody.format());
             	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Resources.serverSipURI));            	            	
-            	            	
+            	     
             	icpController.getCommunicationController().getMsrpStack().createMSRPSession(localSdp, remoteSdp, Resources.serverSipURI);
 
             }

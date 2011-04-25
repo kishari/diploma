@@ -72,6 +72,19 @@ public class ICPController {
 		sessionListeners.add(sessionListener);
 		return session;
 	}
+	
+	public void deleteSipSession(String remoteSipUri) {
+		sessions.remove(remoteSipUri);
+		int i = 0;
+		for (SessionListener l : sessionListeners) {
+			if (l.getRemoteSipUri().equals(remoteSipUri)) {
+				sessionListeners.remove(i);
+				break;
+			}
+			i++;
+		}
+	}
+	
 	public void release() {
 		try {
 			icpGroupListController.release();

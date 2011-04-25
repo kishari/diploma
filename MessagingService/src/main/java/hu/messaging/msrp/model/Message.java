@@ -1,4 +1,4 @@
-package hu.messaging.msrp;
+package hu.messaging.msrp.model;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -8,6 +8,7 @@ public class Message {
 	public enum MethodType {
 		Undefined, Send, _200OK
 	};
+	
 	private MethodType method = MethodType.Undefined; //undefined
 	private String transactionId = "";
 	private URI fromPath = null;

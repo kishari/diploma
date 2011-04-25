@@ -1,9 +1,7 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
+import hu.messaging.msrp.model.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -15,19 +13,16 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	private boolean running = false;
 	
 	public IncomingMessageProcessor(BlockingQueue<Message> incomingMessageQueue, 
-									TransactionManager transactionManager ) {
+									TransactionManager transactionManager) {
 		this.incomingMessageQueue = incomingMessageQueue;
 		this.addObserver(transactionManager);
 	}
 	
 	public void run() {
-		int cnt = 0;
 		while(running) {
 			try {
 				Message mIn = this.incomingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS);
 				if (mIn != null) {
-					cnt++;
-					//System.out.println("incoming message counter: " + cnt);
 					processIncomingMessage(mIn);
 				}				
 			}
@@ -36,46 +31,30 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		this.setChanged();
+		this.notifyObservers();
 	}
 	
 	private void processIncomingMessage(Message chunk) throws IOException {		
 		if (chunk.getMethod().equals(Message.MethodType.Send)) {
-			Request req = (Request) chunk;
-			Response ack = createAcknowledgement(req);
-			
-			Map<String, Message> map = new HashMap<String, Message>();
-			map.put(Keys.incomingRequest, req);
-			map.put(Keys.createdAck, ack);
-			
+			Request req = (Request) chunk;						
 			this.setChanged();
-			this.notifyObservers(map);
+			this.notifyObservers(req);
 			
 		}
-		else if ( chunk.getMethod().equals(Message.MethodType._200OK) ){
+		else if ( chunk.getMethod().equals(Message.MethodType._200OK)){
 			Response resp = (Response) chunk;
 			this.setChanged();
 			this.notifyObservers(resp);
 		}		
-	}
+	}	
 	
-	private Response createAcknowledgement(Request incomingMessage) {
-		Response ack = new Response();
-		
-		ack.setMethod(Message.MethodType._200OK);
-		ack.setToPath(incomingMessage.getFromPath());
-		ack.setFromPath(incomingMessage.getToPath());
-		ack.setTransactionId(incomingMessage.getTransactionId());
-		ack.setEndToken('$');
-				
-		return ack;
-	}
-	
-	public void start() {
+	protected void start() {
 		this.running = true;
 		new Thread(this).start();
 	}
 	
-	public void stop() {
+	protected void stop() {
 		this.running = false;
 	}
 

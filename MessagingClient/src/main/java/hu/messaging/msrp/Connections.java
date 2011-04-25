@@ -65,6 +65,7 @@ public class Connections extends Observable implements Observer{
 			ReceiverConnection conn = (ReceiverConnection)obj;
 			this.setChanged();
 			this.notifyObservers(conn);
+			this.receiverConnection = null;
 		}
 	}
 }

@@ -52,7 +52,7 @@ public class CaptureDialog extends JFrame {
                 AudioConverter converter = new AudioConverter();                
                 try {
                 	capturedContent = converter.encodeStream(tempCapturedContent.toByteArray(), Resources.messagesDirectory + "captured.mp3");
-                	capturedContentMimeType = MimeHelper.getMIMETypeByExtension("captured.mp3");
+                	capturedContentMimeType = MimeHelper.getMIMETypeByExtension("mp3");
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }

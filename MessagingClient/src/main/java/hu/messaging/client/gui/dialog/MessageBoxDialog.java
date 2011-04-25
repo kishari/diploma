@@ -328,7 +328,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					
 					info.setDetailList(detailList);
 					String msg = XMLUtils.createStringXMLFromInfoMessage(info);
-					icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, msg);					
+					icpController.getCommunicationController().sendSIPMessageInSIPSession(Resources.serverSipURI, msg);					
 					
 					break;
 				case brokenTrasmission :
@@ -337,11 +337,13 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					break;
 				case messageReceivingSuccess :
 					setProgressWindowVisibily(false);
-					CompleteMSRPMessage fullMessage = event.getCompleteMessage();					
+					CompleteMSRPMessage fullMessage = event.getCompleteMessage();	
+					System.out.println("messageReceivingSuccess: " + fullMessage.getMessageId());
 					MessageUtils.updateMessageContainerFile(MessageUtils.readMessageContainerFromFile(fullMessage.getMessageId()), fullMessage.getContent());					
 					
 					icpController.getCommunicationController().sendBye(Resources.serverSipURI);
 					this.selectedMessage = null;
+					inboxMessageList = MessageUtils.loadInboxMessages();
 					break;
 			}
 		}

@@ -1,4 +1,4 @@
-package hu.messaging.util;
+package hu.messaging.msrp.util;
 
 import java.net.URI;
 import java.net.InetAddress;

@@ -1,6 +1,6 @@
 package hu.messaging.msrp;
 
-import hu.messaging.msrp.event.MSRPEvent;
+import hu.messaging.msrp.listener.MSRPEvent;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -17,32 +17,33 @@ public class SenderConnection extends Observable implements Runnable {
 
 	private MSRPStack msrpStack;
 	private Session session = null;
-	private String sipUri = null;
+	private String remoteSipUri = null;
 	private InetAddress remoteAddress = null;
 	private int remotePort = -1; //-1 = undefined
 	private boolean running = false;
 	private boolean connected = false;
-	
+
 	private SocketChannel senderChannel = null;
 	private Selector selector = null;
 		
-	private int sendCount = 0;
-	
 	public SenderConnection(InetAddress remoteAddress, int remotePort, 
-							String sipUri, MSRPStack msrpStack) throws IOException {
+							String remoteSipUri, MSRPStack msrpStack) throws IOException {
 		
 		this.msrpStack = msrpStack;		
 		this.remoteAddress = remoteAddress;
 		this.remotePort = remotePort;
-		this.sipUri = sipUri;
+		this.remoteSipUri = remoteSipUri;
 		
 		addObserver(msrpStack.getConnections());
 		this.selector = initSelector();
 	}
 
-	public void send(byte[] chunk) throws IOException {
-		sendCount++;
-		//System.out.println("send hivas: " + sendCount + " Time:" +  System.currentTimeMillis());
+
+	protected String getRemoteSipUri() {
+		return remoteSipUri;
+	}
+
+	protected void send(byte[] chunk) throws IOException {
 		this.write(chunk);
 	}
 	
@@ -77,35 +78,31 @@ public class SenderConnection extends Observable implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("senderConnection stopped: " + this.sipUri);
+		System.out.println("senderConnection stopped: " + remoteSipUri);
 		
 		try {
 			this.senderChannel.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		setConnected(false);
 		
-		System.out.println("senderConnection closed: " + this.sipUri);
+		connected = false;
+		System.out.println("senderConnection closed: " + remoteSipUri);
 		this.setChanged();
 		notifyObservers(this);
 			
 	}
 	
-	public void start() {
-		System.out.println("SenderConnection start! (" + this.sipUri + ")");
-		setRunning(true);
+	protected void start() {
+		System.out.println("SenderConnection start! (" + remoteSipUri + ")");
+		running = true;
 		new Thread(this).start();		
 	}
 
-	public void stop() {
-		setRunning(false);
-		System.out.println("senderConnection stop called: " + this.sipUri);
+	protected void stop() {
+		running = false;
+		System.out.println("senderConnection stop called: " + remoteSipUri);
 		this.selector.wakeup();
-		
-		this.session.getTransactionManager().stop();
-		//Törlöm az MSRPStackbõl a sessiont.
-		getMsrpStack().removeSession(session.getId());	
 	}
 	
 	private SocketChannel initiateConnection() throws IOException {
@@ -129,10 +126,10 @@ public class SenderConnection extends Observable implements Runnable {
 			e.printStackTrace();
 			key.cancel();
 			return;
-		}		
+		}	
+		connected = true;
 		socketChannel.register(this.selector, SelectionKey.OP_READ);
-		setConnected(true);
-		this.msrpStack.notifyListeners(new MSRPEvent(MSRPEvent.sessionStarted));
+		this.msrpStack.notifyListeners(new MSRPEvent(MSRPEvent.MSRPEventType.sessionStarted, remoteSipUri));
 	}
 	
 	private Selector initSelector() throws IOException {
@@ -152,14 +149,14 @@ public class SenderConnection extends Observable implements Runnable {
 	    } catch (IOException e) {
 	      key.cancel();
 	      socketChannel.close();
-	      getMsrpStack().getConnections().deleteSenderConnection(sipUri);
+	      msrpStack.stopSession(remoteSipUri);
 	      return;
 	    }
 		 if (numRead == -1) {
 		      key.channel().close();
 		      key.cancel();
 		      //Szabadítsuk fel az erõforrásokat
-		      getMsrpStack().getConnections().deleteSenderConnection(sipUri);
+		      msrpStack.stopSession(remoteSipUri);
 		      return;
 		 }
 	}
@@ -172,56 +169,21 @@ public class SenderConnection extends Observable implements Runnable {
 		senderChannel.write(b);
 	}
 	
-	public Session getSession() {
+	protected Session getSession() {
 		return session;
 	}
 
-	public void setSession(Session session) {
+	protected void setSession(Session session) {
 		this.session = session;
 	}
 	
-	public MSRPStack getMsrpStack() {
-		return msrpStack;
-	}
-	
-	public boolean isRunning() {
+	private boolean isRunning() {
 		return running;
 	}
 	
-	public void setRunning(boolean running) {
-		this.running = running;
-	}
-
-	public InetAddress getRemoteAddress() {
-		return remoteAddress;
-	}
-
-	public void setRemoteAddress(InetAddress remoteAddress) {
-		this.remoteAddress = remoteAddress;
-	}
-
-	public int getRemotePort() {
-		return remotePort;
-	}
-
-	public void setRemotePort(int remotePort) {
-		this.remotePort = remotePort;
-	}
-
-	public String getSipUri() {
-		return sipUri;
-	}
-
-	public void setSipUri(String sipUri) {
-		this.sipUri = sipUri;
-	}
-
-	public void setConnected(boolean connected) {
-		this.connected = connected;
-	}
-
 	public boolean isConnected() {
 		return connected;
 	}
+
 
 }

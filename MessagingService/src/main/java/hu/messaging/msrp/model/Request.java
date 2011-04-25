@@ -1,6 +1,6 @@
-package hu.messaging.msrp;
+package hu.messaging.msrp.model;
 
-import hu.messaging.Constants;
+import hu.messaging.msrp.model.Constants;
 
 public class Request extends Message implements Comparable<Object>{
 	
