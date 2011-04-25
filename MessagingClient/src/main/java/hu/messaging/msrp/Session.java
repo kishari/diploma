@@ -41,7 +41,7 @@ public class Session implements java.util.Observer{
 		this.incomingMessageQueue.put(message);
 	}
 	
-	protected void putMessageIntoOutgoingMessageQueue(CompleteMSRPMessage message) throws InterruptedException {
+	private void putMessageIntoOutgoingMessageQueue(CompleteMSRPMessage message) throws InterruptedException {
 		this.outgoingMessageQueue.put(message);
 	}
 	

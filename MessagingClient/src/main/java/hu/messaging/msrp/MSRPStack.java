@@ -3,7 +3,7 @@ package hu.messaging.msrp;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.listener.MSRPListener;
 import hu.messaging.msrp.model.CompleteMSRPMessage;
-import hu.messaging.msrp.util.SessionDescription;
+import hu.messaging.msrp.model.SessionDescription;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -69,7 +69,7 @@ public class MSRPStack implements Observer {
 			return;
 		}
 		
-		Session newSession = new Session(localSDP.getPath(), remoteSDP.getPath(), s, this);
+		Session newSession = new Session(localSDP.getPathAttribute(), remoteSDP.getPathAttribute(), s, this);
 		activeSessions.put(newSession.getId(), newSession);
 		
 		s.setSession(newSession);

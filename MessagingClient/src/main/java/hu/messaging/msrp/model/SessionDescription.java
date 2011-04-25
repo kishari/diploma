@@ -1,4 +1,4 @@
-package hu.messaging.msrp.util;
+package hu.messaging.msrp.model;
 
 import java.net.URI;
 import java.net.InetAddress;
@@ -28,7 +28,7 @@ public class SessionDescription {
 	public void setPort(int port) {
 		this.port = port;
 	}
-	public URI getPath() {		
+	public URI getPathAttribute() {		
 		URI path = null;
 		try {
 			path = new URI(attributes.get("PATH"));

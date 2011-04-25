@@ -1,6 +1,6 @@
 package hu.messaging.util;
 
-import hu.messaging.msrp.util.SessionDescription;
+import hu.messaging.msrp.model.SessionDescription;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;

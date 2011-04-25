@@ -26,7 +26,6 @@ public class TransactionManager extends Observable implements Observer {
 	private int numOfUnacknowledgedChunks = 0;
 	
 	private Map<String, Request> requestMap;
-	private List<Request> requestList;
 	private Session session;
 	private Map<String, Request> incomingMessages = Collections.synchronizedMap(new HashMap<String, Request>());
 
@@ -59,7 +58,7 @@ public class TransactionManager extends Observable implements Observer {
 			
 	}
 	
-	public void stop() {
+	protected void stop() {
 		this.outgoingMessageProcessor.stop();
 		this.incomingMessageProcessor.stop();
 		this.sender.stop();
@@ -87,7 +86,7 @@ public class TransactionManager extends Observable implements Observer {
 				return;
 			}
 			
-			requestList = (List<Request>) obj;			
+			List<Request> requestList = (List<Request>) obj;			
 			requestMap = new HashMap<String, Request>();
 			
 			for (Request r : requestList) {
@@ -157,7 +156,7 @@ public class TransactionManager extends Observable implements Observer {
 		
 		private BlockingQueue<Message> senderQueue = new LinkedBlockingQueue<Message>();
 		private boolean isRunning = false;
-		boolean isAck = false;
+		private boolean isAck = false;
 		
 		public SenderThread(TransactionManager tManager) {
 			this.addObserver(tManager);
@@ -196,15 +195,15 @@ public class TransactionManager extends Observable implements Observer {
 			this.notifyObservers();
 		}
 
-		public void start() {
+		private void start() {
 			isRunning = true;
 			new Thread(this).start();
 		}
-		public void stop() {
+		private void stop() {
 			isRunning = false;
 		}
 
-		public BlockingQueue<Message> getSenderQueue() {
+		private BlockingQueue<Message> getSenderQueue() {
 			return senderQueue;
 		}
 	}
@@ -221,6 +220,21 @@ public class TransactionManager extends Observable implements Observer {
 		}		
 	}
 
+	protected Session getSession() {
+		return session;
+	}
+	
+	private Response createAcknowledgement(Request chunk) {
+		Response ack = new Response();
+		
+		ack.setMethod(Message.MethodType._200OK);
+		ack.setToPath(chunk.getFromPath());
+		ack.setFromPath(chunk.getToPath());
+		ack.setTransactionId(chunk.getTransactionId());
+		ack.setEndToken('$');
+				
+		return ack;
+	}
 	
 	//>>>>>>>>>>>TESZT
 	public void printToFile(byte[] data, String fileExtension) {
@@ -267,19 +281,5 @@ public class TransactionManager extends Observable implements Observer {
 	}
 //<<<<<<<<<<<<<<TESZT
 
-	public Session getSession() {
-		return session;
-	}
-	
-	private Response createAcknowledgement(Request chunk) {
-		Response ack = new Response();
-		
-		ack.setMethod(Message.MethodType._200OK);
-		ack.setToPath(chunk.getFromPath());
-		ack.setFromPath(chunk.getToPath());
-		ack.setTransactionId(chunk.getTransactionId());
-		ack.setEndToken('$');
-				
-		return ack;
-	}
+
 }

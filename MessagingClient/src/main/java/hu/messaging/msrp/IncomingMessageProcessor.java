@@ -53,8 +53,10 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	}	
 	
 	protected void start() {
-		this.running = true;
-		new Thread(this).start();
+		if (!running) {
+			this.running = true;
+			new Thread(this).start();
+		}		
 	}
 	
 	protected void stop() {

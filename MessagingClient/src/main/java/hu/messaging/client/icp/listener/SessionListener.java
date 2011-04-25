@@ -7,7 +7,7 @@ import java.util.List;
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
 import hu.messaging.client.icp.listener.ConnectionStateType;
-import hu.messaging.msrp.util.SessionDescription;
+import hu.messaging.msrp.model.SessionDescription;
 import hu.messaging.util.SDPUtil;
 
 import com.ericsson.icp.ISessionListener;

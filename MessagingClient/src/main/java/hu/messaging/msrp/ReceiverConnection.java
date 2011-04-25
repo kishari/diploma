@@ -4,11 +4,7 @@ import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.model.Keys;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -33,11 +29,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	private Selector selector = null;
 	private Parser preParser;
 	private Router router;
-	private ByteBuffer buff;
-	
-	private Date testDate;
-	
-	int parsedCounter = 0;
+	private ByteBuffer buffer;
 	
 	public ReceiverConnection(InetAddress localHostAddress, MSRPStack msrpStack) throws IOException {
 		this.hostAddress = localHostAddress;
@@ -46,13 +38,13 @@ public class ReceiverConnection extends Observable implements Runnable {
 		this.preParser = new Parser();
 		this.router = new Router();
 		this.addObserver(msrpStack.getConnections());
-		buff = ByteBuffer.allocate(Constants.receiverBufferSize);
-		buff.clear();
+		buffer = ByteBuffer.allocate(Constants.receiverBufferSize);
+		buffer.clear();
 		
 	}
 
 	public void run() {
-		setRunning(true);
+		 running = true;
 		
 		this.preParser.start();
 		this.router.start();
@@ -98,7 +90,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 		notifyObservers(this);
 	}
 	
-	private synchronized int getUnboundPort() throws IOException {
+	private synchronized int getFreePort() throws IOException {
 		ServerSocketChannel channel = ServerSocketChannel.open();
 		ServerSocket s = channel.socket();
 		int randomPort = 0;
@@ -124,8 +116,6 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private void accept(SelectionKey key) throws IOException {
 		  System.out.println("receiver accept!");
-		  testDate = new Date();
-		  parsedCounter = 0;
 		  
 		    // For an accept to be pending the channel must be a server socket channel.
 		    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
@@ -142,12 +132,10 @@ public class ReceiverConnection extends Observable implements Runnable {
 	
 	private void read(SelectionKey key) throws IOException {
 	    SocketChannel socketChannel = (SocketChannel) key.channel();
-	    //ByteBuffer buff = ByteBuffer.allocate(100000);
-	    buff.clear();
 		int numRead = 0;
 		try {
-		   buff.clear();
-		   numRead = socketChannel.read(buff);
+			buffer.clear();
+		   numRead = socketChannel.read(buffer);
 		   //System.out.println("numReadByte:" + numRead);
 		} catch (IOException e) {
 			System.out.println("Exception van!");
@@ -173,8 +161,8 @@ public class ReceiverConnection extends Observable implements Runnable {
 		    
 		byte[] rawData = new byte[numRead];
 		    
-		buff.rewind();
-		buff.get(rawData, 0, numRead);
+		buffer.rewind();
+		buffer.get(rawData, 0, numRead);
 		
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put(Keys.socketChannel, socketChannel);
@@ -190,7 +178,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	    this.serverSocketChannel = ServerSocketChannel.open();
 	    serverSocketChannel.configureBlocking(false);
 
-	    setPort(getUnboundPort());
+	    port = getFreePort();
 	    InetSocketAddress isa = new InetSocketAddress(this.hostAddress, this.port);
 	    serverSocketChannel.socket().bind(isa);
 
@@ -199,7 +187,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 	    return socketSelector;
 	}
 	
-	public void start() {
+	protected void start() {
 		if (!isRunning()) {
 			System.out.println("ReceiverConnection start! listen on: " + this.hostAddress.getHostAddress() + ":" + this.port);
 			Thread t = new Thread(this);
@@ -207,41 +195,21 @@ public class ReceiverConnection extends Observable implements Runnable {
 		}
 	}
 	
-	public void stop() {
-		setRunning(false);
+	protected void stop() {
+		running = false;
 		this.selector.wakeup();
 	}
 
-	public boolean isRunning() {
+	protected boolean isRunning() {
 		return running;
 	}
 
-	public void setRunning(boolean running) {
-		this.running = running;
-	}
-
-	public InetAddress getHostAddress() {
+	protected InetAddress getHostAddress() {
 		return hostAddress;
 	}
 
-	public void setHostAddress(InetAddress hostAddress) {
-		this.hostAddress = hostAddress;
-	}
-
-	public int getPort() {
+	protected int getPort() {
 		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public MSRPStack getMsrpStack() {
-		return msrpStack;
-	}
-	
-	public Map<SocketChannel, String> getSaveBuffers() {
-		return saveBuffers;
 	}
 	
 	private class Parser implements Runnable {
@@ -281,7 +249,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 			isRunning = false;
 		}
 
-		public BlockingQueue<Map<String, Object>> getMessageQueue() {
+		private BlockingQueue<Map<String, Object>> getMessageQueue() {
 			return messageQueue;
 		}
 		
@@ -380,8 +348,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 				parserBuffer.position(parserBuffer.position() - byteCounter);
 				parserBuffer.get(save, 0, byteCounter);
 				saveBuff = new String(save);
-				System.out.println("savebuff length: " + saveBuff.length());
-				printToFile(saveBuff.getBytes());	
+				System.out.println("savebuff length: " + saveBuff.length());	
 				saveBuffers.put(channel, saveBuff);
 			}
 			
@@ -420,7 +387,7 @@ public class ReceiverConnection extends Observable implements Runnable {
 							//System.out.println(prevMsg);
 						}
 					 	try {
-					 		Session s = getMsrpStack().findSession(msg.getToPath().toString()+msg.getFromPath().toString());
+					 		Session s = ReceiverConnection.this.msrpStack.findSession(msg.getToPath().toString()+msg.getFromPath().toString());
 					 		if (s != null) {
 					 			s.putMessageIntoIncomingMessageQueue(msg);
 					 		}
@@ -449,24 +416,4 @@ public class ReceiverConnection extends Observable implements Runnable {
 		}
 		
 	}
-	
-	//>>>>>>>>>>>TESZT
-	public void printToFile(byte[] data) {
-		try {
-			OutputStream out = null;
-			File recreatedContentFile = new File("c:\\diploma\\testing\\saveBufferData-" + testDate.getTime() + ".txt");
-			out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
-			
-			out.write(data);
-			out.write("\r\n**********************************************************************\r\n".getBytes());
-			out.flush();					
-			out.close();
-		}
-		catch(IOException e) { 
-			e.printStackTrace();
-		}		
-	}
-//<<<<<<<<<<<<<<TESZT
-	
-
 }
