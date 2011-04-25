@@ -1,5 +1,9 @@
 package hu.messaging.client.gui.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import hu.messaging.client.gui.data.Buddy;
 import hu.messaging.client.icp.listener.PlatformListener;
 import hu.messaging.client.icp.listener.ProfileListener;
@@ -13,213 +17,92 @@ import com.ericsson.icp.IPlatform;
 import com.ericsson.icp.IProfile;
 import com.ericsson.icp.IService;
 import com.ericsson.icp.ISession;
-import com.ericsson.icp.IPlatform.Version;
-import com.ericsson.icp.IProfile.State;
 
-/**
- * The ICP controller is the component between the GUI and the actual ICP. 
- * It wraps main events of the ICP and provide the API to initiate ICP events
- */
+import java.util.Map;
+
 public class ICPController {
-    private IPlatform icpPlatform;
+	private IPlatform icpPlatform;
+	private IProfile profile;
+	private IService service;
+	private Map<String, ISession> sessions;
+	private List<SessionListener> sessionListeners;
 
-    /**
-     * The profile to use for this application.
-     */
-    private IProfile profile;
+	private Buddy localUser;
 
-    /**
-     * The ICP service
-     */
-    private IService service;
-    
-    private ISession session;
-    private SessionListener sessionListener;
-    /**
-     * The local user
-     */
-    private Buddy localUser;
+	private CommunicationController communicationController;
+	private ContactListController contactListController;
+	private ICPGroupListController icpGroupListController;
 
-    /**
-     * The incoming communication handler
-     */
-    private CommunicationController communicationController;
+	private static final String PLATFORM_ID = "IMSSetting";
+	private static final String CLIENT_NAME = "MessagingClient";
+	private static final String SERVICE_ID = "+g.multicastClient";
+	private static final String APPLICATION_ID = "messageClientApp";
 
-    /**
-     * The platform static ID
-     */
-    private static final String PLATFORM_ID = "IMSSetting";
+	public ICPController() throws Exception {
+		icpPlatform = ICPFactory.createPlatform();
+		icpPlatform.registerClient(CLIENT_NAME);
+		icpPlatform.addListener(new PlatformListener(this));
 
-    /**
-     * The application static ID
-     */
-    private static final String CLIENT_NAME = "MessagingClient";
-    
-    /**
-     * The service static ID
-     */
-    private static final String SERVICE_ID = "+g.multicastClient";
+		profile = icpPlatform.createProfile(PLATFORM_ID);
 
-    /**
-     * The application static ID
-     */
-    private static final String APPLICATION_ID = "messageClientApp";
-    
-    /**
-     * The contact list controller to use
-     */
-    private ContactListController contactListController;
+		localUser = new Buddy(profile.getIdentity());
 
-    /**
-     * ICP group list controller
-     */
-    private ICPGroupListController icpGroupListController;
+		contactListController = new ContactListController();
+		contactListController.setLocalUser(localUser);
 
-    /**
-     * Build an ICP controller
-     */
-    public ICPController() throws Exception
-    {    
-        icpPlatform = ICPFactory.createPlatform();
-        icpPlatform.registerClient(CLIENT_NAME);
-        icpPlatform.addListener(new PlatformListener(this));
+		profile.addListener(new ProfileListener(this));
 
-        profile = icpPlatform.createProfile(PLATFORM_ID);
+		icpGroupListController = new ICPGroupListController(this,
+				contactListController);
 
-        localUser = new Buddy(profile.getIdentity());
-      
-        contactListController = new ContactListController();
-        contactListController.setUser(localUser);
-        
-        profile.addListener(new ProfileListener(this));
-        
-        icpGroupListController = new ICPGroupListController(this, contactListController);
+		communicationController = new CommunicationController(this);
 
-        communicationController = new CommunicationController(this);
+		service = profile.createService(SERVICE_ID, APPLICATION_ID);
+		service.addListener(new ServiceListener(this));
+		
+		sessions = new HashMap<String, ISession>();
+		sessionListeners = new ArrayList<SessionListener>();
+	}
 
-        createService();
-        createSession();
-    }
+	public ISession createNewSipSession(String remoteSipUri) throws Exception {
+		ISession session = service.createSession();
+		SessionListener sessionListener = new SessionListener(this, remoteSipUri);
+		session.addListener(sessionListener);
+		sessions.put(remoteSipUri, session);
+		sessionListeners.add(sessionListener);
+		return session;
+	}
+	
+	public void deleteSipSession(String remoteSipUri) {
+		sessions.remove(remoteSipUri);
+		int i = 0;
+		for (SessionListener l : sessionListeners) {
+			if (l.getRemoteSipUri().equals(remoteSipUri)) {
+				sessionListeners.remove(i);
+				break;
+			}
+			i++;
+		}
+	}
+	
+	public void release() {
+		try {
+			icpGroupListController.release();
 
-    /**
-     * Create a service on the ICP platform
-     */
-    private void createService() throws Exception
-    {
-        // Create the service and add a listener on it to be notified on incoming calls
-        service = profile.createService(SERVICE_ID, APPLICATION_ID);
-        service.addListener(new ServiceListener(this));
-    }
-    
-    private void createSession() throws Exception {
-    	session = service.createSession();
-    	sessionListener = new SessionListener(this);
-    	session.addListener(sessionListener);
-    }
+			for (String s : sessions.keySet()) {
+				IcpUtils.release(sessions.get(s));
+			}
+			
+			IcpUtils.release(service);
+			IcpUtils.release(icpPlatform);
+		} catch (Exception e) {
 
-    /**
-     * Release all ICP objects
-     */
-    public void release()
-    {
-        try
-        {
-            // Release all sessions
-            releaseSessions();
-            icpGroupListController.release();
+		}
+	}
 
-            // Release all other allocated objects
-            IcpUtils.release(service);
-            IcpUtils.release(icpPlatform);
-        }
-        catch (Exception e)
-        {
-         
-        }
-    }
-
-    /**
-     * Release all ongoing sessions
-     */
-    private void releaseSessions()
-    {
-       
-    }
-
-    /**
-     * @return The ICP version or -1 if unable to get the version.
-     */
-    public int getICPVersion()
-    {
-        try
-        {
-            Version version = icpPlatform.getVersion();
-            return version.majorVersion;
-        }
-        catch (Throwable t)
-        {
-            return -1;
-        }
-    }
-
-    /**
-     * @return The state(0:not registered, 1:registered) or -1 if unable to get the state.
-     */
-    public int getICPState()
-    {
-        try
-        {
-            State state = profile.getState();
-            return state.registrationState;
-        }
-        catch (Throwable t)
-        {
-            return -1;
-        }
-    }
-
-    /**
-     * Retrieve a list of available services on the platform
-     * 
-     * @param service The service(s) to find. null return all the available services.
-     * @return The service list based on what was requested
-     */
-    public StringBuffer getAvailableServices(String service)
-    {
-        try
-        {
-            StringBuffer servicesBuffer = new StringBuffer();
-            profile.queryAvailableServices(service, servicesBuffer);
-            return servicesBuffer;
-        }
-        catch (Throwable t)
-        {
-            StringBuffer buffer = new StringBuffer("unable to get services list");
-            return buffer;
-        }
-    }
-
-    /**
-     * Process an incoming instant message
-     * 
-     * @param to The calle
-     * @param message The message
-     */
-    public void processIncomingSIPMessage(String to, String message)
-    {
-        // Delegate to the communication controller
-    	communicationController.incomingSIPMessage(to, message);
-    }
-
-    /**
-     * Retrieve the contact list controller
-     * 
-     * @return The controller
-     */
-    public ContactListController getContactListController()
-    {
-        return contactListController;
-    }
+	public ContactListController getContactListController() {
+		return contactListController;
+	}
 
 	public IService getService() {
 		return service;
@@ -229,17 +112,26 @@ public class ICPController {
 		return profile;
 	}
 
+	public ISession getSession(String sipUri) {
+		return sessions.get(sipUri);
+	}
+
 	public CommunicationController getCommunicationController() {
 		return communicationController;
 	}
-
-	public ISession getSession() {
-		return session;
+	
+	public SessionListener getSessionListener(String sipUri) {
+		System.out.println("getSessionListener");
+		for (SessionListener s : sessionListeners) {
+			if (s.getRemoteSipUri().equals(sipUri)) {
+				return s;
+			}
+		}
+		return null;
 	}
 
-	public SessionListener getSessionListener() {
-		return sessionListener;
+	public Buddy getLocalUser() {
+		return localUser;
 	}
-	
-	
+
 }

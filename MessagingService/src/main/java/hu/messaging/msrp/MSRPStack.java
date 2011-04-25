@@ -1,66 +1,122 @@
 package hu.messaging.msrp;
 
-import hu.messaging.msrp.event.MSRPEvent;
-import hu.messaging.msrp.event.MSRPListener;
+import hu.messaging.msrp.listener.MSRPEvent;
+import hu.messaging.msrp.listener.MSRPListener;
+import hu.messaging.msrp.model.CompleteMSRPMessage;
+import hu.messaging.msrp.util.SessionDescription;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
-public class MSRPStack {
+public class MSRPStack implements Observer {
 
 	private Connections connections = new Connections(this);
 	private Map<String, Session> activeSessions = Collections.synchronizedMap(new HashMap<String, Session>());
 	private List<MSRPListener> msrpListeners = new ArrayList<MSRPListener>();
 	
-	public void createReceiverConnection(InetAddress host) throws IOException {
-		getConnections().createReceiverConnection(host);
+	public void sendMessage(CompleteMSRPMessage fullMSRPMessage, String remoteSipUri) {
+		SenderConnection s = getConnections().getSenderConnection(remoteSipUri);
+		do {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}while(!s.isConnected());
+		
+		Session session = s.getSession();
+		session.sendMessage(fullMSRPMessage);
 	}
 	
-	public SenderConnection createSenderConnection(InetAddress host, int port, String sipUri) throws IOException {
-		return getConnections().createSenderConnection(host, port, sipUri, this);		
+	public InetAddress getReceiverConnectionHostAddress() {
+		try {
+			createReceiverConnection(InetAddress.getLocalHost());
+		}
+		catch(UnknownHostException e) {}
+		
+		return getConnections().getReceiverConnection().getHostAddress();
 	}
 	
-	public void putNewSession(Session session) {
-		if ( findSession( session.getId() ) != null ) {
+	public int getReceiverConnectionPort() {
+		try {
+			createReceiverConnection(InetAddress.getLocalHost());
+		}
+		catch(UnknownHostException e) {}
+		
+		return getConnections().getReceiverConnection().getPort();
+	}
+	
+	public void startReceiverConnection() {
+		if (!getConnections().isRunningReceiverConnection()) {
+			if (getConnections().isReceiverConnection()) {
+				getConnections().getReceiverConnection().start();
+			}
+		}
+	}
+	
+	public void createMSRPSession(SessionDescription localSDP, SessionDescription remoteSDP, String remoteSipUri) {
+		SenderConnection s = null;
+		
+		try {
+			s = getConnections().createSenderConnection(remoteSDP.getHost(), remoteSDP.getPort(), remoteSipUri, this);
+		}
+		catch (IOException e) {
+			
+		}
+				
+		if (s == null) {
 			return;
 		}
-		getActiveSessions().put(session.getId(), session);
+		
+		Session newSession = new Session(localSDP.getPath(), remoteSDP.getPath(), s, this);
+		activeSessions.put(newSession.getId(), newSession);
+		
+		s.setSession(newSession);
+		
+		s.start();
+				
 	}
 	
-	public Session findSession(String sessionId) {
-		if ( getActiveSessions().containsKey( sessionId ) ) {
-			return getActiveSessions().get(sessionId);
+	private void createReceiverConnection(InetAddress host) {
+		if (!getConnections().isReceiverConnection()) {
+			try {
+				getConnections().createReceiverConnection(host);
+			}
+			catch(IOException e) { }			
+		}		
+	}
+	
+	protected Session findSession(String sessionId) {
+		if ( activeSessions.containsKey( sessionId ) ) {
+			return activeSessions.get(sessionId);
 		}
 		return null;
 	}
 	
-	public void removeSession(String sessionId) {
-		getActiveSessions().remove(sessionId);
+	public void stopSession(String remoteSipUri) {
+		Session s = getConnections().getSenderConnection(remoteSipUri).getSession();
+		s.stop();
 	}
 	
-	public void sendMessage(CompleteMessage completeMessage, String sipUri) {
-		System.out.println(getClass().getSimpleName() + " sendMessage()");
-		SenderConnection s = getConnections().getSenderConnection(sipUri);
-		Session session = s.getSession();
-		session.sendMessage(completeMessage);
-	}
-	
-	public Connections getConnections() {
+	protected Connections getConnections() {
 		return connections;
-	}
-
-	public Map<String, Session> getActiveSessions() {
-		return activeSessions;
 	}
 	
 	public void disposeResources() {
 		System.out.println("MSRPStack disposeResources...");
-		getConnections().deleteSenderConnections();
+		for (String id : activeSessions.keySet()) {
+			Session s = activeSessions.get(id);
+			s.stop();		
+		}
+		
 		if (getConnections().getReceiverConnection() != null) {
 			getConnections().getReceiverConnection().stop();
 		}
@@ -74,7 +130,7 @@ public class MSRPStack {
 		this.msrpListeners.remove(listener);
 	}
 
-	public synchronized void notifyListeners(MSRPEvent event) {
+	protected synchronized void notifyListeners(MSRPEvent event) {
 		List<MSRPListener> temp = new ArrayList<MSRPListener>();
 		synchronized(this.msrpListeners) {
 			for (MSRPListener l : this.msrpListeners ) {
@@ -84,6 +140,22 @@ public class MSRPStack {
 		for (MSRPListener listener : temp) {					
 			listener.fireMsrpEvent(event);
 		}
+	}
+	
+	public void update(Observable o, Object obj) {
+		if (o.toString().contains(Connections.class.getSimpleName())) {
+			if (obj instanceof SenderConnection) {
+				System.out.println(getClass().getSimpleName() + " update: senderConnection stopped");
+				SenderConnection s = (SenderConnection)obj;
+				activeSessions.remove(s.getSession().getId());
+				
+				System.out.println(getClass().getSimpleName() + this.activeSessions.size());
+			}
+			else if (obj instanceof ReceiverConnection) {
+				System.out.println(getClass().getSimpleName() + " update: ReceiverConnection stopped");
+			}
+		}
+		
 	}
 	
 }

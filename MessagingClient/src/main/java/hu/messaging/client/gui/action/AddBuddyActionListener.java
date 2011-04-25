@@ -10,33 +10,27 @@ import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-
-public class AddBuddyActionListener extends BuddyActionListener
-{
-	public AddBuddyActionListener(ICPController aIcpController, Container parent)
-	{
+public class AddBuddyActionListener extends BuddyActionListener {
+	public AddBuddyActionListener(ICPController aIcpController, Container parent) {
 		super(aIcpController, parent);
 	}
 
-	public void actionPerformed(ActionEvent e) 
-	{
+	public void actionPerformed(ActionEvent e) {
 		List<String> groupsNames = controller.getGroupDisplayNames();
 
-		AddBuddyDialog dialog = new AddBuddyDialog(SwingUtil.getFrame(parent), groupsNames.toArray(new String[groupsNames.size()]));
-        
-		//Initialize the dialog value.
+		AddBuddyDialog dialog = new AddBuddyDialog(SwingUtil.getFrame(parent),
+				groupsNames.toArray(new String[groupsNames.size()]));
+
 		Group group = controller.getSelectedGroup();
-		if(group==null)
-		{
+		if (group == null) {
 			group = controller.getDefaultGroup();
 		}
 		dialog.setSelectedGroup(group.getName());
-		
-        dialog.setVisible(true);
-        Buddy newUser = (Buddy)dialog.getData();
-        if((newUser != null)&&(!newUser.getContact().equals("")))
-        {
-        	controller.addBuddy(controller.getGroup(dialog.getGroup()), newUser);
-        }
+
+		dialog.setVisible(true);
+		Buddy newUser = (Buddy) dialog.getData();
+		if ((newUser != null) && (!newUser.getContact().equals(""))) {
+			controller.addBuddy(controller.getGroup(dialog.getGroup()), newUser);
+		}
 	}
 }

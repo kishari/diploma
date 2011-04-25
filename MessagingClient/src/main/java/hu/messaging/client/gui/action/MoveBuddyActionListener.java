@@ -10,35 +10,30 @@ import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-
-
-public class MoveBuddyActionListener extends BuddyActionListener
-{
-	public MoveBuddyActionListener(ICPController aIcpController, Container parent)
-	{
+public class MoveBuddyActionListener extends BuddyActionListener {
+	public MoveBuddyActionListener(ICPController aIcpController,
+			Container parent) {
 		super(aIcpController, parent);
 	}
-	
-	public void actionPerformed(ActionEvent e)
-	{
-        List<String> groupList = controller.getGroupDisplayNames();
-        groupList.remove(controller.getSelectedGroup().getDisplayName());
-		SelectGroupDialog dialog = new SelectGroupDialog(SwingUtil.getFrame(parent), groupList);
+
+	public void actionPerformed(ActionEvent e) {
+		List<String> groupList = controller.getGroupDisplayNames();
+		groupList.remove(controller.getSelectedGroup().getDisplayName());
+		SelectGroupDialog dialog = new SelectGroupDialog(SwingUtil
+				.getFrame(parent), groupList);
 
 		Group group = controller.getSelectedGroup();
 		Buddy buddy = controller.getSelectedBuddy();
-		if((group != null)&&(buddy != null))
-		{
+		if ((group != null) && (buddy != null)) {
 			dialog.setSelection(group.getDisplayName());
-			
-	        dialog.setVisible(true);
-	        String groupName = (String) dialog.getData();
-	        if((groupName != null) && (!groupName.equals("")))
-	        {
-	        	controller.removeBuddy(buddy);
-	        	Group selectedGroup = controller.getGroup(groupName);
-	        	controller.addBuddy(selectedGroup, buddy);
-	        }
+
+			dialog.setVisible(true);
+			String groupName = (String) dialog.getData();
+			if ((groupName != null) && (!groupName.equals(""))) {
+				controller.removeBuddy(buddy);
+				Group selectedGroup = controller.getGroup(groupName);
+				controller.addBuddy(selectedGroup, buddy);
+			}
 		}
 	}
 

@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import hu.messaging.Constants;
+import hu.messaging.client.Resources;
 import hu.messaging.client.gui.controller.ICPController;
-import hu.messaging.client.icp.listener.ConnectionListener.ConnectionState;
-import hu.messaging.msrp.SenderConnection;
-import hu.messaging.util.SessionDescription;
+import hu.messaging.client.icp.listener.ConnectionStateType;
+import hu.messaging.msrp.model.SessionDescription;
 import hu.messaging.util.SDPUtil;
 
 import com.ericsson.icp.ISessionListener;
@@ -19,48 +18,44 @@ import com.ericsson.icp.util.ISessionDescription;
 public class SessionListener extends BaseListener implements ISessionListener{
 	
 	private List<ConnectionListener> connectionListeners = Collections.synchronizedList(new ArrayList<ConnectionListener>());
+	private String remoteSipUri;
 	
-	public SessionListener(ICPController icpController) {
+	public SessionListener(ICPController icpController, String remoteSipUri) {
 		super(icpController);
+		this.remoteSipUri = remoteSipUri;
 	}
 	public void processSessionStarted(ISessionDescription sdpBody) {
 		log(getClass().getSimpleName() + ": processSessionStarted");
 		try {
         	int mCount = sdpBody.getMediaDescriptionCount();
-        	//log(Integer.toString(mCount));
-        	//log(sdpBody.format());
             for (int i = 0; i < mCount; i++) {
             	SessionDescription remoteSdp = SDPUtil.parseSessionDescription(sdpBody.format());
-            	
-            	icpController.getCommunicationController().createSenderConnection(remoteSdp.getHost(), 
-            											remoteSdp.getPort(), 
-            											Constants.serverSipURI);
-            	SenderConnection s = icpController.getCommunicationController().getMsrpStack().getConnections().getSenderConnection(Constants.serverSipURI);
-            	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Constants.serverSipURI));
-            	
-            	icpController.getCommunicationController().createNewMSRPSession(localSdp.getPath(), remoteSdp.getPath(), Constants.serverSipURI);
-            	s.start();
+            	SessionDescription localSdp = SDPUtil.parseSessionDescription(icpController.getCommunicationController().getLocalSDP(Resources.serverSipURI));            	            	
+            	     
+            	icpController.getCommunicationController().getMsrpStack().createMSRPSession(localSdp, remoteSdp, Resources.serverSipURI);
+
             }
         }
         catch(Exception e) {}
         	
-        notifyListeners(ConnectionState.Connected);
+        notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.Connected, remoteSipUri));
 	}
 	
 	public void processSessionAlerting() {
 		log(getClass().getSimpleName() + ": processSessionAlerting");
-		notifyListeners(ConnectionState.Connecting);
+		notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.Connecting, remoteSipUri));
 	}
 
 	
 	public void processSessionCancelled() {
 		log(getClass().getSimpleName() + ": processSessionCancelled");
+		notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.Refused, remoteSipUri));
 	}
 
 	
 	public void processSessionEnded() {
 		log(getClass().getSimpleName() + ": processSessionEnded");
-		notifyListeners(ConnectionState.ConnectionFinished);
+		notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.ConnectionFinished, remoteSipUri));
 	}
 
 	
@@ -108,14 +103,14 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	
 	public void processSessionMessageFailed(ErrorReason reason, long retryAfter) {
 		log(getClass().getSimpleName() + ": processSessionMessageFailed");
-		notifyListeners(ConnectionState.RecipientsSendFailed);		
+		notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.RecipientsSendFailed, remoteSipUri));		
 	}
 
 	
 	public void processSessionMessageSuccessful(String contentType,
 			byte[] body, int length) {
 		log(getClass().getSimpleName() + ": processSessionMessageSuccessful");
-		notifyListeners(ConnectionState.RecipientsSentSuccessful);
+		notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.RecipientsSentSuccessful, remoteSipUri));
 		
 	}
 
@@ -214,7 +209,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
 	public void processSessionStartFailed(ErrorReason reasonCode,
 			long retryAfter) {
 		log(getClass().getSimpleName() + ": processSessionStartFailed");
-		notifyListeners(ConnectionState.ConnectionFailed);
+		notifyListeners(new ConnectionStateType(ConnectionStateType.ConnectionState.ConnectionFailed, remoteSipUri));
 		
 	}
 
@@ -270,7 +265,7 @@ public class SessionListener extends BaseListener implements ISessionListener{
 		this.connectionListeners.remove(listener);
 	}
 	
-	public synchronized void notifyListeners(ConnectionState event) {
+	public synchronized void notifyListeners(ConnectionStateType event) {
 		List<ConnectionListener> temp = new ArrayList<ConnectionListener>();
 		synchronized(this.connectionListeners) {
 			for (ConnectionListener l : this.connectionListeners ) {
@@ -280,6 +275,9 @@ public class SessionListener extends BaseListener implements ISessionListener{
 		for (ConnectionListener listener : temp) {
 			listener.connectionChanged(event);
 		}
+	}
+	public String getRemoteSipUri() {
+		return remoteSipUri;
 	}
 
 }

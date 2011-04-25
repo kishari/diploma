@@ -1,7 +1,7 @@
 package hu.messaging.dao;
 
 import hu.messaging.Recipient;
-import hu.messaging.msrp.CompleteMessage;
+import hu.messaging.model.CompleteMessage;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,15 +23,22 @@ import org.apache.commons.lang.StringEscapeUtils;
 public class MessagingDAO {
 	 private DataSource dataSource = null;
 	 public static final String DATA_SOURCE_NAME = "jdbc/messagingDataSource";
-	 private static final String INSERT_MESSAGE = "insert into  messagingdb.messages(messageId, content, sender, extension) values (?, ?, ?, ?)";
-	 private static final String UPDATE_MESSAGE = "update messagingdb.messages set extension=?, sender=? " +
-	 														 "where messageId=?";
-	 private static final String INSERT_RECIPIENT = "insert into  messagingdb.recipients(messageId, name, address) values (?, ?, ?)";
-	 private static final String SELECT_MESSAGES_TO_SIPURI = "SELECT messageId, content FROM messagingdb.messages " + 
-	 															"WHERE messageId IN(" + 
-	 																	"SELECT messageId " +
+	 private static final String INSERT_MESSAGE = "INSERT INTO " + 
+	 											  "messagingdb.messages(message_id, content, content_size) " + 
+	 											  "VALUES (?, ?, ?)";
+	 private static final String UPDATE_MESSAGE = "UPDATE messagingdb.messages " + "" +
+	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ? " +
+	 											  "WHERE message_id = ?";
+	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri) values (?, ?, ?)";
+	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
+	 															"WHERE message_id IN(" + 
+	 																	"SELECT message_id " +
 	 																	"FROM messagingdb.recipients " + 
-	 																	"WHERE address = ?)";
+	 																	"WHERE sip_uri = ?)";
+	 
+	 private static final String SELECT_CONTENT_TO_MESSAGE_ID = "SELECT message_id, content, subject, sender_name, sender_sip_uri, mime_type " +
+	 															"FROM messagingdb.messages " + 
+	 															"WHERE message_id = ?";
 	
 	 public MessagingDAO() {
 		 init();
@@ -84,16 +91,18 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void updateMessage( String messageId, String extension, String sender ) {
+	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
 	        try {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(UPDATE_MESSAGE);
-	            pstmt.setString(1, extension);
-	            pstmt.setString(2, sender);
-	            pstmt.setString(3, messageId);
+	            pstmt.setString(1, senderName);
+	            pstmt.setString(2, senderSIPUri);
+	            pstmt.setString(3, mimeType);
+	            pstmt.setString(4, subject);
+	            pstmt.setString(5, messageId);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
@@ -102,17 +111,16 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void insertMessage( CompleteMessage message ) {
+	 	public void insertMessage( CompleteMessage message) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
 	        try {
 	            conn = getConnection();
-	            pstmt = conn.prepareStatement(INSERT_MESSAGE);
+	            pstmt = conn.prepareStatement(INSERT_MESSAGE);	            
 	            pstmt.setString(1, message.getMessageId());
 	            pstmt.setBytes(2, message.getContent());
-	            pstmt.setString(3, message.getSender());
-	            pstmt.setString(4, message.getExtension());
+	            pstmt.setInt(3, message.getContent().length);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
@@ -121,36 +129,31 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public List<CompleteMessage> getMessagesToMessageIds( String[] messageIds ) {	    	
-
-	 		String sql = "SELECT messageId, content, sender, extension FROM messagingdb.messages " + 
-			 "WHERE messageId IN (";
-	 		System.out.println("MessagingDao getMessagesToMessageIds");
-	 		for (int i = 0; i < messageIds.length - 1; i++) {
-	 			sql += "'" + StringEscapeUtils.escapeSql(messageIds[i]) + "',";
-	 		}
-	 		
-	 		sql += "'" + StringEscapeUtils.escapeSql(messageIds[messageIds.length - 1]) + "')";
-	 		
-	 		System.out.println(sql);
+	 	public CompleteMessage getMessageToMessageId(String messageId) {	    	
+	 			 		
 	    	Connection conn = null;
-	        Statement stmt = null;
+	    	PreparedStatement pstmt = null;
 	        ResultSet rs = null;
 	        
 	        List<CompleteMessage> result = new ArrayList<CompleteMessage>();
 	        	        
 	        try {
 	        	conn = getConnection();
-	        	stmt = conn.createStatement();
-		        rs = stmt.executeQuery(sql);
+	        	pstmt = conn.prepareStatement(SELECT_CONTENT_TO_MESSAGE_ID);
+	        	pstmt.setString(1, messageId);
+		        rs = pstmt.executeQuery();
 		            while (rs.next()) {  
-		            	String messageId = rs.getString(1);
-		            	String extension = rs.getString(4);
+		            	String msgId = rs.getString(1);
+		            	String subject = rs.getString(3);
+		            	String senderName = rs.getString(4);
+		            	String senderSipUri = rs.getString(5);
+		            	String mimeType = rs.getString(6);
 		            	InputStream is = rs.getBlob(2).getBinaryStream();
 	            	
 		            	try {
 		            		byte[] content = IOUtils.toByteArray(is);
-		            		CompleteMessage msg = new CompleteMessage(messageId, content, extension);
+		            		
+		            		CompleteMessage msg = new CompleteMessage(msgId, content, mimeType, senderName, senderSipUri,  subject);
 		            		result.add(msg);
 		            	} catch (IOException e) {
 		            		e.printStackTrace();
@@ -159,10 +162,10 @@ public class MessagingDAO {
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
-	        	closeAll(rs, null, stmt, conn);
+	        	closeAll(rs, null, pstmt, conn);
 			}
 	        
-	        return result;
+	        return result.get(0);
 	    }
 	
 
@@ -176,7 +179,7 @@ public class MessagingDAO {
 	        	        
 	        try {
 	        	conn = getConnection();
-	            pstmt = conn.prepareStatement(SELECT_MESSAGES_TO_SIPURI);
+	            pstmt = conn.prepareStatement(SELECT_CONTENTS_TO_SIPURI);
 	            pstmt.setString(1, sipURI);
 	            rs = pstmt.executeQuery();	        
 	            

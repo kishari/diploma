@@ -1,9 +1,6 @@
 package hu.messaging.msrp.util;
 
-import hu.messaging.Constants;
-import hu.messaging.msrp.Message;
-import hu.messaging.msrp.Request;
-import hu.messaging.msrp.Response;
+import hu.messaging.msrp.model.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,7 +25,7 @@ public class MSRPUtil {
 										URI remoteURI, String transactionId, String messageId, int offset,
 										int chunkSize, int completeMessageSize, char endToken) {
 		Request req = new Request();
-		req.setMethod(Constants.methodSEND);
+		req.setMethod(Message.MethodType.Send);
 		try {
 			req.createFromPath(localURI.toString());
 			req.createToPath(remoteURI.toString());
@@ -62,7 +59,7 @@ public class MSRPUtil {
 		if ("SEND".equals(method)) {
 			Request req = new Request();
 			
-			req.setMethod(Constants.methodSEND);			
+			req.setMethod(Message.MethodType.Send);			
 			req.setTransactionId(matcher.group(2));
 			
 			matcher = toPathPattern.matcher(message);
@@ -121,7 +118,7 @@ public class MSRPUtil {
 		else if("200 OK".equals(method)) {
 			Response resp = new Response();
 			
-			resp.setMethod(Constants.method200OK);			
+			resp.setMethod(Message.MethodType._200OK);			
 			resp.setTransactionId(matcher.group(2));
 			
 			matcher = toPathPattern.matcher(message);

@@ -10,6 +10,8 @@ public class User extends Observable{
 	private Timer timer;
 	private int expireDelay = 0;
 	
+	public User() {}
+	
 	public User(String sipURI, int expireDelay) {
 		System.out.println("new User:" + sipURI + " expires: " + expireDelay);
 		this.sipURI = sipURI;

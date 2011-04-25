@@ -4,28 +4,32 @@ import java.io.*;
 import java.util.List;
 import java.util.ArrayList;
 
+import hu.messaging.client.Resources;
+import hu.messaging.client.gui.util.StringUtil;
+import hu.messaging.client.media.MimeHelper;
 import hu.messaging.client.model.*;
-import hu.messaging.util.*;
-import hu.messaging.msrp.CompleteMessage;
-import hu.messaging.Constants;
 
 public class MessageUtils {
 	
-	public static MessageContainer createMessageContainerFromCompleteMessage(CompleteMessage m, boolean isSent) {
+	public static MessageInfoContainer createMessageContainerFromCompleteMessage(CompleteMessage m, boolean isSent) {
 		ObjectFactory f = new ObjectFactory();
-		MessageContainer c = f.createMessageContainer();
-		c.setContentAvailable(m.getContent() != null);
+		MessageInfoContainer c = f.createMessageInfoContainer();
+		c.setContentDescription(f.createContentDescription());
+		
+		c.getContentDescription().setContentAvailable(m.getContent() != null);
 		c.setId(m.getMessageId());
-		c.setMimeType(m.getExtension());
+		c.getContentDescription().setMimeType(m.getMimeType());
 		if (isSent) {
 			c.setStatus("SENT");
 		}
 		else {
 			c.setStatus("NEW");
 		}
-		MessageContainer.Sender s = new ObjectFactory().createMessageContainerSender();
-		s.setName(m.getSender() + "_name");
-		s.setSipUri(m.getSender());
+		UserInfo s = f.createUserInfo();
+		if (m.getSender() != null) {
+			s.setName(m.getSender().getName());
+			s.setSipUri(m.getSender().getSipUri());
+		}		
 		c.setSender(s);
 		
 		c.setSubject(m.getSubject());
@@ -33,19 +37,19 @@ public class MessageUtils {
 		return c;
 	}
 
-	public static void createMessageContainerFile(MessageContainer message, byte[] content) {			
+	public static void createMessageContainerFile(MessageInfoContainer message, byte[] content) {			
 		
-		File dir = new File(Constants.messagesPath);
+		File dir = new File(Resources.messagesDirectory);
 		dir.mkdirs();
 		File messageFile = new File(dir, message.getId() + ".message");
-		message.setContentAvailable(content != null);
+		message.getContentDescription().setContentAvailable(content != null);
 		if (content != null) {
 			try {
 				OutputStream out = null;
-				String contentDirPath = Constants.messagesPath + Constants.messagesContentsRelativePath;	
+				String contentDirPath = Resources.messageContentsDirectory;	
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
-				File contentFile = new File(contentDir, message.getId() + "." + message.getMimeType());
+				File contentFile = new File(contentDir, message.getId() + "." + MimeHelper.getExtensionByMIMEType(message.getContentDescription().getMimeType()));
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 				out.write(content);
@@ -56,28 +60,29 @@ public class MessageUtils {
 				e.printStackTrace();
 			}	
 		}
-		XMLUtils.createXMLFileFromMessageContainer(message, messageFile);			
+		XMLUtils.createXMLFileFromMessageInfoContainer(message, messageFile);			
 	}
 	
-	public static void updateMessageContainerFile(MessageContainer message, byte[] content) {							
+	public static void updateMessageContainerFile(MessageInfoContainer message, byte[] content) {							
 		
-		File dir = new File(Constants.messagesPath);
+		File dir = new File(Resources.messagesDirectory);
 		dir.mkdirs();
+		System.out.println("MessageUtils messageId: " + message.getId());
 		File messageFile = new File(dir, message.getId() + ".message");
 		if (!messageFile.exists()) {
 			System.out.println("Nincs ilyen containerFile: " + message.getId() + ".message");
 		}
 		
-		MessageContainer m = XMLUtils.createMessageContainerFromFile(messageFile);
-		m.setContentAvailable(true);
+		MessageInfoContainer m = XMLUtils.createMessageInfoContainerFromFile(messageFile);
+		m.getContentDescription().setContentAvailable(true);
 		
 		if (content != null) {
 			try {
 				OutputStream out = null;
-				String contentDirPath = Constants.messagesPath + Constants.messagesContentsRelativePath;	
+				String contentDirPath = Resources.messageContentsDirectory;		
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
-				File contentFile = new File(contentDir, message.getId() + "." + m.getMimeType());
+				File contentFile = new File(contentDir, message.getId() + "." + MimeHelper.getExtensionByMIMEType(m.getContentDescription().getMimeType()));
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 				out.write(content);
@@ -88,25 +93,25 @@ public class MessageUtils {
 				e.printStackTrace();
 			}	
 		}
-		XMLUtils.createXMLFileFromMessageContainer(m, messageFile);			
+		XMLUtils.createXMLFileFromMessageInfoContainer(m, messageFile);			
 	}
 	
-	public static MessageContainer readMessageContainerFromFile(String messageId) {
-		File dir = new File(Constants.messagesPath + Constants.messagesContentsRelativePath);
+	public static MessageInfoContainer readMessageContainerFromFile(String messageId) {
+		File dir = new File(Resources.messagesDirectory);
 		File messageFile = new File(dir, messageId + ".message");
-		MessageContainer m = XMLUtils.createMessageContainerFromFile(messageFile);			        
+		MessageInfoContainer m = XMLUtils.createMessageInfoContainerFromFile(messageFile);			        
 		
 		return m;
 	}
 	
-	public static List<MessageContainer> loadInboxMessages() {		
-		List<MessageContainer> inbox = new ArrayList<MessageContainer>();
-		File dir = new File(Constants.messagesPath);
+	public static List<MessageInfoContainer> loadInboxMessages() {		
+		List<MessageInfoContainer> inbox = new ArrayList<MessageInfoContainer>();
+		File dir = new File(Resources.messagesDirectory);
 		
 		for (File f : dir.listFiles()) {
-			if (f.isFile()) {
+			if (f.isFile() && StringUtil.getFileExtension(f.getName()).equals("message")) {
 				System.out.println(f.getName());				
-				MessageContainer c = XMLUtils.createMessageContainerFromFile(f);
+				MessageInfoContainer c = XMLUtils.createMessageInfoContainerFromFile(f);
 				System.out.println("MessageContainer id: " + c.getId());
 				if (!"SENT".equals(c.getStatus().toUpperCase())) {
 					inbox.add(c);
@@ -116,14 +121,14 @@ public class MessageUtils {
 		return inbox;
 	}
 	
-	public static List<MessageContainer> loadSentMessages() {		
-		List<MessageContainer> sentMessages = new ArrayList<MessageContainer>();
-		File dir = new File(Constants.messagesPath);
+	public static List<MessageInfoContainer> loadSentMessages() {		
+		List<MessageInfoContainer> sentMessages = new ArrayList<MessageInfoContainer>();
+		File dir = new File(Resources.messagesDirectory);
 		
 		for (File f : dir.listFiles()) {
-			if (f.isFile()) {
+			if (f.isFile() && StringUtil.getFileExtension(f.getName()).equals("message")) {
 				System.out.println(f.getName());				
-				MessageContainer c = XMLUtils.createMessageContainerFromFile(f);
+				MessageInfoContainer c = XMLUtils.createMessageInfoContainerFromFile(f);
 				System.out.println("MessageContainer id: " + c.getId());
 				if ("SENT".equals(c.getStatus().toUpperCase())) {
 					sentMessages.add(c);
@@ -133,19 +138,29 @@ public class MessageUtils {
 		return sentMessages;
 	}
 	
-	public static MessageContainer createMessageContainerFromNotifyInfoMessage(InfoMessage info) {		
-		MessageContainer m = new ObjectFactory().createMessageContainer();
-		MessageContainer.Sender s = new ObjectFactory().createMessageContainerSender();
-		m.setId(info.getInfoDetail().getId());
-		m.setStatus("NEW");
-		m.setMimeType(info.getInfoDetail().getMimeType());
-		m.setSubject(info.getInfoDetail().getSubject());
-		m.setContentAvailable(false);
+	public static List<MessageInfoContainer> createMessageInfoContainerListFromNotifyInfoMessage(InfoMessage info) {		
+		ObjectFactory f = new ObjectFactory();
+		List<MessageInfoContainer> cList = new ArrayList<MessageInfoContainer>();
 		
-		s.setName(info.getInfoDetail().getSender().getName());
-		s.setSipUri(info.getInfoDetail().getSender().getSipUri());
-		m.setSender(s);		
+		for (InfoDetail d : info.getDetailList().getDetail()) {
+			System.out.println("csinálom a dolgom");
+			MessageInfoContainer m = f.createMessageInfoContainer();
+			m.setContentDescription(f.createContentDescription());
+			UserInfo s = f.createUserInfo();
+			
+			m.setId(d.getId());
+			m.setStatus("NEW");
+			m.getContentDescription().setMimeType(d.getContent().getMimeType());
+			m.setSubject(d.getSubject());
+			m.getContentDescription().setContentAvailable(false);
+			
+			s.setName(d.getSender().getName());
+			s.setSipUri(d.getSender().getSipUri());
+			m.setSender(s);		
+			
+			cList.add(m);
+		}				
 					 
-		return m;
+		return cList;
 	}
 }

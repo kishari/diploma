@@ -16,246 +16,148 @@ import com.ericsson.icp.util.IBuddy;
 import com.ericsson.icp.util.IIterator;
 import hu.messaging.client.gui.controller.ICPController;
 
+public class ICPGroupListController {
 
-/**
- * Handles the creation and updates of groups and buddies
- */
-public class ICPGroupListController
-{
+	private IRLSManager groupListManager;
+	private ContactListController contactListController;
 
-    /**
-     * The ICP group list manager
-     */
-    private IRLSManager groupListManager;
+	private GroupListManagerListener glmListener;
 
-    /**
-     * The application contact list controller
-     */
-    private ContactListController contactListController;
+	public ICPGroupListController(ICPController icpController,
+			ContactListController contactListController) throws Exception {
+		contactListController.setIcpGroupListController(this);
+		groupListManager = PGMFactory.createRLSManager(icpController.getProfile());
 
+		glmListener = new GroupListManagerListener(icpController);
 
-    /**
-     * The user identity
-     */
-    private String identity;
+		groupListManager.addListener((IRLSMListener) glmListener);
+		this.contactListController = contactListController;
 
-    /**
-     * The group list manager listener that received the callback
-     */
-    private GroupListManagerListener glmListener;
+		loadGroups();
 
-    public ICPGroupListController(ICPController icpController, ContactListController contactListController) throws Exception
-    {
-        contactListController.setIcpGroupListController(this);
-        groupListManager = PGMFactory.createRLSManager(icpController.getProfile());
+		createDefaultGroup();
+	}
 
-        identity = icpController.getProfile().getIdentity();
-        glmListener = new GroupListManagerListener(icpController);
+	public void addBuddy(Group group, Buddy contact) throws Exception {
+		IRLSGroup icpGroup = findGroup(group.getName());
+		IBuddy newBuddy = PGMFactory.createBuddy(contact.getContact());
+		newBuddy.setDisplayName(contact.getDisplayName());
+		icpGroup.addMember(newBuddy);
+		glmListener.clear();
+		groupListManager.modifyGroup(icpGroup);
+		glmListener.waitForCallback();
+	}
 
-        groupListManager.addListener((IRLSMListener) glmListener);
-        this.contactListController = contactListController;
+	public void removeBuddy(Group group, Buddy contact) throws Exception {
+		IRLSGroup icpGroup = findGroup(group.getName());
+		if (icpGroup != null) {
+			IBuddy buddyToRemove = findBuddy(icpGroup, contact.getContact());
+			if (buddyToRemove != null) {
+				icpGroup.removeMember(buddyToRemove);
+				groupListManager.modifyGroup(icpGroup);
+			}
+		}
+	}
 
-        loadGroups();        
-        
-        createDefaultGroup();
-    }
+	public void addGroup(Group group) throws Exception {
+		IRLSGroup icpGroup = PGMFactory.createGroup(group.getName());
+		icpGroup.setDisplayName(group.getName());
+		glmListener.clear();
+		groupListManager.addGroup(icpGroup);
+		glmListener.waitForCallback();
+	}
 
-    /**
-     * Add contact to the specified group and create the group if it doesn't exist.
-     * 
-     * @throws Exception
-     * @see hu.messaging.client.gui.listener.ui.ContactListListener#buddyAdded(hu.messaging.client.gui.data.Group, hu.messaging.client.gui.data.Buddy)
-     */
-    public void addBuddy(Group group, Buddy contact) throws Exception
-    {
-        IRLSGroup icpGroup = findGroup(group.getName());
-        IBuddy newBuddy = PGMFactory.createBuddy(contact.getContact());
-        newBuddy.setDisplayName(contact.getDisplayName());
-        icpGroup.addMember(newBuddy);
-        glmListener.clear();
-        groupListManager.modifyGroup(icpGroup);
-        glmListener.waitForCallback();
-    }
+	public void removeGroup(Group group) throws Exception {
+		IRLSGroup icpGroup = findGroup(group.getName());
+		if (icpGroup != null) {
+			groupListManager.removeGroup(icpGroup);
+			icpGroup.release();
+		}
+	}
 
-    /**
-     * @throws Exception
-     * @see hu.messaging.client.gui.listener.ui.ContactListListener#buddyRemoved(hu.messaging.client.gui.data.Group, hu.messaging.client.gui.data.Buddy)
-     */
-    public void removeBuddy(Group group, Buddy contact) throws Exception
-    {
-        IRLSGroup icpGroup = findGroup(group.getName());
-        if(icpGroup != null)
-        {
-            IBuddy buddyToRemove = findBuddy(icpGroup, contact.getContact());
-            if(buddyToRemove != null)
-            {
-                icpGroup.removeMember(buddyToRemove);
-                groupListManager.modifyGroup(icpGroup);
-            }
-        }
-    }
+	public void modifyBuddy(Group group, Buddy contact) throws Exception {
+		IRLSGroup icpGroup = findGroup(group.getName());
+		if (icpGroup != null) {
+			IBuddy buddyToUpdate = findBuddy(icpGroup, contact.getContact());
+			if (buddyToUpdate != null) {
+				buddyToUpdate.setDisplayName(contact.getDisplayName());
+				icpGroup.modifyMember(buddyToUpdate);
+				groupListManager.modifyGroup(icpGroup);
+			}
+		}
+	}
 
-    /**
-     * @throws Exception 
-     * @see hu.messaging.client.gui.listener.ui.ContactListListener#groupAdded(hu.messaging.client.gui.data.Group)
-     */
-    public void addGroup(Group group) throws Exception
-    {
-        IRLSGroup icpGroup = PGMFactory.createGroup(group.getName());
-        icpGroup.setDisplayName(group.getName());
-        glmListener.clear();
-        groupListManager.addGroup(icpGroup);
-        glmListener.waitForCallback();
-    }
+	public void modifyGroup(Group group) throws Exception {
+		IRLSGroup icpGroup = findGroup(group.getName());
+		if (icpGroup != null) {
+			icpGroup.setDisplayName(group.getDisplayName());
+			groupListManager.modifyGroup(icpGroup);
+		}
+	}
 
-    /**
-     * @throws Exception
-     * @see hu.messaging.client.gui.listener.ui.ContactListListener#groupRemoved(hu.messaging.client.gui.data.Group)
-     */
-    public void removeGroup(Group group) throws Exception
-    {
-        IRLSGroup icpGroup = findGroup(group.getName());
-        if(icpGroup != null)
-        {
-            groupListManager.removeGroup(icpGroup);
-            icpGroup.release();
-        }
-    }
+	private IRLSGroup findGroup(String name) {
+		IRLSGroup icpGroup = null;
+		try {
+			icpGroup = groupListManager.searchGroup(name);
+		} catch (Exception e) {
 
-    public void modifyBuddy(Group group, Buddy contact) throws Exception
-    {
-        IRLSGroup icpGroup = findGroup(group.getName());
-        if(icpGroup != null)
-        {
-            IBuddy buddyToUpdate = findBuddy(icpGroup, contact.getContact());
-            if(buddyToUpdate != null)
-            {
-                buddyToUpdate.setDisplayName(contact.getDisplayName());
-                icpGroup.modifyMember(buddyToUpdate);
-                groupListManager.modifyGroup(icpGroup);
-            }
-        }
-    }
+		}
+		return icpGroup;
+	}
 
-    public void modifyGroup(Group group) throws Exception
-    {
-        IRLSGroup icpGroup = findGroup(group.getName());
-        if(icpGroup != null)
-        {
-            icpGroup.setDisplayName(group.getDisplayName());
-            groupListManager.modifyGroup(icpGroup);
-        }
-    }
+	private IBuddy findBuddy(IRLSGroup group, String contactUri) {
+		IBuddy icpBuddy = null;
+		try {
+			IIterator itr = group.getMembers();
+			while (itr.hasNext() && (icpBuddy == null)) {
+				itr.next();
+				icpBuddy = (IBuddy) itr.getElement();
+				if (!icpBuddy.getUri().equals(contactUri)) {
+					icpBuddy = null;
+				}
+			}
+		} catch (Exception e) {
+			
+		}
+		return icpBuddy;
+	}
 
-    /**
-     * Find the group indentified by name.
-     * 
-     * @param name
-     * @return The group finded or null if no group with the identifier name is finded.
-     */
-    private IRLSGroup findGroup(String name)
-    {
-        IRLSGroup icpGroup = null;
-        try
-        {
-            icpGroup = groupListManager.searchGroup(name);
-        }
-        catch (Exception e)
-        {
-            //ICPController.error("Could not find group", e);
-        }
-        return icpGroup;
-    }
+	private void loadGroups() throws Exception {
+		IIterator groupList = groupListManager.getGroupIterator();
+		while (groupList.hasNext()) {
+			groupList.next();
+			IRLSGroup icpGroup = (IRLSGroup) groupList.getElement();
 
-    /**
-     * Find a user
-     * 
-     * @param iterator A user iterator
-     * @param contactUri The URI to find
-     * @return The buddy if found
-     */
-    private IBuddy findBuddy(IRLSGroup group, String contactUri)
-    {
-        IBuddy icpBuddy = null;
-        try
-        {
-            IIterator itr = group.getMembers();
-            while (itr.hasNext() && (icpBuddy == null))
-            {
-                itr.next();
-                icpBuddy = (IBuddy) itr.getElement();
-                if(!icpBuddy.getUri().equals(contactUri))
-                {
-                    icpBuddy = null;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            //ICPController.error("Error searching for buddy", e);
-        }
-        return icpBuddy;
-    }
+			if (!StringUtil.isEmpty(icpGroup.getDisplayName())) {
+				Group group = new Group(icpGroup.getName());
+				group.setDisplayName(icpGroup.getDisplayName());
+				contactListController.addGroupToGui(group);
 
-    /**
-     * Get the groups and the buddies
-     * 
-     * @throws Exception
-     */
-    private void loadGroups() throws Exception
-    {
-    	//System.out.println(getClass().getSimpleName() + " : loadGroups()");
-        IIterator groupList = groupListManager.getGroupIterator();
-        while (groupList.hasNext())        	
-        {
-            groupList.next();
-            IRLSGroup icpGroup = (IRLSGroup) groupList.getElement();
+				IIterator buddyList = icpGroup.getMembers();
+				while (buddyList.hasNext()) {
+					buddyList.next();
+					IBuddy icpBuddy = (IBuddy) buddyList.getElement();
+					Buddy buddy = new Buddy(icpBuddy.getUri());
+					buddy.setDisplayName(icpBuddy.getDisplayName());
+					contactListController.addBuddy(group, buddy, false);
+				}
+			}
+		}
+	}
 
-            if(!StringUtil.isEmpty(icpGroup.getDisplayName()))
-            {
-                Group group = new Group(icpGroup.getName());
-                group.setDisplayName(icpGroup.getDisplayName());
-                contactListController.addGroupToGui(group);
+	private void createDefaultGroup() {
+		if (contactListController.getDefaultGroup() == null) {
+			Group group = new Group(ContactList.DEFAULT_GROUP_NAME);
+			contactListController.addGroup(group);
+		}
+	}
 
-                IIterator buddyList = icpGroup.getMembers();
-                while (buddyList.hasNext())
-                {
-                    buddyList.next();
-                    IBuddy icpBuddy = (IBuddy) buddyList.getElement();
-                    Buddy buddy = new Buddy(icpBuddy.getUri());
-                    buddy.setDisplayName(icpBuddy.getDisplayName());
-                    contactListController.addBuddy(group, buddy, false);
-                }
-            }
-        }
-    }
+	public void release() {
+		try {
+			IcpUtils.release(groupListManager);
+		} catch (Exception e) {
 
-    /**
-     * Create the default gr4oup as required
-     */
-    private void createDefaultGroup()
-    {
-        if(contactListController.getDefaultGroup() == null)
-        {
-            // Create a default group
-            Group group = new Group(ContactList.DEFAULT_GROUP_NAME);
-            contactListController.addGroup(group);
-        }
-    }
-
-    /**
-     * Release this instance
-     */
-    public void release()
-    {
-        try
-        {
-            IcpUtils.release(groupListManager);
-        }
-        catch (Exception e)
-        {
-            //ICPController.error("Error releasing group controller", e);
-        }
-    }
+		}
+	}
 
 }

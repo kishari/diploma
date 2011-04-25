@@ -9,35 +9,29 @@ import hu.messaging.client.gui.util.SwingUtil;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 
-/**
- * Action called when a group is edited
- */
-public class EditGroupActionListener extends BuddyActionListener
-{
+public class EditGroupActionListener extends BuddyActionListener {
 
-	public EditGroupActionListener(ICPController aIcpController, Container parent)
-	{
+	public EditGroupActionListener(ICPController aIcpController,
+			Container parent) {
 		super(aIcpController, parent);
 	}
 
-	public void actionPerformed(ActionEvent e)
-	{
+	public void actionPerformed(ActionEvent e) {
 		Group group = controller.getSelectedGroup();
-		if(group != null)
-		{
-		    // Open the edition dialog
-            SimpleTextDialog dialog = new SimpleTextDialog(SwingUtil.getFrame(parent), "dialog.group.name.label");
-            dialog.setTitle(Resources.resources.get("dialog.group.edit.title"));
+		if (group != null) {
+
+			SimpleTextDialog dialog = new SimpleTextDialog(SwingUtil
+					.getFrame(parent), "dialog.group.name.label");
+			dialog.setTitle(Resources.resources.get("dialog.group.edit.title"));
 			dialog.setTextValue(group.getDisplayName());
-            dialog.pack();
+			dialog.pack();
 			dialog.setVisible(true);
-            // update the name
-	        String groupName = (String) dialog.getData();
-	        if((groupName != null) && (!groupName.equals("")))
-	        {
-	            group.setDisplayName(groupName);
-                controller.updateGroup(group);
-	        }
+			// update the name
+			String groupName = (String) dialog.getData();
+			if ((groupName != null) && (!groupName.equals(""))) {
+				group.setDisplayName(groupName);
+				controller.updateGroup(group);
+			}
 		}
 	}
 

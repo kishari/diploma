@@ -1,7 +1,6 @@
 package hu.messaging.util;
 
-import hu.messaging.client.model.InfoMessage;
-import hu.messaging.client.model.MessageContainer;
+import hu.messaging.client.model.*;
 import javax.xml.bind.*;
 import java.io.*;
 
@@ -12,7 +11,7 @@ public class XMLUtils {
 	static {
         try {
         	infoMessageContext = JAXBContext.newInstance(InfoMessage.class);
-        	messageContext = JAXBContext.newInstance(MessageContainer.class);
+        	messageContext = JAXBContext.newInstance(MessageInfoContainer.class);
         } catch (JAXBException e) {
             //throw new RuntimeException(e);
         	System.out.println("Exception van");
@@ -44,16 +43,19 @@ public class XMLUtils {
 	    catch (JAXBException e) {
 	    	
 	    }
-	    	    	    	    
+	    	 
+	    System.out.println("XMLUtils createStringXMLFromInfoMessage return:");
+	    System.out.println(baos.toString());
+	    
 		return baos.toString();
 	}
 	
-	public static MessageContainer createMessageContainerFromStringXML(String xml) {	      	    
+	public static MessageInfoContainer createMessageInfoContainerFromStringXML(String xml) {	      	    
 	    ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
-	    MessageContainer msg = null;
+	    MessageInfoContainer msg = null;
 	    try {
 	    	Unmarshaller um = messageContext.createUnmarshaller();
-	    	msg = (MessageContainer)um.unmarshal(bais);
+	    	msg = (MessageInfoContainer)um.unmarshal(bais);
 	    }
 	    catch (JAXBException e) {
 	    	
@@ -62,20 +64,27 @@ public class XMLUtils {
 		return msg;
 	}
 	
-	public static MessageContainer createMessageContainerFromFile(File xmlFile) {	      	    
-		MessageContainer msg = null;
+	public static MessageInfoContainer createMessageInfoContainerFromFile(File xmlFile) {	      	    
+		MessageInfoContainer msg = null;
+		if (xmlFile == null) {
+			System.out.println("XMLUtils createMessageInfoContainerFromFile file null");
+		}
 	    try {
 	    	Unmarshaller um = messageContext.createUnmarshaller();
-	    	msg = (MessageContainer)um.unmarshal(xmlFile);
+	    	msg = (MessageInfoContainer)um.unmarshal(xmlFile);
 	    }
 	    catch (JAXBException e) {
 	    	
 	    }
 	    
+	    System.out.println("createMessageInfoContainerFromFile return");
+	    if (msg == null)
+	    	System.out.println("baj van baj");
+	    
 		return msg;
 	}
 	
-	public static String createStringXMLFromMessageContainer(MessageContainer message) {
+	public static String createStringXMLFromMessageInfoContainer(MessageInfoContainer message) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
 			Marshaller m = messageContext.createMarshaller();
@@ -89,7 +98,7 @@ public class XMLUtils {
 		return baos.toString();
 	}
 	
-	public static void createXMLFileFromMessageContainer(MessageContainer message, File outputFile) {
+	public static void createXMLFileFromMessageInfoContainer(MessageInfoContainer message, File outputFile) {
 		try {
 			Marshaller m = messageContext.createMarshaller();
 			m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);

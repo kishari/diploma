@@ -1,5 +1,7 @@
 package hu.messaging.util;
 
+import hu.messaging.msrp.util.SessionDescription;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.net.*;
@@ -11,8 +13,8 @@ public class SDPUtil {
 																"([\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})\r\n");
 	
 	
-	public ParsedSDP parseSessionDescription(String s) throws UnknownHostException {
-		ParsedSDP sdp = new ParsedSDP();
+	public SessionDescription parseSessionDescription(String s) throws UnknownHostException {
+		SessionDescription sdp = new SessionDescription();
 		
 		Matcher m = attributePattern.matcher(s);
 		while (m.find()) {

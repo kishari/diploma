@@ -12,14 +12,13 @@ public class BaseListener {
     }
 
     public void processError(ErrorReason aError){
-        System.out.println("processError: " + aError.getReasonString());
+    	log("processError: " + aError.getReasonString());
     }
     
     public void log(String message)  {
     	if (logEnabled) {
     		System.out.println(message);
-    	}
-    	
+    	}    	
     }
     
 }

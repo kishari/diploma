@@ -12,13 +12,13 @@ public class ServiceListener extends BaseListener implements IServiceListener {
 	}
 
 	public void processIncomingSession(ISession session) {
-		log(getClass().getSimpleName() + ": ");
+		log(getClass().getSimpleName() + ": processIncomingSession");
 
 	}
 
 	public void processMessage(String to, String msgType, byte[] message, int length) {
 		log(getClass().getSimpleName() + ": processMessage");
-		icpController.processIncomingSIPMessage(to, new String(message));
+		icpController.getCommunicationController().processIncomingSIPMessage(to, new String(message));
 	}
 
 	public void processOptions(String preferedContact, String remote,
@@ -74,34 +74,34 @@ public class ServiceListener extends BaseListener implements IServiceListener {
 	public void processSendOptionsResult(boolean status,
 			String preferedContact, String remote, String type, byte[] content,
 			int length, long retryAfter) {
-		log(getClass().getSimpleName() + ": ");
+		log(getClass().getSimpleName() + ": processSendOptionsResult");
 
 	}
 
 	
 	public void processSubscribeEnded(String preferedContact, String remote,
 			String event) {
-		log(getClass().getSimpleName() + ": ");
+		log(getClass().getSimpleName() + ": processSubscribeEnded");
 
 	}
 
 	
 	public void processSubscribeNotification(String remote, String contact,
 			String event, String type, byte[] content, int length) {
-		log(getClass().getSimpleName() + ": ");
+		log(getClass().getSimpleName() + ": processSubscribeNotification");
 
 	}
 
 	
 	public void processSubscribeResult(boolean status, String remote,
 			String event, long retryAfter) {
-		log(getClass().getSimpleName() + ": ");
+		log(getClass().getSimpleName() + ": processSubscribeResult");
 
 	}
 
 	
 	public void processUnsubscribeResult(boolean status, String remote,
 			String event, long retryAfter) {
-		log(getClass().getSimpleName() + ": processSendOptionsResult");
+		log(getClass().getSimpleName() + ": processUnsubscribeResult");
 	}
 }

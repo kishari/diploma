@@ -1,6 +1,6 @@
 package hu.messaging.msrp;
 
-import hu.messaging.Constants;
+import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.BufferedOutputStream;
@@ -25,18 +25,16 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //TESZTHEZ START
 	private File contentFile = null;
 	private File recreatedContentFile = null;
-	private String fileExtension = null;
 //TESZTHEZ END
 	
 	private boolean running = false;
-	private BlockingQueue<CompleteMessage> outgoingMessageQueue;
-	private Session session;
+	private BlockingQueue<CompleteMSRPMessage> outgoingMessageQueue;
+	private TransactionManager transactionManager;
 	
-	public OutgoingMessageProcessor(BlockingQueue<CompleteMessage> outgoingMessageQueue, 
-									Session session,
-									TransactionManager transactionManager ) {
+	public OutgoingMessageProcessor(BlockingQueue<CompleteMSRPMessage> outgoingMessageQueue, 
+									TransactionManager transactionManager) {
 		this.outgoingMessageQueue = outgoingMessageQueue;
-		this.session = session;
+		this.transactionManager = transactionManager;
 		this.addObserver(transactionManager);
 	}
 	
@@ -45,7 +43,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			try {
 				//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
 				//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
-				CompleteMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+				CompleteMSRPMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 				if (data != null) {
 					processOutgoingMessage(data);
 				}				
@@ -53,18 +51,19 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			catch(InterruptedException e) {}
 			
 		}
+		this.setChanged();
+		this.notifyObservers();
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void processOutgoingMessage(CompleteMessage completeMessage) {
-		fileExtension = completeMessage.getExtension();
-		
-		this.printToFile(completeMessage.getContent(), false);
+	private void processOutgoingMessage(CompleteMSRPMessage fullMessage) {
+
+		this.printToFile(fullMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
 
 		int chunkSize = Constants.chunkSize;
 		
-		Map<String, Object> map = splitMessageToChunks(completeMessage, chunkSize);
+		Map<String, Object> map = splitMessageToChunks(fullMessage, chunkSize);
 		
 		List<byte[]> chunks = (List<byte[]>)map.get(Keys.chunkList);
 		int totalContentLength = (Integer)map.get(Keys.contentLength);
@@ -75,7 +74,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		int offset = 1;
 		char endToken = '+';
 		String tId = "";
-		String messageId = MSRPUtil.generateRandomString(Constants.messageIdLength);
+		String messageId = fullMessage.getMessageId() != null? fullMessage.getMessageId() : MSRPUtil.generateRandomString(Constants.messageIdLength);
 		List<Request> requestList = new ArrayList<Request>();
 		
 		for (byte[] chunk : chunks) {			
@@ -85,7 +84,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 				endToken = '$';
 			}
 			
-			Request req = MSRPUtil.createRequest(chunk, session.getLocalUri(), session.getRemoteUri(),
+			Request req = MSRPUtil.createRequest(chunk, transactionManager.getSession().getLocalUri(), transactionManager.getSession().getRemoteUri(),
 												  tId, messageId, 
 												  offset, chunk.length, totalContentLength,
 												  endToken);
@@ -93,6 +92,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //>>>> TESZT
 			Message mTest = MSRPUtil.createMessageFromString(req.toString());
 			Request r = (Request)mTest;
+			//System.out.println(r.getContent().length);
 			this.printToFile(Base64.decodeBase64(r.getContent()), true);
 //<<<< TESZT
 			
@@ -105,7 +105,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		this.notifyObservers(requestList); //Átküldjük a TransactionManagernek a requestList-et
 	}
 	
-	private Map<String, Object> splitMessageToChunks(CompleteMessage message, int chunkSize) {
+	private Map<String, Object> splitMessageToChunks(CompleteMSRPMessage message, int chunkSize) {
 		List<byte[]> chunks = new ArrayList<byte[]>();
 		
 		byte[] base64EncodedContent = Base64.encodeBase64(message.getContent());
@@ -135,12 +135,14 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		return map;
 	}
 	
-	public void start() {
-		this.running = true;
-		new Thread(this).start();
+	protected void start() {
+		if (!running) {
+			this.running = true;
+			new Thread(this).start();
+		}	
 	}
 	
-	public void stop() {
+	protected void stop() {
 		this.running = false;
 	}	
 	
@@ -150,11 +152,11 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		try {
 			OutputStream out = null;
 			if (!recreated) {
-				contentFile = new File("c:\\diploma\\testing\\clientContentFile." + fileExtension);
+				contentFile = new File("c:\\diploma\\testing\\clientContentFile.mp3");
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			}
 			else {
-				recreatedContentFile = new File("c:\\diploma\\testing\\clientRecreatedContentFile." + fileExtension);
+				recreatedContentFile = new File("c:\\diploma\\testing\\clientRecreatedContentFile.mp3");
 				out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			}
 			

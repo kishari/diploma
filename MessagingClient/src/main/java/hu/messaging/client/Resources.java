@@ -8,9 +8,23 @@ public class Resources {
 	public static final Map<String, String> resources = new HashMap<String, String>(){
 		{
             put("application.title", "Messaging Client");
-            put("application.name", "IMS Multicast Messaging Client");
-            put("application.version", "Version 1.0");
+            put("application.start.error","Error starting the client");
             put("buddy.group.default", "Others");
+            put("menu.messages", "Messages");
+            put("menu.messages.box", "Message Box");
+            put("menu.messages.pull", "Pull New Messages");
+            put("menu.file", "File");                        
+            put("menu.file.exit", "Exit");
+            put("menu.edit", "Edit");
+            put("menu.edit.buddy.add", "Add Buddy...");
+            put("menu.edit.buddy.edit", "Rename Buddy...");
+            put("menu.edit.buddy.move", "Move to Group...");
+            put("menu.edit.buddy.remove", "Remove Buddy");
+            put("menu.edit.group.add", "Add Group...");
+            put("menu.edit.group.remove", "Remove Group");
+            put("menu.edit.group.edit", "Rename Group...");
+            put("menu.edit.sort.ascending", "Sort Ascending");
+            put("menu.edit.sort.descending", "Sort Descending");            
             put("button.cancel", "Cancel");
             put("button.ok", "Ok");
             put("button.add", "Add");
@@ -19,30 +33,23 @@ public class Resources {
             put("button.send", "Send");
             put("button.play", "Play");
             put("button.stop", "Stop");
-            put("button.show", "Show");            
-            put("menu.file", "File");
-            put("menu.file.exit", "Exit");
-            put("menu.edit", "Edit");
-            put("menu.edit.buddy.add", "Add Buddy...");
-            put("menu.edit.buddy.edit", "Rename Buddy...");
-            put("menu.edit.buddy.move", "Move to Group...");
-            put("menu.edit.buddy.remove", "Remove Buddy");
-            put("menu.edit.sendmessage", "Send message...");
-            put("menu.edit.group.add", "Add Group...");
-            put("menu.edit.group.remove", "Remove Group");
-            put("menu.edit.group.edit", "Rename Group...");
-            put("menu.edit.sort.ascending", "Sort Ascending");
-            put("menu.edit.sort.descending", "Sort Descending");
-            put("menu.help", "Help");
-            put("menu.help.about", "About...");
-            put("menu.session", "Session");
-            put("menu.session.start.chat", "Start chat session...");
-            put("menu.session.start.voice", "Start voice session...");
-            put("menu.view", "View");
-            put("menu.view.inbox", "Inbox...");
-            put("dialog.group.add.title", "New Group");
-            put("dialog.group.name.label", "Group name:");
+            put("button.show", "Show");
+            put("button.capture", "Capture");     
             put("dialog.group.edit.title", "Modify Group");
+            put("dialog.group.name.label", "Group name:");
+            put("icon.nouser", "No User");
+            put("add.buddy.error","Error adding buddy");
+            put("add.group.error","Error adding group ");
+            put("remove.buddy.error","Error removing buddy");
+            put("remove.group.error","Error removing group ");
+            put("update.buddy.error","Error updating buddy");
+            put("update.group.error","Error updating group ");
+            put("capture.window.title", "Capture content");
+            put("detail.message.sender.label", "Feladó: ");
+            put("detail.message.subject.label", "Tárgy: ");
+            put("detail.message.mimetype.label", "Üzenet típusa: ");
+            put("menu.edit.sendmessage", "Send message...");
+            put("dialog.group.add.title", "New Group");                       
             put("dialog.buddy.add.title", "New Buddy");
             put("dialog.buddy.group.label", "Add to Group:");
             put("dialog.buddy.name", "Buddy Name");
@@ -51,6 +58,13 @@ public class Resources {
             put("dialog.buddy.edit.title", "Modify Buddy");
             put("dialog.contact.move.title", "Move to group");
             put("dialog.contact.move.label", "Select new group:");
+            put("messagepane.label.sent", "Elküldött üzenetek");
+            put("messagepane.label.inbox", "Bejövõ üzenetek");
+            put("message.remove.group.default.title","Cannot remove group");
+            put("message.remove.group.default","Default group cannot be deleted");
+            //---------------------------------
+                                                
+
             put("dialog.message.sender", "Sender:");
             put("dialog.help.about.title", "About Messaging Client");
             put("dialog.instant.message.send.title", "Message to send");
@@ -92,25 +106,25 @@ public class Resources {
             put("status.online","Online");
             put("status.offline","Offline");
             put("status.blacklisted","");
-            put("message.remove.group.default.title","Cannot remove group");
-            put("message.remove.group.default","Default group cannot be deleted");
+            
             put("message.communication.failed","Unable to initiate the communication with the remote party");
             put("message.communication.refused","The remote party declined the invitation");
             put("message.communication.end","Communication ended by the remote party");
-            put("application.start.error","Error starting the client");
+           
             put("save.error","Error saving file");
             put("dialog.chat.error","Error processing the chat session");
             put("dialog.call.error","Error processing the voice call");
             put("add.user.error","Error adding user");
-            put("add.buddy.error","Error adding buddy");
-            put("add.group.error","Error adding group ");
-            put("remove.buddy.error","Error removing buddy");
-            put("remove.group.error","Error removing group ");
-            put("update.buddy.error","Error updating buddy");
-            put("update.group.error","Error updating group ");
+            
             put("frame.messagebox.title", "Messages");
             put("frame.message.details.title", "Message Details");
         }
-    };	
+    };
+    
+    public static final String serverSipURI = "sip:weblogic@ericsson.com";
+    
+    public static final String workingDirectory = "C:\\diploma\\testing\\";
+    public static final String messagesDirectory = workingDirectory + "messages\\";
+    public static final String messageContentsDirectory = messagesDirectory + "contents\\";
     
 }
