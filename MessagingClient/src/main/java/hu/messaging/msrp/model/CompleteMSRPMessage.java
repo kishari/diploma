@@ -2,12 +2,12 @@ package hu.messaging.msrp.model;
 
 import org.apache.commons.codec.binary.Base64;
 
-public class FullMSRPMessage {
+public class CompleteMSRPMessage {
 	
 	private byte[] content = null;
 	private String messageId = null;
 	
-	public FullMSRPMessage(String messageId, byte[] content) {
+	public CompleteMSRPMessage(String messageId, byte[] content) {
 		this.messageId = messageId;
 		if (Base64.isArrayByteBase64(content)) {
 			this.content = Base64.decodeBase64(content);

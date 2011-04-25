@@ -42,7 +42,7 @@ public class TransactionManager extends Observable implements Observer {
 	
 	
 	public TransactionManager(BlockingQueue<Message> incomingMessageQueue, 
-			  				  BlockingQueue<FullMSRPMessage> outgoingMessageQueue,
+			  				  BlockingQueue<CompleteMSRPMessage> outgoingMessageQueue,
 			  				  Session session) {
 		
 			this.session = session;
@@ -139,7 +139,7 @@ public class TransactionManager extends Observable implements Observer {
 						}
 					}
 					*/
-					event.setFullMessage(new FullMSRPMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
+					event.setCompleteMessage(new CompleteMSRPMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}

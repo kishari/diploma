@@ -1,6 +1,6 @@
 package hu.messaging.msrp.listener;
 
-import hu.messaging.msrp.model.FullMSRPMessage;
+import hu.messaging.msrp.model.CompleteMSRPMessage;
 
 public class MSRPEvent {
 
@@ -11,7 +11,7 @@ public class MSRPEvent {
 	private MSRPEventType eventType;
 	private String remoteSipUri;
 	private String messageId;
-	private FullMSRPMessage fullMessage;
+	private CompleteMSRPMessage completeMessage;
 	
 
 	public MSRPEvent(MSRPEventType eventType) {
@@ -23,10 +23,10 @@ public class MSRPEvent {
 		this.remoteSipUri = remoteSipUri;
 	}
 		
-	public MSRPEvent(MSRPEventType eventType, String remoteSipUri, FullMSRPMessage fullMessage) {
+	public MSRPEvent(MSRPEventType eventType, String remoteSipUri, CompleteMSRPMessage completeMessage) {
 		this.eventType = eventType;
 		this.remoteSipUri = remoteSipUri;
-		this.fullMessage = fullMessage;
+		this.completeMessage = completeMessage;
 	}
 
 	public String getMessageId() {
@@ -53,11 +53,11 @@ public class MSRPEvent {
 		this.eventType = eventType;
 	}
 
-	public FullMSRPMessage getFullMessage() {
-		return fullMessage;
+	public CompleteMSRPMessage getCompleteMessage() {
+		return completeMessage;
 	}
 
-	public void setFullMessage(FullMSRPMessage fullMessage) {
-		this.fullMessage = fullMessage;
+	public void setCompleteMessage(CompleteMSRPMessage completeMessage) {
+		this.completeMessage = completeMessage;
 	}
 }

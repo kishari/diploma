@@ -28,10 +28,10 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 //TESZTHEZ END
 	
 	private boolean running = false;
-	private BlockingQueue<FullMSRPMessage> outgoingMessageQueue;
+	private BlockingQueue<CompleteMSRPMessage> outgoingMessageQueue;
 	private TransactionManager transactionManager;
 	
-	public OutgoingMessageProcessor(BlockingQueue<FullMSRPMessage> outgoingMessageQueue, 
+	public OutgoingMessageProcessor(BlockingQueue<CompleteMSRPMessage> outgoingMessageQueue, 
 									TransactionManager transactionManager) {
 		this.outgoingMessageQueue = outgoingMessageQueue;
 		this.transactionManager = transactionManager;
@@ -43,7 +43,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 			try {
 				//Vár 300 ms-ot adatra, ha nincs adat, akkor továbblép
 				//Ez azért kell, hogy a stop metódus meghívása után fejezze be a ciklus a futást (ne legyen take() miatt blokkolva)
-				FullMSRPMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
+				CompleteMSRPMessage data = this.outgoingMessageQueue.poll(Constants.queuePollTimeout, TimeUnit.MILLISECONDS); 
 				if (data != null) {
 					processOutgoingMessage(data);
 				}				
@@ -56,7 +56,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void processOutgoingMessage(FullMSRPMessage fullMessage) {
+	private void processOutgoingMessage(CompleteMSRPMessage fullMessage) {
 
 		this.printToFile(fullMessage.getContent(), false);
 		System.out.println(getClass().getSimpleName() + " processOutgoingMessage...");
@@ -105,7 +105,7 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		this.notifyObservers(requestList); //Átküldjük a TransactionManagernek a requestList-et
 	}
 	
-	private Map<String, Object> splitMessageToChunks(FullMSRPMessage message, int chunkSize) {
+	private Map<String, Object> splitMessageToChunks(CompleteMSRPMessage message, int chunkSize) {
 		List<byte[]> chunks = new ArrayList<byte[]>();
 		
 		byte[] base64EncodedContent = Base64.encodeBase64(message.getContent());
