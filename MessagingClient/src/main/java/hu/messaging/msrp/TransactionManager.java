@@ -2,7 +2,6 @@ package hu.messaging.msrp;
 
 import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.listener.MSRPEvent;
-import hu.messaging.msrp.listener.MSRPEvent.MSRPEventType;
 import hu.messaging.msrp.util.MSRPUtil;
 
 import java.io.BufferedOutputStream;
@@ -104,20 +103,15 @@ public class TransactionManager extends Observable implements Observer {
 				return;
 			}
 			
-			Map<String, Message> map = null;
 			Message m = null;
-			if (obj instanceof Map<?, ?>) {
-				map = (Map<String, Message>) obj;
-				m = map.get(Keys.incomingRequest);
-			}
-			else if (obj instanceof Message) {
+			if (obj instanceof Message) {
 				m = (Message) obj;
 			}
 			if (m.getMethod().equals(Message.MethodType.Send)) {
 				Request req = (Request) m;
 				this.incomingMessages.put(req.getTransactionId(), req);
 				//Nyugtát küldünk
-				this.sender.getSenderQueue().add(map.get(Keys.createdAck));
+				this.sender.getSenderQueue().add(createAcknowledgement(req));
 				
 				if (req.getEndToken() == '$') {
 					System.out.println("Utolso csomag is megjott...");
@@ -129,16 +123,6 @@ public class TransactionManager extends Observable implements Observer {
 						chunks.add(this.incomingMessages.get(key));
 					}
 					
-					//Megvárjuk, hogy minden nyugta kiküldésre kerüljön
-					/*while (this.sender.getSenderQueue().size() > 0) {
-						try {
-							Thread.sleep(200);
-							System.out.println("var amig nem 0. senderQueue merete: " + this.sender.getSenderQueue().size());
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					*/
 					event.setCompleteMessage(new CompleteMSRPMessage(req.getMessageId(), MSRPUtil.createMessageContentFromChunks(chunks)));
 					this.session.getMsrpStack().notifyListeners(event);
 				}
@@ -147,12 +131,7 @@ public class TransactionManager extends Observable implements Observer {
 				Response resp = (Response) m;
 				Request ackedReq = this.requestMap.remove(resp.getTransactionId());
 				//printTo(m, true);
-				decrementNumOfUnacknowledgedChunks();
-
-				//Ha van még küldendõ kérés, akkor elküldjük
-				//if (ackCounter < requestList.size()) {
-				//	this.sender.getSenderQueue().add(requestList.get(ackCounter));
-				//}												
+				decrementNumOfUnacknowledgedChunks();											
 				
 				if (isAckedTotalSentMessage(ackedReq)) {
 					System.out.println("minden nyugtazva...");
@@ -168,12 +147,9 @@ public class TransactionManager extends Observable implements Observer {
 	}
 
 	private boolean isAckedTotalSentMessage(Request ackedReq) {
-		//System.out.println(" ackCounter: " + ackCounter);
-		int mapSize = this.requestMap.size();
 		boolean empty = this.requestMap.isEmpty();
 		boolean lastChunk = (ackedReq.getEndToken() == '$');
 		boolean t = empty && lastChunk;
-		//System.out.println("isAckedTotalSentMessage(mapsize: " + mapSize + " token:" + ackedReq.getEndToken() + ") : " + empty + " and " + lastChunk);
 		return t;
 	}
 	
@@ -293,5 +269,17 @@ public class TransactionManager extends Observable implements Observer {
 
 	public Session getSession() {
 		return session;
+	}
+	
+	private Response createAcknowledgement(Request chunk) {
+		Response ack = new Response();
+		
+		ack.setMethod(Message.MethodType._200OK);
+		ack.setToPath(chunk.getFromPath());
+		ack.setFromPath(chunk.getToPath());
+		ack.setTransactionId(chunk.getTransactionId());
+		ack.setEndToken('$');
+				
+		return ack;
 	}
 }

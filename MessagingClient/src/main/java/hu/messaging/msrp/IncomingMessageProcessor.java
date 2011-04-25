@@ -1,13 +1,10 @@
 package hu.messaging.msrp;
 
 import hu.messaging.msrp.model.Constants;
-import hu.messaging.msrp.model.Keys;
 import hu.messaging.msrp.model.Message;
 import hu.messaging.msrp.model.Request;
 import hu.messaging.msrp.model.Response;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,15 +40,9 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 	
 	private void processIncomingMessage(Message chunk) throws IOException {		
 		if (chunk.getMethod().equals(Message.MethodType.Send)) {
-			Request req = (Request) chunk;
-			Response ack = createAcknowledgement(req);
-			
-			Map<String, Message> map = new HashMap<String, Message>();
-			map.put(Keys.incomingRequest, req);
-			map.put(Keys.createdAck, ack);
-			
+			Request req = (Request) chunk;						
 			this.setChanged();
-			this.notifyObservers(map);
+			this.notifyObservers(req);
 			
 		}
 		else if ( chunk.getMethod().equals(Message.MethodType._200OK)){
@@ -59,19 +50,7 @@ public class IncomingMessageProcessor extends Observable implements Runnable {
 			this.setChanged();
 			this.notifyObservers(resp);
 		}		
-	}
-	
-	private Response createAcknowledgement(Request chunk) {
-		Response ack = new Response();
-		
-		ack.setMethod(Message.MethodType._200OK);
-		ack.setToPath(chunk.getFromPath());
-		ack.setFromPath(chunk.getToPath());
-		ack.setTransactionId(chunk.getTransactionId());
-		ack.setEndToken('$');
-				
-		return ack;
-	}
+	}	
 	
 	protected void start() {
 		this.running = true;
