@@ -104,6 +104,7 @@ public class CommunicationController implements hu.messaging.client.icp.listener
      
 	public void sendBye(String remoteSipURI) {
 		try {
+			System.out.println("sendBye");
 			icpController.getSession(remoteSipURI).end();
 		}
 		catch(Exception e) { }				

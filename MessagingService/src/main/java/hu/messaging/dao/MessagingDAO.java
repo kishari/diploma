@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.naming.InitialContext;
@@ -27,7 +28,7 @@ public class MessagingDAO {
 	 											  "messagingdb.messages(message_id, content, content_size) " + 
 	 											  "VALUES (?, ?, ?)";
 	 private static final String UPDATE_MESSAGE = "UPDATE messagingdb.messages " + "" +
-	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ? " +
+	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ?, sent_at = ? " +
 	 											  "WHERE message_id = ?";
 	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri) values (?, ?, ?)";
 	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
@@ -102,7 +103,10 @@ public class MessagingDAO {
 	            pstmt.setString(2, senderSIPUri);
 	            pstmt.setString(3, mimeType);
 	            pstmt.setString(4, subject);
-	            pstmt.setString(5, messageId);
+	            java.sql.Timestamp sentAt = new java.sql.Timestamp(new Date().getTime());
+	            System.out.println("sentAt: " + sentAt.toString());
+	            pstmt.setTimestamp(5, sentAt);
+	            pstmt.setString(6, messageId);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();

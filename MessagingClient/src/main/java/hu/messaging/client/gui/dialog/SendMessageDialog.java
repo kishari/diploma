@@ -118,12 +118,14 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
                 }
                 break;           
             case RecipientsSentSuccessful:
+            	System.out.println("SendMessageDialog: RecipientsSentSuccessful");
         		icpController.getCommunicationController().sendBye(Resources.serverSipURI);
         		if (!Constants.sendTestMessageMySelf) {
         			MessageUtils.createMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(completeMessage, true), completeMessage.getContent());
         		}
             	break;
             case ConnectionFinished:
+            	System.out.println("SendMessageDialog: ConnectionFinished");
             	icpController.getCommunicationController().removeMSRPListener(this);
             	icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
         		icpController.getCommunicationController().getMsrpStack().disposeResources();        		
@@ -420,6 +422,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 			switch(event.getEventType()) {
 				case sessionStarted :  
 					System.out.println("session started event: " + event.getRemoteSipUri());
+					Thread.sleep(1000);
 					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Resources.serverSipURI);
 					break;
 				case brokenTrasmission :
