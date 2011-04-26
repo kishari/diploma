@@ -2,6 +2,7 @@ package hu.messaging.dao;
 
 import hu.messaging.Recipient;
 import hu.messaging.model.CompleteMessage;
+import hu.messaging.model.UserInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,10 @@ public class MessagingDAO {
 	 private static final String UPDATE_MESSAGE = "UPDATE messagingdb.messages " + "" +
 	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ?, sent_at = ? " +
 	 											  "WHERE message_id = ?";
-	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri) values (?, ?, ?)";
+	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri, delivery_status) values (?, ?, ?, ?)";
+	 private static final String UPDATE_RECIPIENT = "UPDATE messagingdb.recipients " +
+	 											    "SET delivery_status = ? " +
+	 											    "WHERE sip_uri = ? AND message_id = ? ";
 	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
 	 															"WHERE message_id IN(" + 
 	 																	"SELECT message_id " +
@@ -71,7 +75,7 @@ public class MessagingDAO {
 		}
 	}
 	 	 
-	 public void insertRecipients( String messageId, List<Recipient> recipients ) {
+	 public void insertRecipients( String messageId, List<UserInfo> recipients ) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -79,12 +83,33 @@ public class MessagingDAO {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(INSERT_RECIPIENT);
 	            
-	            for (Recipient r : recipients) {		            
+	            for (UserInfo r : recipients) {		            
 		            pstmt.setString(1, messageId);
 		            pstmt.setString(2, r.getName());
-		            pstmt.setString(3, r.getSipURI());
+		            pstmt.setString(3, r.getSipUri());
+		            pstmt.setString(4, "NEW");
 		            pstmt.executeUpdate();
 	            }
+	            
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        } finally {
+	        	closeAll(null, pstmt, null, conn);
+	        }
+	    }
+	 
+	 public void updateDeliveryStatus( String messageId, String recipientSipUri, String deliveryStatus ) {
+	    	
+	 		Connection conn = null;
+	        PreparedStatement pstmt = null;
+	        try {
+	            conn = getConnection();
+	            pstmt = conn.prepareStatement(UPDATE_RECIPIENT);
+	            		            
+	            pstmt.setString(1, deliveryStatus);
+	            pstmt.setString(2, recipientSipUri); 
+	            pstmt.setString(3, messageId);
+	            pstmt.executeUpdate();	            
 	            
 	        } catch (SQLException e) {
 	            e.printStackTrace();

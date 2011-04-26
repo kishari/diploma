@@ -167,17 +167,13 @@ public class MessagingSipServlet extends SipServlet {
 			String mimeType = detail.getContent().getMimeType();
 			String senderSipUri = detail.getSender().getSipUri();
 			String senderName = detail.getSender().getName();
-			String subject = detail.getSubject();			
-			
-			List<Recipient> recipients = new ArrayList<Recipient>();
+			String subject = detail.getSubject();						
 			
 			for (UserInfo r : detail.getRecipientList().getRecipient()) {				
-				Recipient recipient = new Recipient(r.getName(), r.getSipUri());
-				System.out.println("recipient name : " + recipient.getName() + " ****** uri: " + recipient.getSipURI());
-				recipients.add(recipient);
+				System.out.println("recipient name : " + r.getName() + " ****** uri: " + r.getSipUri());				
 			}
 			
-			messagingService.getMessagingDao().insertRecipients(messageId, recipients);
+			messagingService.getMessagingDao().insertRecipients(messageId, detail.getRecipientList().getRecipient());
 			Date sentAt = messagingService.getMessagingDao().updateMessage(messageId, mimeType, senderName, senderSipUri, subject);
 			
 			GregorianCalendar c = new GregorianCalendar();
@@ -260,6 +256,8 @@ public class MessagingSipServlet extends SipServlet {
 										
 					System.out.println(r);
 					r.send();
+					
+					messagingService.getMessagingDao().updateDeliveryStatus(detail.getId(), recipient.getSipUri(), "NOTIFIED");
 				}
 			}			
 		}

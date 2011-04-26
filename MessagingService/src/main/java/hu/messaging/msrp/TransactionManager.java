@@ -137,6 +137,7 @@ public class TransactionManager extends Observable implements Observer {
 					System.out.println("minden nyugtazva...");
 					MSRPEvent event = new MSRPEvent(MSRPEvent.MSRPEventType.messageSentSuccess);
 					event.setMessageId(ackedReq.getMessageId());
+					event.setRemoteSipUri(session.getSenderConnection().getRemoteSipUri());
 					this.session.getMsrpStack().notifyListeners(event);
 				}
 			}

@@ -172,6 +172,7 @@ public class MessagingService implements Observer, MSRPListener{
 				break;
 			case messageSentSuccess:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: messageSentSuccess");
+				messagingDao.updateDeliveryStatus(event.getMessageId(), event.getRemoteSipUri(), "SENT");
 				break;
 			case sessionStarted:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: sessionStarted");
