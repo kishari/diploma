@@ -152,6 +152,7 @@ public class MessageUtils {
 			m.setStatus("NEW");
 			m.getContentDescription().setMimeType(d.getContent().getMimeType());
 			m.setSubject(d.getSubject());
+			m.setSentAt(d.getSentAt());
 			m.getContentDescription().setContentAvailable(false);
 			
 			s.setName(d.getSender().getName());

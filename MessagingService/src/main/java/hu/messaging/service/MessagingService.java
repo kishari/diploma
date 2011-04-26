@@ -131,6 +131,7 @@ public class MessagingService implements Observer, MSRPListener{
 			sender.setSipUri(d.getSender().getSipUri());			
 			detail.setSender(sender);
 			
+			System.out.println("createNotifyMessage: sentAt: " + d.getSentAt());
 			detail.setSentAt(d.getSentAt());
 			detail.setSubject(d.getSubject());
 			

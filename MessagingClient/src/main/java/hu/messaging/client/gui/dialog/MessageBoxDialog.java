@@ -367,7 +367,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
             case ConnectionFinished:
             	System.out.println("connection Finished");
             	icpController.getCommunicationController().removeMSRPListener(this);
-				icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
+				//icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
 				icpController.getCommunicationController().getMsrpStack().disposeResources();
             	break;
             case RecipientsSentSuccessful:

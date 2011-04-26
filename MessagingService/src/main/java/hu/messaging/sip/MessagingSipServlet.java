@@ -3,6 +3,8 @@ package hu.messaging.sip;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,9 @@ import javax.servlet.sip.SipFactory;
 import javax.servlet.sip.SipServlet;
 import javax.servlet.sip.SipServletRequest;
 import javax.servlet.sip.SipServletResponse;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import hu.messaging.*;
 import hu.messaging.msrp.util.MSRPUtil;
@@ -162,7 +167,7 @@ public class MessagingSipServlet extends SipServlet {
 			String mimeType = detail.getContent().getMimeType();
 			String senderSipUri = detail.getSender().getSipUri();
 			String senderName = detail.getSender().getName();
-			String subject = detail.getSubject();
+			String subject = detail.getSubject();			
 			
 			List<Recipient> recipients = new ArrayList<Recipient>();
 			
@@ -173,7 +178,18 @@ public class MessagingSipServlet extends SipServlet {
 			}
 			
 			messagingService.getMessagingDao().insertRecipients(messageId, recipients);
-			messagingService.getMessagingDao().updateMessage(messageId, mimeType, senderName, senderSipUri, subject); 
+			Date sentAt = messagingService.getMessagingDao().updateMessage(messageId, mimeType, senderName, senderSipUri, subject);
+			
+			GregorianCalendar c = new GregorianCalendar();
+			c.setTime(sentAt);
+			XMLGregorianCalendar date2 = null;
+			try {
+				date2 = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+			} catch (DatatypeConfigurationException e) {
+				e.printStackTrace();
+			}
+			
+			info.getDetailList().getDetail().get(0).setSentAt(date2);
 			notifyOnlineRecipientsFromNewMessage(req, info);
 		}
 		

@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -37,7 +38,7 @@ public class MessagingDAO {
 	 																	"FROM messagingdb.recipients " + 
 	 																	"WHERE sip_uri = ?)";
 	 
-	 private static final String SELECT_CONTENT_TO_MESSAGE_ID = "SELECT message_id, content, subject, sender_name, sender_sip_uri, mime_type " +
+	 private static final String SELECT_CONTENT_TO_MESSAGE_ID = "SELECT message_id, content, subject, sender_name, sender_sip_uri, mime_type, sent_at " +
 	 															"FROM messagingdb.messages " + 
 	 															"WHERE message_id = ?";
 	
@@ -92,10 +93,11 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
+	 	public Date updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
+	        java.sql.Timestamp sentAt = new java.sql.Timestamp(new Date().getTime());
 	        try {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(UPDATE_MESSAGE);
@@ -103,7 +105,7 @@ public class MessagingDAO {
 	            pstmt.setString(2, senderSIPUri);
 	            pstmt.setString(3, mimeType);
 	            pstmt.setString(4, subject);
-	            java.sql.Timestamp sentAt = new java.sql.Timestamp(new Date().getTime());
+	            
 	            System.out.println("sentAt: " + sentAt.toString());
 	            pstmt.setTimestamp(5, sentAt);
 	            pstmt.setString(6, messageId);
@@ -113,6 +115,8 @@ public class MessagingDAO {
 	        } finally {
 	        	closeAll(null, pstmt, null, conn);
 	        }
+	        
+	        return new Date(sentAt.getTime());
 	    }
 	 
 	 	public void insertMessage( CompleteMessage message) {
@@ -152,12 +156,14 @@ public class MessagingDAO {
 		            	String senderName = rs.getString(4);
 		            	String senderSipUri = rs.getString(5);
 		            	String mimeType = rs.getString(6);
+		            	Timestamp sentAt = rs.getTimestamp(7);
 		            	InputStream is = rs.getBlob(2).getBinaryStream();
 	            	
 		            	try {
 		            		byte[] content = IOUtils.toByteArray(is);
 		            		
 		            		CompleteMessage msg = new CompleteMessage(msgId, content, mimeType, senderName, senderSipUri,  subject);
+		            		msg.setSentAt(sentAt);
 		            		result.add(msg);
 		            	} catch (IOException e) {
 		            		e.printStackTrace();
