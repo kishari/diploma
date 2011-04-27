@@ -1,31 +1,27 @@
 package hu.messaging.client.media.video;
 
 import hu.messaging.client.Resources;
+import hu.messaging.client.gui.dialog.CaptureDialog;
+import hu.messaging.client.gui.util.FileUtils;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.io.File;
 import java.io.IOException;
+import java.util.Observable;
 import java.util.Vector;
 
-import javax.media.CannotRealizeException;
-import javax.media.CaptureDeviceInfo;
-import javax.media.CaptureDeviceManager;
-import javax.media.DataSink;
-import javax.media.Format;
-import javax.media.IncompatibleSourceException;
-import javax.media.Manager;
-import javax.media.MediaLocator;
-import javax.media.NoDataSinkException;
-import javax.media.NoDataSourceException;
-import javax.media.NoPlayerException;
-import javax.media.NoProcessorException;
-import javax.media.Player;
-import javax.media.Processor;
-import javax.media.ProcessorModel;
+import javax.media.*;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.FileTypeDescriptor;
+import javax.media.protocol.SourceCloneable;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-public class VideoRecorder {
+public class VideoRecorder extends Observable{
 
 	private static final String defaultVideoDeviceName = "Microsoft WDM Image Capture";
 	private static final String defaultAudioDeviceName = "DirectSoundCapture";
@@ -58,17 +54,25 @@ public class VideoRecorder {
 	private DataSinkAdapter dataSinkListener = null;
 
 	private boolean enabled = false;
-	public VideoRecorder() {
+	
+	private VisualComponent visualComponent = null;
+	
+	public void dispose() {
+		visualComponent.player.close();
+		visualComponent.dispose();
+	}
+	
+	public VideoRecorder(CaptureDialog cDialog) {
+		this.addObserver(cDialog);
+		
 		Vector<CaptureDeviceInfo> deviceList = CaptureDeviceManager.getDeviceList(null);
 		
 		for (int x = 0; x < deviceList.size(); x++) {
 			CaptureDeviceInfo deviceInfo = (CaptureDeviceInfo) deviceList.elementAt(x);
-			//System.out.println(deviceInfo.getName());
 
 			Format deviceFormat[] = deviceInfo.getFormats();
 			for (int y = 0; y < deviceFormat.length; y++) {
-				//System.out.println("capture format = " + DeviceInfo.formatToString(deviceFormat[y]));
-				// search for default video device
+
 				if (captureVideoDevice == null) {
 					if (deviceFormat[y] instanceof VideoFormat) {
 						if (deviceInfo.getName().indexOf(defaultVideoDeviceName) >= 0) {
@@ -107,9 +111,11 @@ public class VideoRecorder {
 				}
 			}
 		}
+		
+		visualComponent = new VisualComponent();
 	}
 	
-	public void init() {
+	private void init() {
 		videoMediaLocator = captureVideoDevice.getLocator();
 		
 		try {
@@ -197,7 +203,7 @@ public class VideoRecorder {
 
 		// create a File protocol MediaLocator with the location
 		// of the file to which bits are to be written
-		destination = new MediaLocator("file:testcam.avi");
+		destination = new MediaLocator("file:" + Resources.getMessagesDirectoryPath() + "capturedVideo.avi");
 
 		// create a datasink to do the file
 		dataSink = null;
@@ -216,6 +222,8 @@ public class VideoRecorder {
 	}
 	
 	public void startCapture() {
+		this.visualComponent.startCapture();
+		
 		enabled = true;
 		new Thread() {
 			public void run() {
@@ -229,7 +237,7 @@ public class VideoRecorder {
 				processor.start();
 				while (enabled) {
 					try {
-						Thread.currentThread().sleep(10);
+						Thread.sleep(10);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -240,6 +248,7 @@ public class VideoRecorder {
 	}
 	
 	public void stopCapture() {
+		
 		enabled = false;
 		// stop and close the processor when done capturing...
 		// close the datasink when EndOfStream event is received...
@@ -248,22 +257,96 @@ public class VideoRecorder {
 
 		dataSinkListener.waitEndOfStream(10);
 		dataSink.close();
+		
+		visualComponent.stopCapture();
+		
+		byte[] capturedVideo = FileUtils.readFileToByteArray(new File(Resources.getMessagesDirectoryPath() + "capturedVideo.avi"));
+		this.setChanged();
+		this.notifyObservers(capturedVideo);
+		
 	}
+	
+	private class VisualComponent extends JFrame {
+		private DataSource ds = null;
+		private Player player;
 
-	public CaptureDeviceInfo getCaptureVideoDevice() {
-		return captureVideoDevice;
-	}
+		private JPanel videoPanel = null;
+		
+		public VisualComponent() {
+			try {
+					// Create a Player for Media Located by MediaLocator
+				player = Manager.createRealizedPlayer(captureVideoDevice.getLocator());
+				
+				if (player != null) {
+					player.start();
+					
+					setPreferredSize(new Dimension(640, 480));
+					setTitle("Capture video");
+					setLayout(new BorderLayout());
+					Component c = player.getVisualComponent();
+					c.setSize(100, 100);
+					
+					videoPanel = new JPanel();
+					videoPanel.setLayout(new BorderLayout());
+					videoPanel.add(c, BorderLayout.CENTER);
+					
+					add(videoPanel, BorderLayout.CENTER);
+					pack();
+					setVisible(true);
+				}
 
-	public Processor getProcessor() {
-		return processor;
-	}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		private void startCapture() {
+			try {
+				player.close();
+				
+				init();
+				ds = ((SourceCloneable)videoDataSource).createClone();
+				player = Manager.createRealizedPlayer(ds);
+				player.start();
+				
+				Component c = player.getVisualComponent();
+				videoPanel.remove(0);
+				videoPanel.add(c, BorderLayout.CENTER);
 
-	public DataSource getDataOutput() {
-		return dataOutput;
-	}
+			}catch(IOException e) {
+				e.printStackTrace();
+			} catch (CannotRealizeException e) {
+				e.printStackTrace();
+			}
+			catch (NoPlayerException e) {
+				e.printStackTrace();
+			}
 
-	public DataSource getVideoDataSource() {
-		return videoDataSource;
+		}
+		
+		private void stopCapture() {
+			try{
+				player.close();
+				player = Manager.createRealizedPlayer(captureVideoDevice.getLocator());
+				
+				player.start();
+				
+				Component c = player.getVisualComponent();
+				videoPanel.remove(0);
+				videoPanel.add(c, BorderLayout.CENTER);
+			}catch(IOException e) {
+				e.printStackTrace();
+			} catch (CannotRealizeException e) {
+				e.printStackTrace();
+			}
+			catch (NoPlayerException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public Player getPlayer() {
+			return player;
+		}
 	}
 	
 	
