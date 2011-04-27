@@ -7,19 +7,29 @@ import hu.messaging.client.gui.util.FileUtils;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Observable;
 import java.util.Vector;
 
 import javax.media.*;
+import javax.media.control.FrameGrabbingControl;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.FileTypeDescriptor;
 import javax.media.protocol.SourceCloneable;
+import javax.media.util.BufferToImage;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+
+import com.sun.image.codec.jpeg.JPEGCodec;
+import com.sun.image.codec.jpeg.JPEGEncodeParam;
+import com.sun.image.codec.jpeg.JPEGImageEncoder;
 
 public class VideoRecorder extends Observable{
 
@@ -265,6 +275,43 @@ public class VideoRecorder extends Observable{
 		this.notifyObservers(capturedVideo);
 		
 	}
+	
+	public void takeAnImage() {
+		Buffer buff;
+		BufferToImage btoi=null;
+		FrameGrabbingControl fgc = (FrameGrabbingControl) visualComponent.player.getControl("javax.media.control.FrameGrabbingControl");
+		buff = fgc.grabFrame();
+        btoi= new BufferToImage((VideoFormat)buff.getFormat());
+        Image img = btoi.createImage(buff);
+        saveJPG(img, Resources.getMessagesDirectoryPath() + "capturedPicture.jpg");
+        byte[] capturedPicture = FileUtils.readFileToByteArray(new File(Resources.getMessagesDirectoryPath() + "capturedPicture.jpg"));
+        this.setChanged();
+		this.notifyObservers(capturedPicture);
+	}
+	
+	private  void saveJPG(Image img, String s) {
+        BufferedImage bi= new BufferedImage(img.getWidth(null),img.getHeight(null),BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2=bi.createGraphics();
+        g2.drawImage(img, null, null);
+        FileOutputStream out=null;
+        try{
+            out = new FileOutputStream(s);
+        }
+        catch(java.io.FileNotFoundException ex){
+            ex.printStackTrace();
+        }
+        JPEGImageEncoder encoder= JPEGCodec.createJPEGEncoder(out);
+        JPEGEncodeParam param= encoder.getDefaultJPEGEncodeParam(bi);
+        param.setQuality(0.5f, false);
+        encoder.setJPEGEncodeParam(param);
+        try{
+            encoder.encode(bi);
+            out.close();
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+        }
+    }
 	
 	private class VisualComponent extends JFrame {
 		private DataSource ds = null;

@@ -20,6 +20,8 @@ public class CaptureDialog extends JFrame implements Observer {
     
     private AudioRecorder audioRecorder = null;
     private VideoRecorder videoRecorder = null;
+    
+    private int comboSelectedIndex = 0;
 
     public CaptureDialog() {
     	
@@ -125,18 +127,19 @@ public class CaptureDialog extends JFrame implements Observer {
         		switch (selected) {
         		case 0:
         			isAudio = true;
+        			comboSelectedIndex = 0;
         			audioRecorder = new AudioRecorder(CaptureDialog.this);
         			if (videoRecorder != null) {
         				videoRecorder.dispose();
         			}
         			break;
         		case 1: 
+        			comboSelectedIndex = 1;
         			isPicture = true;
-        			if (videoRecorder != null) {
-        				videoRecorder.dispose();
-        			}
+        			videoRecorder = new VideoRecorder(CaptureDialog.this);
         			break;
         		case 2: 
+        			comboSelectedIndex = 2;
         			isVideo = true;
         			videoRecorder = new VideoRecorder(CaptureDialog.this);
         			break;
@@ -173,7 +176,7 @@ public class CaptureDialog extends JFrame implements Observer {
     }
 
     private void takeImage() {
-    	System.out.println("take image");
+    	videoRecorder.takeAnImage();
     }
     
     private void captureVideo() {
@@ -194,12 +197,12 @@ public class CaptureDialog extends JFrame implements Observer {
 		if (o.toString().contains(VideoRecorder.class.getSimpleName())) {
 			if (o.toString().contains(VideoRecorder.class.getSimpleName())) {
 				byte[] capturedContent = null;
-				if (obj != null) {
+				if (obj != null && obj instanceof byte[]) {
 					capturedContent = (byte[])obj;
 				}
 				
 				this.capturedContent = capturedContent;
-				this.capturedContentMimeType = "video/x-msvideo";	
+				this.capturedContentMimeType = comboSelectedIndex == 2 ? "video/x-msvideo" : "image/jpeg";	
 				
 			}
 		}
