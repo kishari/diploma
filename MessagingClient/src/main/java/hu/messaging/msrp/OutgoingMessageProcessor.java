@@ -153,11 +153,11 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		try {
 			OutputStream out = null;
 			if (!recreated) {
-				contentFile = new File(Resources.workingDirectory + "clientContentFile.mp3");
+				contentFile = new File(Resources.getTestingDirectoryPath() + "clientContentFile.mp3");
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			}
 			else {
-				recreatedContentFile = new File(Resources.workingDirectory + "clientRecreatedContentFile.mp3");
+				recreatedContentFile = new File(Resources.getTestingDirectoryPath() + "clientRecreatedContentFile.mp3");				
 				out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			}
 			

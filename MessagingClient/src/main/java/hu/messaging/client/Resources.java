@@ -1,7 +1,11 @@
 package hu.messaging.client;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class Resources {
 
@@ -123,8 +127,29 @@ public class Resources {
     
     public static final String serverSipURI = "sip:weblogic@ericsson.com";
     
-    public static final String workingDirectory = "C:\\diploma\\testing\\";
-    public static final String messagesDirectory = workingDirectory + "messages\\";
-    public static final String messageContentsDirectory = messagesDirectory + "contents\\";
+    public static Properties getProperties() {
+    	Properties properties = new Properties();
+    	String path = System.getProperty("user.dir");
+    	File propertyFile = new File(path + "/messaging.properties");
+        try {
+      	properties.load(new FileInputStream(propertyFile));
+        }
+        catch(IOException e) {
+           e.printStackTrace();
+        }
+        
+        return properties;
+    }
     
+    public static String getMessagesDirectoryPath() {
+    	return getProperties().getProperty("messages.directory");
+    }
+    
+    public static String getMessagesContentsDirectoryPath() {
+    	return getProperties().getProperty("messages.contents.directory");
+    }
+    
+    public static String getTestingDirectoryPath() {
+    	return getProperties().getProperty("testing.directory");
+    }
 }
