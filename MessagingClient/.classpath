@@ -36,5 +36,10 @@
 	<classpathentry kind="lib" path="lib/jna.jar"/>
 	<classpathentry kind="lib" path="lib/lamejb.jar"/>
 	<classpathentry kind="lib" path="lib/jl1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/JMF2.1.1e/lib/jmf.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/JMF2.1.1e/lib/mediaplayer.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/JMF2.1.1e/lib/multiplayer.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/JMF2.1.1e/lib/sound.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/JMF2.1.1e/lib/customizer.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.media.format.AudioFormat;
+
 public class Resources {
 
 	public static final Map<String, String> resources = new HashMap<String, String>(){
@@ -38,7 +40,8 @@ public class Resources {
             put("button.play", "Play");
             put("button.stop", "Stop");
             put("button.show", "Show");
-            put("button.capture", "Capture");     
+            put("button.capture", "Capture");
+            put("button.take.image", "Take Image");
             put("dialog.group.edit.title", "Modify Group");
             put("dialog.group.name.label", "Group name:");
             put("icon.nouser", "No User");
@@ -151,5 +154,24 @@ public class Resources {
     
     public static String getTestingDirectoryPath() {
     	return getProperties().getProperty("testing.directory");
+    }
+    
+    public static AudioFormat getVideoAudioFormat() {
+    	Properties properties = getProperties();
+    	
+    	String bitsAsString = properties.getProperty("audio.bits");
+    	int bits = Integer.parseInt(bitsAsString);
+    	
+    	String rateAsString = properties.getProperty("audio.samplerate");
+    	double rate = Double.parseDouble(rateAsString);
+    	
+    	String channelAsString = properties.getProperty("audio.channels");
+    	int channel = Integer.parseInt(channelAsString);
+    	
+    	AudioFormat audioFormat = new AudioFormat(AudioFormat.LINEAR,
+    									rate, bits, channel, 
+    									AudioFormat.LITTLE_ENDIAN, AudioFormat.SIGNED);
+    	
+    	return audioFormat;
     }
 }
