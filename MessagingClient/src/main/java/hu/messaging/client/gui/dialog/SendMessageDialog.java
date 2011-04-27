@@ -241,7 +241,6 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    	  completeMessage.setSender(sender);
 		    	  completeMessage.setSubject(subjectTextField.getText());
 		    	  if (fromCaptureDeviceButton.isSelected() && cDialog.getCapturedContent() != null) {
-		    		  System.out.println("Van captured content te geci");
 		    		  completeMessage.setContent(cDialog.getCapturedContent());
 		    		  completeMessage.setMimeType(cDialog.getCapturedContentMimeType());
 		    	  }

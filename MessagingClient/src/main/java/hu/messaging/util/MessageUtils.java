@@ -172,6 +172,7 @@ public class MessageUtils {
 			m.setSubject(d.getSubject());
 			m.setSentAt(d.getSentAt());
 			m.getContentDescription().setContentAvailable(false);
+			m.getContentDescription().setSize(d.getContent().getSize());
 
 			s.setName(d.getSender().getName());
 			s.setSipUri(d.getSender().getSipUri());
