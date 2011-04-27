@@ -254,7 +254,7 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
     }
     
     private byte[] getMessageContent(MessageInfoContainer m) {
-		File contentFile = new File(Resources.messageContentsDirectory + 
+		File contentFile = new File(Resources.getMessagesContentsDirectoryPath() + 
 									m.getId() + "." + MimeHelper.getExtensionByMIMEType(m.getContentDescription().getMimeType()));
 		byte content[] = new byte[(int) contentFile.length()];
 

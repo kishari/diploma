@@ -23,7 +23,7 @@ public class MessagingClient extends JFrame {
 
 	private BuddyListPanel buddyListPanel;
 
-	public MessagingClient() {
+	public MessagingClient() {		
 		try {
 			setTitle(Resources.resources.get("application.title"));
 			getContentPane().setLayout(new GridBagLayout());

@@ -40,14 +40,14 @@ public class MessageUtils {
 	public static void createMessageContainerFile(MessageInfoContainer message,
 			byte[] content) {
 
-		File dir = new File(Resources.messagesDirectory);
+		File dir = new File(Resources.getMessagesDirectoryPath());
 		dir.mkdirs();
 		File messageFile = new File(dir, message.getId() + ".message");
 		message.getContentDescription().setContentAvailable(content != null);
 		if (content != null) {
 			try {
 				OutputStream out = null;
-				String contentDirPath = Resources.messageContentsDirectory;
+				String contentDirPath = Resources.getMessagesContentsDirectoryPath();
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
 				File contentFile = new File(contentDir, message.getId()
@@ -72,7 +72,7 @@ public class MessageUtils {
 		if (content != null) {
 			try {
 				OutputStream out = null;
-				String contentDirPath = Resources.messageContentsDirectory;
+				String contentDirPath = Resources.getMessagesContentsDirectoryPath();
 				File contentDir = new File(contentDirPath);
 				contentDir.mkdir();
 				File contentFile = new File(contentDir, message.getId()
@@ -93,7 +93,7 @@ public class MessageUtils {
 
 	public static void updateMessageContainerFile(MessageInfoContainer message) {
 
-		File dir = new File(Resources.messagesDirectory);
+		File dir = new File(Resources.getMessagesDirectoryPath());
 		dir.mkdirs();
 		System.out.println("MessageUtils messageId: " + message.getId());
 		File messageFile = new File(dir, message.getId() + ".message");
@@ -107,7 +107,7 @@ public class MessageUtils {
 
 	public static MessageInfoContainer readMessageContainerFromFile(
 			String messageId) {
-		File dir = new File(Resources.messagesDirectory);
+		File dir = new File(Resources.getMessagesDirectoryPath());
 		File messageFile = new File(dir, messageId + ".message");
 		MessageInfoContainer m = XMLUtils
 				.createMessageInfoContainerFromFile(messageFile);
@@ -117,7 +117,7 @@ public class MessageUtils {
 
 	public static List<MessageInfoContainer> loadInboxMessages() {
 		List<MessageInfoContainer> inbox = new ArrayList<MessageInfoContainer>();
-		File dir = new File(Resources.messagesDirectory);
+		File dir = new File(Resources.getMessagesDirectoryPath());
 
 		for (File f : dir.listFiles()) {
 			if (f.isFile()
@@ -137,7 +137,7 @@ public class MessageUtils {
 
 	public static List<MessageInfoContainer> loadSentMessages() {
 		List<MessageInfoContainer> sentMessages = new ArrayList<MessageInfoContainer>();
-		File dir = new File(Resources.messagesDirectory);
+		File dir = new File(Resources.getMessagesDirectoryPath());
 
 		for (File f : dir.listFiles()) {
 			if (f.isFile()
@@ -184,8 +184,8 @@ public class MessageUtils {
 	}
 
 	public static void deleteMessageWithMessageId(String messageId) {
-		File dir = new File(Resources.messagesDirectory);
-		File contentDir = new File(Resources.messageContentsDirectory);
+		File dir = new File(Resources.getMessagesDirectoryPath());
+		File contentDir = new File(Resources.getMessagesContentsDirectoryPath());
 
 		for (File f : dir.listFiles()) {
 			if (f.isFile()
