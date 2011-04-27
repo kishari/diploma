@@ -225,8 +225,11 @@ public class MessagingSipServlet extends SipServlet {
 		System.out.println("doResponse callId: " + resp.getCallId());
 		//System.out.println("doResponse: " + resp);
 		String messageId = sentNotifyMessageCallIdMessageIdMap.remove(resp.getCallId());
-		String sipUri = getCleanSipUri(resp.getFrom().toString());
-		messagingService.getMessagingDao().updateDeliveryStatus(messageId, sipUri, "NOTIFIED");
+		String sipUri = getCleanSipUri(resp.getTo().toString());
+		if (messageId != null) {
+			System.out.println("doResponse updateDeliveryStatus");
+			messagingService.getMessagingDao().updateDeliveryStatus(messageId, sipUri, "NOTIFIED");
+		}		
 	}
 
 	private InfoMessage createInfoMessageFromNewMessages(User u) {
@@ -261,7 +264,7 @@ public class MessagingSipServlet extends SipServlet {
 			for (User user : this.messagingService.onlineUsers ) {				
 				if (recipient.getSipUri().equals(user.getSipURI())) {
 					SipServletRequest r = null;
-					if (true) {
+					if (false) {
 						r = sipFactory.createRequest(req, false);
 						r.setRequestURI(sipFactory.createURI(user.getSipURI()));
 						r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
@@ -269,12 +272,13 @@ public class MessagingSipServlet extends SipServlet {
 						r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
 					}
 					else {
-						r = sipFactory.createRequest(sipFactory.createApplicationSession(), "INVITE", "sip:weblogic@ericsson.com",
+						r = sipFactory.createRequest(sipFactory.createApplicationSession(), "MESSAGE", "sip:weblogic@ericsson.com",
 								user.getSipURI());
-						r.setRequestURI(sipFactory.createURI(user.getSipURI()));
+						//r.setRequestURI(sipFactory.createURI(user.getSipURI()));
 						r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
 						r.setContent(messagingService.createNotifyMessageContent(info), "text/plain");
 						r.addHeader("p-asserted-identity", "sip:weblogic@ericsson.com");
+						r.addHeader("Accept-Contact:", "*;+g.multicastclient");
 					}
 										
 					//System.out.println("notify üzenet: " + r);
