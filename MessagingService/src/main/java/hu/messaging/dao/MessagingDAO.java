@@ -1,6 +1,5 @@
 package hu.messaging.dao;
 
-import hu.messaging.Recipient;
 import hu.messaging.model.CompleteMessage;
 import hu.messaging.model.UserInfo;
 
@@ -21,7 +20,6 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 
 public class MessagingDAO {
 	 private DataSource dataSource = null;
@@ -33,7 +31,7 @@ public class MessagingDAO {
 	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ?, sent_at = ? " +
 	 											  "WHERE message_id = ?";
 	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri, delivery_status) values (?, ?, ?, ?)";
-	 private static final String UPDATE_RECIPIENT = "UPDATE messagingdb.recipients " +
+	 private static final String UPDATE_DELIVERY_STATUS_TO_RECIPIENT = "UPDATE messagingdb.recipients " +
 	 											    "SET delivery_status = ? " +
 	 											    "WHERE sip_uri = ? AND message_id = ? ";
 	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
@@ -46,6 +44,10 @@ public class MessagingDAO {
 	 															"FROM messagingdb.messages " + 
 	 															"WHERE message_id = ?";
 	
+	 private static final String SELECT_NEW_MESSAGE_IDS_TO_RECIPIENT = "SELECT message_id " +
+																	"FROM messagingdb.recipients " + 
+																	"WHERE sip_uri = ? AND delivery_status = 'NEW'";
+
 	 public MessagingDAO() {
 		 init();
 	 }
@@ -98,19 +100,20 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 public void updateDeliveryStatus( String messageId, String recipientSipUri, String deliveryStatus ) {
+	 public void updateDeliveryStatus(List<String> messageIds, String recipientSipUri, String deliveryStatus ) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
 	        try {
 	            conn = getConnection();
-	            pstmt = conn.prepareStatement(UPDATE_RECIPIENT);
-	            		            
-	            pstmt.setString(1, deliveryStatus);
-	            pstmt.setString(2, recipientSipUri); 
-	            pstmt.setString(3, messageId);
-	            pstmt.executeUpdate();	            
-	            
+	            pstmt = conn.prepareStatement(UPDATE_DELIVERY_STATUS_TO_RECIPIENT);
+	            		    
+	            for (String mId : messageIds) {
+	            	pstmt.setString(1, deliveryStatus);
+	            	pstmt.setString(2, recipientSipUri); 
+	            	pstmt.setString(3, mId);
+	            	pstmt.executeUpdate();
+	            }
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
@@ -187,6 +190,9 @@ public class MessagingDAO {
 		            	try {
 		            		byte[] content = IOUtils.toByteArray(is);
 		            		
+		            		if (content != null)
+		            			System.out.println("MessagingDao content size: " + content.length);
+		            		
 		            		CompleteMessage msg = new CompleteMessage(msgId, content, mimeType, senderName, senderSipUri,  subject);
 		            		msg.setSentAt(sentAt);
 		            		result.add(msg);
@@ -203,6 +209,37 @@ public class MessagingDAO {
 	        return result.get(0);
 	    }
 	
+	 	public List<CompleteMessage> getNewMessagesToSipUri(String sipURI) {
+	 		List<CompleteMessage> result = new ArrayList<CompleteMessage>();
+	 		
+	 		List<String> newMessagesMessageId = new ArrayList<String>();
+	 		
+	 		Connection conn = null;
+	    	PreparedStatement pstmt = null;
+	        ResultSet rs = null;
+	        
+	        try {
+	        	conn = getConnection();
+	        	pstmt = conn.prepareStatement(SELECT_NEW_MESSAGE_IDS_TO_RECIPIENT);
+	        	pstmt.setString(1, sipURI);
+		        rs = pstmt.executeQuery();
+		            while (rs.next()) {  
+		            	String msgId = rs.getString(1);
+		            	newMessagesMessageId.add(msgId);		            
+		            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        } finally {
+	        	closeAll(rs, null, pstmt, conn);
+			}
+	 		
+	        for (String id : newMessagesMessageId) {
+	        	CompleteMessage m = getMessageToMessageId(id);
+	        	result.add(m);
+	        }
+	        
+	 		return result;
+	 	}
 
 	    public List<byte[]> getMessagesToSipURI( String sipURI ) {
 	    	
