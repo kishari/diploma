@@ -36,6 +36,9 @@ public class MessagingSipServlet extends SipServlet {
 	private MessagingService messagingService = null;
 	private static final long serialVersionUID = 1L;
 	
+	
+	private Map<String, String> sentNotifyMessageCallIdMessageIdMap = new HashMap<String, String>();
+	
 	private String getCleanSipUri(String incomingUri) {
 		Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
 												 "[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");	
@@ -159,7 +162,7 @@ public class MessagingSipServlet extends SipServlet {
 			this.messagingService.sendMessages(messages, getCleanSipUri(req.getFrom().toString()));
 		}
 		
-		if (info != null && InfoMessage.messageData.equals(info.getInfoType().toUpperCase())) {		
+		if (info != null && InfoMessage.messageData.equals(info.getInfoType().toUpperCase())) {			
 			InfoMessage.DetailList detailList = info.getDetailList();
 			InfoDetail detail = detailList.getDetail().get(0);
 			
@@ -204,6 +207,18 @@ public class MessagingSipServlet extends SipServlet {
 			r.send();
 
 		}
+	}
+
+	@Override
+	protected void doResponse(SipServletResponse resp) throws ServletException,
+			IOException {
+		super.doResponse(resp);
+		//System.out.println("doResponse METHOD: " + resp.getMethod());
+		System.out.println("doResponse callId: " + resp.getCallId());
+		//System.out.println("doResponse: " + resp);
+		String messageId = sentNotifyMessageCallIdMessageIdMap.remove(resp.getCallId());
+		String sipUri = getCleanSipUri(resp.getFrom().toString());
+		messagingService.getMessagingDao().updateDeliveryStatus(messageId, sipUri, "NOTIFIED");
 	}
 
 	private InfoMessage createInfoMessageFromNewMessages(User u) {
@@ -254,10 +269,11 @@ public class MessagingSipServlet extends SipServlet {
 						r.addHeader("p-asserted-identity", "sip:weblogic@ericsson.com");
 					}
 										
-					System.out.println(r);
+					//System.out.println("notify üzenet: " + r);
+					sentNotifyMessageCallIdMessageIdMap.put(r.getCallId(), detail.getId());
 					r.send();
 					
-					messagingService.getMessagingDao().updateDeliveryStatus(detail.getId(), recipient.getSipUri(), "NOTIFIED");
+					
 				}
 			}			
 		}
