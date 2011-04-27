@@ -143,12 +143,14 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
               				catch(Exception e) { } 
               			}
               			else {
-              					if ("audio/mpeg".equals(selectedMessage.getContentDescription().getMimeType().toLowerCase().trim())) {
-                  					children.add(new AudioMessageDetailsDialog(selectedMessage, getMessageContent(selectedMessage)));
-                  				}
-                  				else {
-                  					children.add(new ImageMessageDetailsDialog(selectedMessage, getMessageContent(selectedMessage)));
-                  				}              			
+              				selectedMessage.setStatus("SEEN");
+              				MessageUtils.updateMessageContainerFile(selectedMessage);
+              				if ("audio/mpeg".equals(selectedMessage.getContentDescription().getMimeType().toLowerCase().trim())) {
+                  				children.add(new AudioMessageDetailsDialog(selectedMessage, getMessageContent(selectedMessage)));
+                  			}
+                  			else {
+                  				children.add(new ImageMessageDetailsDialog(selectedMessage, getMessageContent(selectedMessage)));
+                  			}              			
               			}
               		}         		
               	}
@@ -287,12 +289,27 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
     		int idx = 0;
     		for (Vector v : rows) {
     			if (mId.equals((String)v.get(checkboxIndex + 1))) {
+    				MessageInfoContainer c = MessageUtils.readMessageContainerFromFile(mId);
+    				
+    				if (!c.getContentDescription().isContentAvailable()) {
+    					ObjectFactory f = new ObjectFactory();
+    					InfoMessage info = f.createInfoMessage();
+    					info.setInfoType(InfoMessage.deleteMessage);
+    					info.setDetailList(f.createInfoMessageDetailList());
+    					InfoDetail d = f.createInfoDetail();
+    					d.setId(c.getId());
+    					
+    					info.getDetailList().getDetail().add(d);
+    					this.icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, 
+    							                                                       XMLUtils.createStringXMLFromInfoMessage(info));
+    				}
     				if (tabIndex == 0) {
     					inboxMessageTableModel.removeRow(idx);
     				}
     				else {
     					sentMessageTableModel.removeRow(idx);
-    				}    					
+    				}
+    				MessageUtils.deleteMessageWithMessageId(mId);
     				break;
     			}
     			idx++;
@@ -339,7 +356,10 @@ public class MessageBoxDialog extends JFrame implements MSRPListener, Connection
 					setProgressWindowVisibily(false);
 					CompleteMSRPMessage fullMessage = event.getCompleteMessage();	
 					System.out.println("messageReceivingSuccess: " + fullMessage.getMessageId());
-					MessageUtils.updateMessageContainerFile(MessageUtils.readMessageContainerFromFile(fullMessage.getMessageId()), fullMessage.getContent());					
+					MessageInfoContainer c = MessageUtils.readMessageContainerFromFile(fullMessage.getMessageId());
+					c.getContentDescription().setContentAvailable(true);
+					MessageUtils.createContentFileToMessageInfoContainer(c, fullMessage.getContent());
+					MessageUtils.updateMessageContainerFile(c);					
 					
 					icpController.getCommunicationController().sendBye(Resources.serverSipURI);
 					this.selectedMessage = null;

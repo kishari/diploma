@@ -18,4 +18,15 @@ public class StringUtil {
         return extension;
 
     }
+    
+    public static String getFileNameWithoutExtension(String fileName){
+        String fName = null; 
+        int extensionIndex = fileName.indexOf(".");
+        if (extensionIndex >= 0)
+        {
+        	fName = fileName.substring(0, extensionIndex);
+        }
+        return fName;
+
+    }
 }

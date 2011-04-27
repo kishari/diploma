@@ -207,6 +207,14 @@ public class MessagingSipServlet extends SipServlet {
 			r.send();
 
 		}
+		
+		if (info != null && InfoMessage.deleteMessage.equals(info.getInfoType().toUpperCase())) {
+			System.out.println("delete message jott");
+			for (InfoDetail d: info.getDetailList().getDetail()) {
+				messagingService.getMessagingDao().updateDeliveryStatus(d.getId(), getCleanSipUri(req.getFrom().toString()), "DELETED");
+			}
+			
+		}
 	}
 
 	@Override

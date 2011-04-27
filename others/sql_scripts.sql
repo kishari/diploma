@@ -1,6 +1,6 @@
-select * from messagingdb.messages;
+#select * from messagingdb.messages;
 
-#select * from messagingdb.recipients;
+select * from messagingdb.recipients;
 
 #delete from messagingdb.messages where id > 0;
 
