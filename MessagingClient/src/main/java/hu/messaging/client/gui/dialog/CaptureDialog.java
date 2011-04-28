@@ -172,6 +172,9 @@ public class CaptureDialog extends JFrame implements Observer {
     }
 
     private void captureAudio() {
+    	if (audioRecorder == null) {
+    		audioRecorder = new AudioRecorder(this);
+    	}
         audioRecorder.startCapture();
     }
 
