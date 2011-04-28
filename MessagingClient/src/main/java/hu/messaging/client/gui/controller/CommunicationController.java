@@ -104,6 +104,7 @@ public class CommunicationController implements hu.messaging.client.icp.listener
      
 	public void sendBye(String remoteSipURI) {
 		try {
+			System.out.println("sendBye");
 			icpController.getSession(remoteSipURI).end();
 		}
 		catch(Exception e) { }				
@@ -142,6 +143,7 @@ public class CommunicationController implements hu.messaging.client.icp.listener
         case Disconnected:
             break;    
         case ConnectionFinished:
+        	System.out.println(getClass().getSimpleName() + " ConnectionFinished. removing sipsession: " + event.getRemoteSipUri());
         	icpController.deleteSipSession(event.getRemoteSipUri());
         	removeLocalSDP(event.getRemoteSipUri());
         	break;

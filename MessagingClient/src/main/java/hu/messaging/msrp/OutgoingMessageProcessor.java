@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import hu.messaging.client.Resources;
 import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.util.MSRPUtil;
 
@@ -152,11 +153,11 @@ public class OutgoingMessageProcessor extends Observable implements Runnable {
 		try {
 			OutputStream out = null;
 			if (!recreated) {
-				contentFile = new File("c:\\diploma\\testing\\clientContentFile.mp3");
+				contentFile = new File(Resources.getTestingDirectoryPath() + "clientContentFile.mp3");
 				out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			}
 			else {
-				recreatedContentFile = new File("c:\\diploma\\testing\\clientRecreatedContentFile.mp3");
+				recreatedContentFile = new File(Resources.getTestingDirectoryPath() + "clientRecreatedContentFile.mp3");				
 				out = new BufferedOutputStream(new FileOutputStream(recreatedContentFile, true));
 			}
 			

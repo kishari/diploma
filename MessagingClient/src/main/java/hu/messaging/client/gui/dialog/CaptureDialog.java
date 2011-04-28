@@ -2,28 +2,40 @@ package hu.messaging.client.gui.dialog;
 
 import hu.messaging.client.Resources;
 import hu.messaging.client.gui.util.ImageUtil;
-import hu.messaging.client.media.MimeHelper;
-import hu.messaging.client.media.audio.AudioConverter;
+
+import hu.messaging.client.media.audio.AudioRecorder;
+import hu.messaging.client.media.video.VideoRecorder;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import javax.sound.sampled.*;
+import java.util.Observable;
+import java.util.Observer;
 
-public class CaptureDialog extends JFrame {
+public class CaptureDialog extends JFrame implements Observer {
 
-    private boolean stopCapture = false;
-    private ByteArrayOutputStream tempCapturedContent;
-    private byte[] capturedContent = null;
+	private byte[] capturedContent = null;
     private String capturedContentMimeType = "";
+    
+    private AudioRecorder audioRecorder = null;
+    private VideoRecorder videoRecorder = null;
+    
+    private int comboSelectedIndex = 0;
 
     public CaptureDialog() {
+    	
         final JButton captureBtn = new JButton(Resources.resources.get("button.capture"));
         final JButton stopBtn = new JButton(Resources.resources.get("button.stop"));
         final JButton playBtn = new JButton(Resources.resources.get("button.play"));
         final JButton okButton = new JButton(Resources.resources.get("button.ok"));
+        String[] comboElement = {"Audio", "Picture", "Video"};
+        final JComboBox combobox = new JComboBox(comboElement);
+        combobox.setSelectedIndex(0);
 
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+        
         captureBtn.setEnabled(true);
         stopBtn.setEnabled(false);
         playBtn.setEnabled(false);
@@ -33,42 +45,70 @@ public class CaptureDialog extends JFrame {
         
         captureBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	switch(combobox.getSelectedIndex()) {
+            	case 0: 
+            		captureAudio();
+            		break;
+            	case 1: 
+            		takeImage();
+            		break;
+            	case 2: 
+            		captureVideo();
+            		break;
+            	}
+            	
                 captureBtn.setEnabled(false);
                 stopBtn.setEnabled(true);
                 playBtn.setEnabled(false);
-                captureAudio();
+                okButton.setEnabled(false);
+                
             }
         });
 
-        getContentPane().add(captureBtn);
+        buttonPanel.add(captureBtn);
 
         stopBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	switch(combobox.getSelectedIndex()) {
+            	case 0: 
+            		audioRecorder.stopCapture();
+            		break;
+            	case 1: 
+            		
+            		break;
+            	case 2: 
+            		videoRecorder.stopCapture();
+            		break;
+            	}
+                
                 captureBtn.setEnabled(true);
                 stopBtn.setEnabled(false);
                 playBtn.setEnabled(true);
                 okButton.setEnabled(true);
-                stopCapture = true;
-                AudioConverter converter = new AudioConverter();                
-                try {
-                	capturedContent = converter.encodeStream(tempCapturedContent.toByteArray(), Resources.messagesDirectory + "captured.mp3");
-                	capturedContentMimeType = MimeHelper.getMIMETypeByExtension("mp3");
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                            
             }
         });
 
-        getContentPane().add(stopBtn);
+        buttonPanel.add(stopBtn);
 
         playBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	switch(combobox.getSelectedIndex()) {
+            	case 0: 
+            		audioRecorder.playAudio();
+            		break;
+            	case 1: 
+            		
+            		break;
+            	case 2: 
+            		
+            		break;
+            	}
             	okButton.setEnabled(true);
-                playAudio();
             }
         });                
 
-        getContentPane().add(playBtn);
+        buttonPanel.add(playBtn);
 
         okButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {            	
@@ -76,9 +116,55 @@ public class CaptureDialog extends JFrame {
             }
         }); 
         
-        getContentPane().add(okButton);
+        buttonPanel.add(okButton);
         
-        getContentPane().setLayout(new FlowLayout());
+        combobox.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e) {
+        		int selected = combobox.getSelectedIndex();
+            	boolean isAudio = false;
+            	boolean isPicture = false;
+            	boolean isVideo = false;
+        		switch (selected) {
+        		case 0:
+        			isAudio = true;
+        			comboSelectedIndex = 0;
+        			audioRecorder = new AudioRecorder(CaptureDialog.this);
+        			if (videoRecorder != null) {
+        				videoRecorder.dispose();
+        			}
+        			break;
+        		case 1: 
+        			comboSelectedIndex = 1;
+        			isPicture = true;
+        			videoRecorder = new VideoRecorder(CaptureDialog.this);
+        			break;
+        		case 2: 
+        			comboSelectedIndex = 2;
+        			isVideo = true;
+        			videoRecorder = new VideoRecorder(CaptureDialog.this);
+        			break;
+        		}
+        		if (isAudio || isVideo) {
+        			captureBtn.setText(Resources.resources.get("button.capture"));
+        			playBtn.setText(Resources.resources.get("button.play"));        			
+        		}
+        		else {
+        			captureBtn.setText(Resources.resources.get("button.take.image"));
+        			playBtn.setText(Resources.resources.get("button.show"));      
+        		}
+        		stopBtn.setVisible(!isPicture);
+    			stopBtn.setText(Resources.resources.get("button.stop"));
+    	        okButton.setText(Resources.resources.get("button.ok"));
+        	}
+        });
+        
+        JPanel comboboxPanel = new JPanel();
+        comboboxPanel.setLayout(new FlowLayout());
+        comboboxPanel.add(combobox);
+        
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(comboboxPanel, BorderLayout.NORTH);
+        getContentPane().add(buttonPanel, BorderLayout.CENTER);
         setTitle(Resources.resources.get("capture.window.title"));
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setSize(300, 100);
@@ -86,114 +172,44 @@ public class CaptureDialog extends JFrame {
     }
 
     private void captureAudio() {
-        try {
-        	AudioFormat audioFormat = getAudioFormat();
-            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            TargetDataLine targetDataLine = (TargetDataLine) AudioSystem.getLine(dataLineInfo);
-            targetDataLine.open(audioFormat);
-            targetDataLine.start();
-
-            Thread captureThread = new Thread(new CaptureThread(targetDataLine));
-            captureThread.start();
-        } catch (Exception e) {
-            System.out.println(e);
-            System.exit(0);
-        }
+    	if (audioRecorder == null) {
+    		audioRecorder = new AudioRecorder(this);
+    	}
+        audioRecorder.startCapture();
     }
 
-    private void playAudio() {
-        try {
-            byte audioData[] = tempCapturedContent.toByteArray();
-            InputStream byteArrayInputStream = new ByteArrayInputStream(audioData);
-            AudioFormat audioFormat = getAudioFormat();
-            AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream,
-                    audioFormat,
-                    audioData.length / audioFormat.getFrameSize());
-            DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
-            SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
-            sourceDataLine.open(audioFormat);
-            sourceDataLine.start();
-
-            Thread playThread = new Thread(new PlayThread(audioInputStream, sourceDataLine));
-            playThread.start();
-        } catch (Exception e) {
-            System.out.println(e);
-            System.exit(0);
-        }
+    private void takeImage() {
+    	videoRecorder.takeAnImage();
+    }
+    
+    private void captureVideo() {
+    	videoRecorder.startCapture();
     }
 
-    private AudioFormat getAudioFormat() {
-        float sampleRate = 44100.0F;
-        //8000,11025,16000,22050,44100
-        int sampleSizeInBits = 16;
-        //8,16
-        int channels = 2;
-        //1,2
-        boolean signed = true;
-        //true,false
-        boolean bigEndian = false;
-        //true,false
-        return new AudioFormat(
-                sampleRate,
-                sampleSizeInBits,
-                channels,
-                signed,
-                bigEndian);
-    }
-
-    class CaptureThread extends Thread {
-        byte tempBuffer[] = new byte[10000];
-        
-        TargetDataLine targetDataLine = null;
-        public CaptureThread(TargetDataLine targetDataLine) {
-        	this.targetDataLine = targetDataLine;
-        }
-        
-        public void run() {
-        	tempCapturedContent = new ByteArrayOutputStream();
-            stopCapture = false;
-            try {
-                while (!stopCapture) {
-                    int cnt = targetDataLine.read(tempBuffer, 0, tempBuffer.length);
-                    if (cnt > 0) {
-                    	tempCapturedContent.write(tempBuffer, 0, cnt);
-                    }
-                }
-                tempCapturedContent.close();
-            } catch (Exception e) {
-                System.out.println(e);
-                System.exit(0);
-            }
-        }
-    }
-
-    class PlayThread extends Thread {
-        byte tempBuffer[] = new byte[10000];
-
-        private AudioInputStream audioInputStream = null;
-        private SourceDataLine sourceDataLine;
-        
-        public PlayThread(AudioInputStream audioInputStream, SourceDataLine sourceDataLine) {
-        	this.audioInputStream = audioInputStream;
-        	this.sourceDataLine = sourceDataLine;
-        }
-        
-        public void run() {
-            try {
-                int cnt;
-                while ((cnt = audioInputStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
-                    if (cnt > 0) {
-                        sourceDataLine.write(tempBuffer, 0, cnt);
-                    }
-                }
-                sourceDataLine.drain();
-                sourceDataLine.close();
-            } catch (Exception e) {
-                System.out.println(e);
-                System.exit(0);
-            }
-        }
-    }
+	public void update(Observable o, Object obj) {
+		if (o.toString().contains(AudioRecorder.class.getSimpleName())) {
+			byte[] capturedContent = null;
+			if (obj != null) {
+				capturedContent = (byte[])obj;
+			}
+			
+			this.capturedContent = capturedContent;
+			this.capturedContentMimeType = "audio/mpeg";
+		}
+		
+		if (o.toString().contains(VideoRecorder.class.getSimpleName())) {
+			if (o.toString().contains(VideoRecorder.class.getSimpleName())) {
+				byte[] capturedContent = null;
+				if (obj != null && obj instanceof byte[]) {
+					capturedContent = (byte[])obj;
+				}
+				
+				this.capturedContent = capturedContent;
+				this.capturedContentMimeType = comboSelectedIndex == 2 ? "video/x-msvideo" : "image/jpeg";	
+				
+			}
+		}
+	}
 
 	public byte[] getCapturedContent() {
 		return capturedContent;
@@ -202,7 +218,7 @@ public class CaptureDialog extends JFrame {
 	public String getCapturedContentMimeType() {
 		return capturedContentMimeType;
 	}
-	
+    
     public static void main(String[] args) {
     	CaptureDialog f = new CaptureDialog();
     	f.setVisible(true);

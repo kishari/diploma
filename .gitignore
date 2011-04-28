@@ -3,3 +3,5 @@ bin
 *.class
 testing
 project
+messaging.properties
+*.avi

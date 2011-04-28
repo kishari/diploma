@@ -1,7 +1,13 @@
 package hu.messaging.client;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+
+import javax.media.format.AudioFormat;
 
 public class Resources {
 
@@ -34,7 +40,8 @@ public class Resources {
             put("button.play", "Play");
             put("button.stop", "Stop");
             put("button.show", "Show");
-            put("button.capture", "Capture");     
+            put("button.capture", "Capture");
+            put("button.take.image", "Take Image");
             put("dialog.group.edit.title", "Modify Group");
             put("dialog.group.name.label", "Group name:");
             put("icon.nouser", "No User");
@@ -123,8 +130,48 @@ public class Resources {
     
     public static final String serverSipURI = "sip:weblogic@ericsson.com";
     
-    public static final String workingDirectory = "C:\\diploma\\testing\\";
-    public static final String messagesDirectory = workingDirectory + "messages\\";
-    public static final String messageContentsDirectory = messagesDirectory + "contents\\";
+    public static Properties getProperties() {
+    	Properties properties = new Properties();
+    	String path = System.getProperty("user.dir");
+    	File propertyFile = new File(path + "/messaging.properties");
+        try {
+      	properties.load(new FileInputStream(propertyFile));
+        }
+        catch(IOException e) {
+           e.printStackTrace();
+        }
+        
+        return properties;
+    }
     
+    public static String getMessagesDirectoryPath() {
+    	return getProperties().getProperty("messages.directory");
+    }
+    
+    public static String getMessagesContentsDirectoryPath() {
+    	return getProperties().getProperty("messages.contents.directory");
+    }
+    
+    public static String getTestingDirectoryPath() {
+    	return getProperties().getProperty("testing.directory");
+    }
+    
+    public static AudioFormat getVideoAudioFormat() {
+    	Properties properties = getProperties();
+    	
+    	String bitsAsString = properties.getProperty("audio.bits");
+    	int bits = Integer.parseInt(bitsAsString);
+    	
+    	String rateAsString = properties.getProperty("audio.samplerate");
+    	double rate = Double.parseDouble(rateAsString);
+    	
+    	String channelAsString = properties.getProperty("audio.channels");
+    	int channel = Integer.parseInt(channelAsString);
+    	
+    	AudioFormat audioFormat = new AudioFormat(AudioFormat.LINEAR,
+    									rate, bits, channel, 
+    									AudioFormat.LITTLE_ENDIAN, AudioFormat.SIGNED);
+    	
+    	return audioFormat;
+    }
 }

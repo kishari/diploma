@@ -1,6 +1,8 @@
 package hu.messaging.model;
 
 
+import java.util.Date;
+
 import org.apache.commons.codec.binary.Base64;
 
 public class CompleteMessage {
@@ -10,7 +12,8 @@ public class CompleteMessage {
 	private String mimeType = null;	
 	private UserInfo sender = null;
 	private String subject = null;
-	
+	private Date sentAt = null;
+
 	public CompleteMessage() { }
 	
 	public CompleteMessage(String messageId, byte[] content) {
@@ -86,6 +89,14 @@ public class CompleteMessage {
 
 	public void setMimeType(String mimeType) {
 		this.mimeType = mimeType;
+	}
+	
+	public Date getSentAt() {
+		return sentAt;
+	}
+
+	public void setSentAt(Date sentAt) {
+		this.sentAt = sentAt;
 	}
 	
 	public boolean isReady() {

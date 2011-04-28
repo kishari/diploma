@@ -1,6 +1,8 @@
 package hu.messaging.client.model;
 
 
+import java.util.Date;
+
 import org.apache.commons.codec.binary.Base64;
 
 public class CompleteMessage {
@@ -10,7 +12,8 @@ public class CompleteMessage {
 	private String mimeType = null;	
 	private UserInfo sender = null;
 	private String subject = null;
-	
+	private Date sentAt = null;
+
 	public CompleteMessage() { }
 	
 	public CompleteMessage(String messageId, byte[] content) {
@@ -29,6 +32,16 @@ public class CompleteMessage {
 		setContent(content);
 		this.messageId = messageId;
 		this.sender = sender;
+		this.subject = subject;
+	}
+	
+	public CompleteMessage(String messageId, byte[] content, String mimeType, String senderName, String senderSipUri, String subject) {
+		this.mimeType = mimeType;
+		setContent(content);
+		this.messageId = messageId;
+		this.sender = new UserInfo();
+		sender.setName(senderName);
+		sender.setSipUri(senderSipUri);
 		this.subject = subject;
 	}
 
@@ -78,17 +91,22 @@ public class CompleteMessage {
 		this.mimeType = mimeType;
 	}
 	
+	public Date getSentAt() {
+		return sentAt;
+	}
+
+	public void setSentAt(Date sentAt) {
+		this.sentAt = sentAt;
+	}
+	
 	public boolean isReady() {
 		boolean ready = true;
 		
 		ready = ready && (getContent() != null);
-		System.out.println(ready);
 		ready = ready && (getMimeType() != null && !"".equals(getMimeType()));
-		System.out.println(ready);
 		ready = ready && (getSender() != null && !"".equals(getSender().getName()) && !"".equals(getSender().getSipUri()));
 		ready = ready && (getSubject() != null && !"".equals(getSubject()));
 		
-		System.out.println("isReady: " + ready);
 		return ready;
 	}
 

@@ -16,11 +16,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 public class MessagingService implements Observer, MSRPListener{
 	
@@ -112,27 +117,44 @@ public class MessagingService implements Observer, MSRPListener{
 		getMsrpStack().removeMSRPListener(listener);
 	}
 	
-	public String createNotifyMessageContent(InfoMessage info) {
+	public String createNotifyMessageContent(List<CompleteMessage> messages) {
 		ObjectFactory factory = new ObjectFactory();
 		InfoMessage infoMsg = factory.createInfoMessage();
 		
 		infoMsg.setInfoType(InfoMessage.notifyUser);
 		InfoMessage.DetailList detailList = factory.createInfoMessageDetailList();
 			
-		for (InfoDetail d : info.getDetailList().getDetail()) {
+		for (CompleteMessage m : messages) {
 			InfoDetail detail = factory.createInfoDetail();
-			detail.setId(d.getId());
+			detail.setId(m.getMessageId());
+			
 			detail.setContent(factory.createContentDescription());
-			detail.getContent().setMimeType(d.getContent().getMimeType());
-			detail.getContent().setSize(d.getContent().getSize());
-				
+			detail.getContent().setMimeType(m.getMimeType());
+			detail.getContent().setSize(m.getContent().length);
+			
 			UserInfo sender = factory.createUserInfo();
-			sender.setName(d.getSender().getName());
-			sender.setSipUri(d.getSender().getSipUri());			
+			sender.setName(m.getSender().getName());
+			sender.setSipUri(m.getSender().getSipUri());			
 			detail.setSender(sender);
 			
-			detail.setSentAt(d.getSentAt());
-			detail.setSubject(d.getSubject());
+			GregorianCalendar c = new GregorianCalendar();
+			c.setTime(m.getSentAt());
+			XMLGregorianCalendar date2 = null;
+			try {
+				date2 = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+			} catch (DatatypeConfigurationException e) {
+				e.printStackTrace();
+			}
+			
+			detail.setSentAt(date2);
+			detail.setSubject(m.getSubject());
+			
+			detailList.getDetail().add(detail);
+
+		}
+/*		
+		for (InfoDetail d : info.getDetailList().getDetail()) {
+
 			
 			if (d.getRecipientList() != null) {
 				InfoDetail.RecipientList recipientList = factory.createInfoDetailRecipientList();
@@ -143,15 +165,11 @@ public class MessagingService implements Observer, MSRPListener{
 					recipientList.getRecipient().add(recipient);
 				}
 			}
-			
-			detailList.getDetail().add(detail);
-		}
-			
+*/						
 		infoMsg.setDetailList(detailList);
-				
-		
-		
+
 		String xml = XMLUtils.createStringXMLFromInfoMessage(infoMsg);
+		
 		return xml;
 	}
 
@@ -171,6 +189,9 @@ public class MessagingService implements Observer, MSRPListener{
 				break;
 			case messageSentSuccess:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: messageSentSuccess");
+				List<String> s = new ArrayList<String>();
+				s.add(event.getMessageId());
+				messagingDao.updateDeliveryStatus(s, event.getRemoteSipUri(), "SENT");
 				break;
 			case sessionStarted:
 				System.out.println(getClass().getSimpleName() + " fireMsrpEvent: sessionStarted");

@@ -1,5 +1,6 @@
 package hu.messaging.msrp;
 
+import hu.messaging.client.Resources;
 import hu.messaging.msrp.model.*;
 import hu.messaging.msrp.listener.MSRPEvent;
 import hu.messaging.msrp.util.MSRPUtil;
@@ -240,7 +241,7 @@ public class TransactionManager extends Observable implements Observer {
 	public void printToFile(byte[] data, String fileExtension) {
 		try {
 			OutputStream out = null;
-			File contentFile = new File("c:\\diploma\\testing\\clientQueueContentFile." + fileExtension);
+			File contentFile = new File(Resources.getTestingDirectoryPath() + "clientQueueContentFile." + fileExtension);
 			out = new BufferedOutputStream(new FileOutputStream(contentFile, true));
 			
 			out.write(data);
@@ -259,12 +260,12 @@ public class TransactionManager extends Observable implements Observer {
 			if (isAck) {
 				Response r = (Response)data;
 				line =  r.getTransactionId() + "\n";
-				f = new File("c:\\diploma\\testing\\clientAckBytes.txt");
+				f = new File(Resources.getTestingDirectoryPath() + "clientAckBytes.txt");
 			}
 			else {
 				Request d = (Request)data;
 				line = d.getFirstByte() + "\t" + d.getLastByte() + "\t" + d.getTransactionId() + "\n";
-				f = new File("c:\\diploma\\testing\\clientMsgBytes.txt");
+				f = new File(Resources.getTestingDirectoryPath() + "clientMsgBytes.txt");
 			}
 
 			OutputStream out = null;

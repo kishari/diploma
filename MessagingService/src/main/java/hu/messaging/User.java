@@ -12,6 +12,10 @@ public class User extends Observable{
 	
 	public User() {}
 	
+	public User(String sipURI) {
+		this.sipURI = sipURI;
+	}
+	
 	public User(String sipURI, int expireDelay) {
 		System.out.println("new User:" + sipURI + " expires: " + expireDelay);
 		this.sipURI = sipURI;

@@ -1,7 +1,7 @@
 package hu.messaging.dao;
 
-import hu.messaging.Recipient;
 import hu.messaging.model.CompleteMessage;
+import hu.messaging.model.UserInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.naming.InitialContext;
@@ -18,7 +20,6 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 
 public class MessagingDAO {
 	 private DataSource dataSource = null;
@@ -27,19 +28,26 @@ public class MessagingDAO {
 	 											  "messagingdb.messages(message_id, content, content_size) " + 
 	 											  "VALUES (?, ?, ?)";
 	 private static final String UPDATE_MESSAGE = "UPDATE messagingdb.messages " + "" +
-	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ? " +
+	 											  "SET sender_name = ?, sender_sip_uri = ?, mime_type = ?, subject= ?, sent_at = ? " +
 	 											  "WHERE message_id = ?";
-	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri) values (?, ?, ?)";
+	 private static final String INSERT_RECIPIENT = "INSERT INTO messagingdb.recipients(message_id, name, sip_uri, delivery_status) values (?, ?, ?, ?)";
+	 private static final String UPDATE_DELIVERY_STATUS_TO_RECIPIENT = "UPDATE messagingdb.recipients " +
+	 											    "SET delivery_status = ? " +
+	 											    "WHERE sip_uri = ? AND message_id = ? ";
 	 private static final String SELECT_CONTENTS_TO_SIPURI = "SELECT message_id, content FROM messagingdb.messages " + 
 	 															"WHERE message_id IN(" + 
 	 																	"SELECT message_id " +
 	 																	"FROM messagingdb.recipients " + 
 	 																	"WHERE sip_uri = ?)";
 	 
-	 private static final String SELECT_CONTENT_TO_MESSAGE_ID = "SELECT message_id, content, subject, sender_name, sender_sip_uri, mime_type " +
+	 private static final String SELECT_CONTENT_TO_MESSAGE_ID = "SELECT message_id, content, subject, sender_name, sender_sip_uri, mime_type, sent_at " +
 	 															"FROM messagingdb.messages " + 
 	 															"WHERE message_id = ?";
 	
+	 private static final String SELECT_NEW_MESSAGE_IDS_TO_RECIPIENT = "SELECT message_id " +
+																	"FROM messagingdb.recipients " + 
+																	"WHERE sip_uri = ? AND delivery_status = 'NEW'";
+
 	 public MessagingDAO() {
 		 init();
 	 }
@@ -69,7 +77,7 @@ public class MessagingDAO {
 		}
 	}
 	 	 
-	 public void insertRecipients( String messageId, List<Recipient> recipients ) {
+	 public void insertRecipients( String messageId, List<UserInfo> recipients ) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -77,10 +85,11 @@ public class MessagingDAO {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(INSERT_RECIPIENT);
 	            
-	            for (Recipient r : recipients) {		            
+	            for (UserInfo r : recipients) {		            
 		            pstmt.setString(1, messageId);
 		            pstmt.setString(2, r.getName());
-		            pstmt.setString(3, r.getSipURI());
+		            pstmt.setString(3, r.getSipUri());
+		            pstmt.setString(4, "NEW");
 		            pstmt.executeUpdate();
 	            }
 	            
@@ -91,10 +100,32 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
+	 public void updateDeliveryStatus(List<String> messageIds, String recipientSipUri, String deliveryStatus ) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
+	        try {
+	            conn = getConnection();
+	            pstmt = conn.prepareStatement(UPDATE_DELIVERY_STATUS_TO_RECIPIENT);
+	            		    
+	            for (String mId : messageIds) {
+	            	pstmt.setString(1, deliveryStatus);
+	            	pstmt.setString(2, recipientSipUri); 
+	            	pstmt.setString(3, mId);
+	            	pstmt.executeUpdate();
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        } finally {
+	        	closeAll(null, pstmt, null, conn);
+	        }
+	    }
+	 
+	 	public Date updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
+	    	
+	 		Connection conn = null;
+	        PreparedStatement pstmt = null;
+	        java.sql.Timestamp sentAt = new java.sql.Timestamp(new Date().getTime());
 	        try {
 	            conn = getConnection();
 	            pstmt = conn.prepareStatement(UPDATE_MESSAGE);
@@ -102,13 +133,18 @@ public class MessagingDAO {
 	            pstmt.setString(2, senderSIPUri);
 	            pstmt.setString(3, mimeType);
 	            pstmt.setString(4, subject);
-	            pstmt.setString(5, messageId);
+	            
+	            System.out.println("sentAt: " + sentAt.toString());
+	            pstmt.setTimestamp(5, sentAt);
+	            pstmt.setString(6, messageId);
 	            pstmt.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        } finally {
 	        	closeAll(null, pstmt, null, conn);
 	        }
+	        
+	        return new Date(sentAt.getTime());
 	    }
 	 
 	 	public void insertMessage( CompleteMessage message) {
@@ -148,12 +184,17 @@ public class MessagingDAO {
 		            	String senderName = rs.getString(4);
 		            	String senderSipUri = rs.getString(5);
 		            	String mimeType = rs.getString(6);
+		            	Timestamp sentAt = rs.getTimestamp(7);
 		            	InputStream is = rs.getBlob(2).getBinaryStream();
 	            	
 		            	try {
 		            		byte[] content = IOUtils.toByteArray(is);
 		            		
+		            		if (content != null)
+		            			System.out.println("MessagingDao content size: " + content.length);
+		            		
 		            		CompleteMessage msg = new CompleteMessage(msgId, content, mimeType, senderName, senderSipUri,  subject);
+		            		msg.setSentAt(sentAt);
 		            		result.add(msg);
 		            	} catch (IOException e) {
 		            		e.printStackTrace();
@@ -168,6 +209,37 @@ public class MessagingDAO {
 	        return result.get(0);
 	    }
 	
+	 	public List<CompleteMessage> getNewMessagesToSipUri(String sipURI) {
+	 		List<CompleteMessage> result = new ArrayList<CompleteMessage>();
+	 		
+	 		List<String> newMessagesMessageId = new ArrayList<String>();
+	 		
+	 		Connection conn = null;
+	    	PreparedStatement pstmt = null;
+	        ResultSet rs = null;
+	        
+	        try {
+	        	conn = getConnection();
+	        	pstmt = conn.prepareStatement(SELECT_NEW_MESSAGE_IDS_TO_RECIPIENT);
+	        	pstmt.setString(1, sipURI);
+		        rs = pstmt.executeQuery();
+		            while (rs.next()) {  
+		            	String msgId = rs.getString(1);
+		            	newMessagesMessageId.add(msgId);		            
+		            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        } finally {
+	        	closeAll(rs, null, pstmt, conn);
+			}
+	 		
+	        for (String id : newMessagesMessageId) {
+	        	CompleteMessage m = getMessageToMessageId(id);
+	        	result.add(m);
+	        }
+	        
+	 		return result;
+	 	}
 
 	    public List<byte[]> getMessagesToSipURI( String sipURI ) {
 	    	

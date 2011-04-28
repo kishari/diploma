@@ -31,6 +31,9 @@ public class MessagingSipServlet extends SipServlet {
 	private MessagingService messagingService = null;
 	private static final long serialVersionUID = 1L;
 	
+	
+	private Map<String, List<String>> sentNotifyMessageCallIdMessageIdMap = new HashMap<String, List<String>>();
+	
 	private String getCleanSipUri(String incomingUri) {
 		Pattern sipUriPattern =  Pattern.compile("(sip:[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}@" +
 												 "[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,}.?[\\p{Alnum}]{1,})");	
@@ -58,7 +61,7 @@ public class MessagingSipServlet extends SipServlet {
 		
 		user.addObserver(this.messagingService);
 		if (this.messagingService.addUserToOnlineList(user)) {
-			//notifyUserFromNewMessages(req, user);
+			notifyUserFromNewMessage(user);
 		}
 		
 	}
@@ -154,7 +157,7 @@ public class MessagingSipServlet extends SipServlet {
 			this.messagingService.sendMessages(messages, getCleanSipUri(req.getFrom().toString()));
 		}
 		
-		if (info != null && InfoMessage.messageData.equals(info.getInfoType().toUpperCase())) {		
+		if (info != null && InfoMessage.messageData.equals(info.getInfoType().toUpperCase())) {			
 			InfoMessage.DetailList detailList = info.getDetailList();
 			InfoDetail detail = detailList.getDetail().get(0);
 			
@@ -162,19 +165,20 @@ public class MessagingSipServlet extends SipServlet {
 			String mimeType = detail.getContent().getMimeType();
 			String senderSipUri = detail.getSender().getSipUri();
 			String senderName = detail.getSender().getName();
-			String subject = detail.getSubject();
+			String subject = detail.getSubject();						
 			
-			List<Recipient> recipients = new ArrayList<Recipient>();
+			List<User> recipients = new ArrayList<User>();
 			
 			for (UserInfo r : detail.getRecipientList().getRecipient()) {				
-				Recipient recipient = new Recipient(r.getName(), r.getSipUri());
-				System.out.println("recipient name : " + recipient.getName() + " ****** uri: " + recipient.getSipURI());
-				recipients.add(recipient);
+				System.out.println("recipient name : " + r.getName() + " ****** uri: " + r.getSipUri());
+				recipients.add(new User(r.getSipUri()));
+				
 			}
 			
-			messagingService.getMessagingDao().insertRecipients(messageId, recipients);
-			messagingService.getMessagingDao().updateMessage(messageId, mimeType, senderName, senderSipUri, subject); 
-			notifyOnlineRecipientsFromNewMessage(req, info);
+			messagingService.getMessagingDao().insertRecipients(messageId, detail.getRecipientList().getRecipient());
+			messagingService.getMessagingDao().updateMessage(messageId, mimeType, senderName, senderSipUri, subject);
+						
+			notifyUsersFromNewMessage(recipients);
 		}
 		
 		if (info != null && InfoMessage.pullNewMessageInfos.equals(info.getInfoType().toUpperCase())) {
@@ -192,6 +196,32 @@ public class MessagingSipServlet extends SipServlet {
 			r.send();
 
 		}
+		
+		if (info != null && InfoMessage.deleteMessage.equals(info.getInfoType().toUpperCase())) {
+			System.out.println("delete message jott");
+			List<String> deletedMessageIds = new ArrayList<String>();
+			
+			for (InfoDetail d: info.getDetailList().getDetail()) {
+				deletedMessageIds.add(d.getId());
+			}
+			
+			messagingService.getMessagingDao().updateDeliveryStatus(deletedMessageIds, getCleanSipUri(req.getFrom().toString()), "DELETED");			
+		}
+	}
+
+	@Override
+	protected void doResponse(SipServletResponse resp) throws ServletException,
+			IOException {
+		super.doResponse(resp);
+		//System.out.println("doResponse METHOD: " + resp.getMethod());
+		System.out.println("doResponse callId: " + resp.getCallId());
+		//System.out.println("doResponse: " + resp);
+		List<String> messageIds = sentNotifyMessageCallIdMessageIdMap.remove(resp.getCallId());
+		String sipUri = getCleanSipUri(resp.getTo().toString());
+		if (messageIds != null) {
+			System.out.println("doResponse updateDeliveryStatus");
+			messagingService.getMessagingDao().updateDeliveryStatus(messageIds, sipUri, "NOTIFIED");
+		}		
 	}
 
 	private InfoMessage createInfoMessageFromNewMessages(User u) {
@@ -217,35 +247,51 @@ public class MessagingSipServlet extends SipServlet {
 		return m;
 	}
 	
-	private void notifyOnlineRecipientsFromNewMessage(SipServletRequest req, 
-									    InfoMessage info) throws ServletParseException, IOException {
-		
+	private void notifyUsersFromNewMessage(List<User> users) throws ServletParseException, IOException {
+
 		System.out.println("notifyOnlineRecipients");
-		InfoDetail detail = info.getDetailList().getDetail().get(0);
-		for (UserInfo recipient : detail.getRecipientList().getRecipient()) {
-			for (User user : this.messagingService.onlineUsers ) {				
-				if (recipient.getSipUri().equals(user.getSipURI())) {
-					SipServletRequest r = null;
-					if (true) {
-						r = sipFactory.createRequest(req, false);
-						r.setRequestURI(sipFactory.createURI(user.getSipURI()));
-						r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-						r.setContent(messagingService.createNotifyMessageContent(info), "text/plain");
-						r.addHeader("p-asserted-identity", "sip:wl@ericsson.com");
-					}
-					else {
-						r = sipFactory.createRequest(sipFactory.createApplicationSession(), "INVITE", "sip:weblogic@ericsson.com",
-								user.getSipURI());
-						r.setRequestURI(sipFactory.createURI(user.getSipURI()));
-						r.pushRoute(sipFactory.createSipURI(null, InetAddress.getLocalHost().getHostAddress() + ":5082"));
-						r.setContent(messagingService.createNotifyMessageContent(info), "text/plain");
-						r.addHeader("p-asserted-identity", "sip:weblogic@ericsson.com");
-					}
-										
-					System.out.println(r);
-					r.send();
-				}
-			}			
+		for (User user : users) {
+			if (!messagingService.onlineUsers.contains(user)) {
+				return;
+			}
+			
+			List<CompleteMessage> userNewMessages = messagingService.getMessagingDao().getNewMessagesToSipUri(user.getSipURI());
+			
+			if (userNewMessages == null || userNewMessages.size() == 0) {
+				return;
+			}
+			
+			InfoMessage infoMessage = XMLUtils.createInfoMessageFromStringXML(messagingService.createNotifyMessageContent(userNewMessages));
+			SipServletRequest r = null;
+			r = sipFactory.createRequest(sipFactory.createApplicationSession(),
+					"MESSAGE", "sip:weblogic@ericsson.com", user.getSipURI());
+			// r.setRequestURI(sipFactory.createURI(user.getSipURI()));
+			r.pushRoute(sipFactory.createSipURI(null, InetAddress
+					.getLocalHost().getHostAddress() + ":5082"));
+			r.setContent(messagingService.createNotifyMessageContent(userNewMessages),
+					"text/plain");
+			r.addHeader("p-asserted-identity", "sip:weblogic@ericsson.com");
+			r.addHeader("Accept-Contact:", "*;+g.multicastclient");
+
+			List<String> messageIds = new ArrayList<String>();
+			for (InfoDetail d : infoMessage.getDetailList().getDetail()) {
+				messageIds.add(d.getId());
+			}
+			sentNotifyMessageCallIdMessageIdMap.put(r.getCallId(), messageIds);
+			
+			r.send();
+		}
+	}
+	
+	private void notifyUserFromNewMessage(User user) {
+		List<User> u = new ArrayList<User>();
+		u.add(user);
+		try {
+			notifyUsersFromNewMessage(u);
+		} catch (ServletParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	

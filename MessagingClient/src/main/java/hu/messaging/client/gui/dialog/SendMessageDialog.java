@@ -118,14 +118,16 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
                 }
                 break;           
             case RecipientsSentSuccessful:
+            	System.out.println("SendMessageDialog: RecipientsSentSuccessful");
         		icpController.getCommunicationController().sendBye(Resources.serverSipURI);
         		if (!Constants.sendTestMessageMySelf) {
         			MessageUtils.createMessageContainerFile(MessageUtils.createMessageContainerFromCompleteMessage(completeMessage, true), completeMessage.getContent());
         		}
             	break;
             case ConnectionFinished:
+            	System.out.println("SendMessageDialog: ConnectionFinished");
             	icpController.getCommunicationController().removeMSRPListener(this);
-            	icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
+            	//icpController.getSessionListener(Resources.serverSipURI).removeConnectionListener(this);
         		icpController.getCommunicationController().getMsrpStack().disposeResources();        		
         }
     }
@@ -239,7 +241,6 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 		    	  completeMessage.setSender(sender);
 		    	  completeMessage.setSubject(subjectTextField.getText());
 		    	  if (fromCaptureDeviceButton.isSelected() && cDialog.getCapturedContent() != null) {
-		    		  System.out.println("Van captured content te geci");
 		    		  completeMessage.setContent(cDialog.getCapturedContent());
 		    		  completeMessage.setMimeType(cDialog.getCapturedContentMimeType());
 		    	  }
@@ -420,6 +421,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 			switch(event.getEventType()) {
 				case sessionStarted :  
 					System.out.println("session started event: " + event.getRemoteSipUri());
+					Thread.sleep(1000);
 					icpController.getCommunicationController().sendMessageInMSRPSession(completeMessage, Resources.serverSipURI);
 					break;
 				case brokenTrasmission :
@@ -428,6 +430,7 @@ public class SendMessageDialog extends JFrame implements ConnectionListener, Lis
 					System.out.println("message sent successful event: " + event.getRemoteSipUri());
 					String sipMsg = buildRecipientsSIPMessage(event.getMessageId(), getSelectedGroupsMembers());
 					icpController.getSession(Resources.serverSipURI).sendMessage("text/plain", sipMsg.getBytes(), sipMsg.length());
+					//icpController.getCommunicationController().sendSIPMessage(Resources.serverSipURI, sipMsg);
 					break;
 				case messageReceivingSuccess :
 					break;
