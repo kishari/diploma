@@ -362,7 +362,6 @@ A következőkben ezen pontok részletezésére kerül sor.
 Az  egyes multimédia üzenethez kapcsolódó adatok tárolásához a következő mezők szükségesek:
 
 \begin{mydescription}
-\item[ID:] a tábla sorainak egyértelmű azonosítására szolgál, a tábla elsődleges kulcsa. Értelemszerűen nem vehet fel NULL értéket.
 \item[MESSAGE\_ID:] az MSRP kapcsolaton átvitt multimédia tartalom MSRP azonosítója, amely egy véletlen karakterlánc. A mező alapján egyértelműen visszakereshető a multimédia üzenet. Értéke egyedi a táblában, továbbá nem vehet fel NULL értéket. A multimédia tartalom MSRP kapcsolaton történő sikeres átvitele után ezen azonosító alapján küldi el az üzenethez kapcsolódó további adatokat, mint a címzettek, az üzenet tárgya, a tartalom formátuma, stb. (lásd. \ref{sec:appserver}.~ fejezet) 
 \item[CONTENT:] ebben a mezőben a multimédia üzenethez tartozó multimédia tartalom base64 kódolt bájtfolyamként tárolódik.
 \item[SENDER\_NAME:] az üzenet feladójának nevét tartalmazó oszlop.
@@ -392,13 +391,45 @@ A konkrét adatbázis táblákat létrehozó SQL utasítások \aref{sec:sql_utas
 \subsection{Megvalósítási terv}
 \label{sec:megvalositas}
 
-Ide jönnek majd az állapotgépek, működés leírása...
+A most következő részben a kliens, illetve a szerver oldal működésének megtervezése, a működés leírása következik.
 
 \subsubsection{A kliens megvalósítása}
 \label{sec:kliensmegvalositas}
 
+\begin{figure}[htbp]
+\center
+\resizebox{14cm}{!}{
+\includegraphics{img/client_statemachine_full.eps}}
+\caption{A kliens állapotgépe}
+\label{fig:client_statemachine_full}
+\end{figure}
+
+hello, hallo 
+
+\begin{figure}[htbp]
+  \begin{center}
+    \subfloat[A kapcsolat felépítése]{\label{fig:create_msrp_connection}\includegraphics[scale=0.47]{img/client_create_msrp_connecton.eps}}
+    \hspace{0.2in}
+    \subfloat[A kapcsolat bontása]{\label{fig:destroy_msrp_connection}\includegraphics[scale=0.47]{img/client_destroy_msrp_connecton.eps}}
+  \end{center}
+  \caption{Az MSRP kapcsolat felépítése és bontása}
+  \label{fig:edge}
+\end{figure}
+
+Amennyiben a címzett úgy dönt, hogy nem érdekli az adott multimédia üzenet, a tartalom ,,letöltése'' és megtekintése nélkül egyszerűen törölheti azt. Ebben az esetben egy DELETE\_MESSAGE típusú SIP MESSAGE kérésben értesíti a szervert, ahol az üzenet törzsében lévő XML-ben megadja a törölni kívánt multimédia üzenet azonosítóját. 
+
 \subsubsection{A szerver megvalósítása}
 \label{sec:szervermegvalositas}
+
+A szerver állapotgépe \aref{fig:server_statemachine_full}.~ábrán látható. A szerver folyamatosan várja a kliensek által küldött SIP üzeneteket. A beérkező üzenetnek többféle akciót hajthat végre.
+
+A szerver beérkező SIP REGISTER kérés esetén megnézi, hogy a küldő felhasználó szerepel-e az elérhető felhasználók listájában. Ha a felhasználó nem szerepel benne, akkor a szerver hozzáadja őt a listához. Ezután megnézi, hogy az adott felhasználónak vannak-e új üzenetei, találat esetén létrehoz egy értesítő MESSAGE üzenetet a beérkezett új üzenetek adataiból, és elküldi azt a felhasználónak. Utolsó lépésként elindítja a felhasználóhoz tartozó, REGISTER üzenet lejárati idejével inicializált időzítőt. Abban az esetben, amikor a REGISTER-t küldő felhasználó már szerepel az elérhető felhasználók listájában, akkor csak az utolsó lépés, azaz az időzítő újraindítása történik.
+
+INVITE kérés vétele azt jelenti, hogy a küldő kliens MSRP kapcsolatot kíván felépíteni a szerverrel. Ilyenkor a szerver megvizsgálja, hogy létezik-e már az MSRP kapcsolatokon érkező csomagok fogadására létrehozott TCP socket (fogadó socket). Amennyiben létezik ilyen socket, a szerver a socket jellemzői (IP cím és port) alapján generál egy MSRP kapcsolatot leíró SDP leírót. Utóbbi leíró a szerver szemszögéből jellemzi a létrehozandó MSRP kapcsolatot. Abban az esetben, ha a szerver oldalán nem létezik fogadó socket, akkor létrehoz egyet, majd ezután generálja le a kapcsolatot leíró SDP információkat.  Az INVITE üzenet törzsében található a felépítendő MSRP kapcsolat kliens oldalát jellemző SDP leíró információk (kliens oldali fogadó TCP kapcsolat IP cím, port, MSRP kapcsolat azonosító) . Az INVITE törzsében megtalálható leíró információk alapján a szerver létrehoz egy, az MSRP csomagok küldését megvalósító TCP socketet (küldő socket). Utóbbi socket majd a kliens oldali fogadó TCP sockethez kapcsolódik, a szerver ezen a socketen küldi a kliens felé létrehozott MSRP kapcsolaton az MSRP csomagokat. A folyamat végén a szerver egy 200OK típusú SIP válasz törzsében elküldi az MSRP kapcsolatot szerver oldaláról leíró SDP információkat a kliensnek.
+
+A szerverhez beérkező SIP ACK üzenet azt jelenti, hogy az előző bekezdésben leírt, INVITE-ra küldött 200OK üzenetet a kliens oldal sikeresen megkapta, és ő is létrehozott egy MSRP csomagok küldését végző TCP socketet, illetve létrehozta az MSRP kapcsolatot. Az MSRP kapcsolat létrehozásának folyamatában még annyi hátravan, hogy a szerver oldalon létrehozott küldő TCP socket ténylegesen kapcsolódjon a kliens oldali fogadó TCP socket-hez, majd az MSRP kapcsolat a szerver oldalán is létrejöjjön. Ennek eredményeként befejeződik a kliens és a szerver közötti MSRP kapcsolat kiépítése. Ezen az MSRP kapcsolaton a multimédia üzenethez kapcsolódó tartalom kerül majd átvitelre.
+
+Miután egy kliens és a szerver között fennálló MSRP kapcsolaton a multimédia üzenet teljes tartalma átvitelre került, az MSRP kapcsolatra már nincs szükség. Ilyenkor a kliens SIP BYE kérést küld a szervernek, ezzel kezdeményezve az MSRP kapcsolat bontását. A szerver a kérés hatására bontja az MSRP  kapcsolatot, felszabadítja a klienssel létrehozott TCP kapcsolatok erőforrásait, majd 200OK válaszban nyugtázza a kliens felé, hogy a kapcsolat bontás sikeres volt.
 
 \begin{figure}[htbp]
 \center
@@ -407,6 +438,25 @@ Ide jönnek majd az állapotgépek, működés leírása...
 \caption{A szerver állapotgépe}
 \label{fig:server_statemachine_full}
 \end{figure}
+
+A szerver a kliensek felől fogadhat SIP MESSAGE kéréseket, amelyek határása többféle akciót hajthat végre. \Aref{fig:server_statemachine_full}.~ábra bal oldalán található, szürke állapot egy összetett állapot, amelyben a vett SIP MESSAGE törzsében lévő tartalom a szerver oldalon más-más tevékenységet vált ki. Az állapot részletezése \aref{fig:server_statemachine_message}.~ábrán látható.
+
+\begin{figure}[htbp]
+\center
+\resizebox{12cm}{!}{
+\includegraphics{img/server_statemachine_message.eps}}
+\caption{A szerver állapotgépe}
+\label{fig:server_statemachine_message}
+\end{figure}
+
+Az üzenetküldő szolgáltatásban használt SIP MESSAGE kérések törzsének tartalma \aref{sec:sip_message}.~részben leírt adatokat tartalmazhatja.
+
+A multimédia üzenet küldésének folyamatában az első lépés az üzenethez tartozó tartalom a kliens és a szerver közötti MSRP kapcsolaton történő átvitele. Miután a tartalom küldése sikeresen megtörtént, a kliensnek az üzenethez tartozó egyéb információkat is el kell küldenie a szervernek. A kliens az adatokat egy SIP MESSAGE kérés törzsében, XML formában küldi el a szervernek. Ilyen információk pl. a címzettek listája, az üzenet tárgya, stb. Az XML tartalmazza a kapcsolódó multimédia tartalom MSRP átvitel során használt egyedi azonosítóját is, így az XML-ben kapott adatok egyértelműen köthetőek a már eltárolt multimédia tartalomhoz.  Az XMLből kinyerhető a MESSAGE kérés típusa is, amely ez esetben MESSAGE\_DATA. A szerver a kérés vétele után a már adatbázisban (messages táblában) eltárolt multimédia tartalomhoz kitölti a többi mező értékét, mint a küldő neve és SIP URI-ja, az üzenet tárgya, a multimédia tartalom típusa, stb. Az XML tartalmazza a címzetteket is, őket is beszúrja a címzetteket tároló adatbázis táblába (recipients). Miután az adatok eltárolása sikeresen megtörtént, a szerver létrehoz az új üzenetből egy értesítő MESSAGE kérést, amelynek törzsébe XML formában elhelyezi az új multimédia üzenetet leíró adatokat (üzenet azonosítója, feladó adatai, multimédia tartalom típusa, stb.). Az utóbbi kérés típusának NOTIFY\_USER-t állít be. Az így létrehozott MESSAGE kérést a multimédia üzenet minden elérhető címzettjének elküldi, majd a címzett táblában az értesített felhasználó multimédia üzenethez tartozó bejegyzésének értesítési státuszát ,,értesítve'' állapotra állítja. Utóbbi lépés azért szükséges, hogy a szerver tisztában legyen azzal, melyik üzenetről küldött már értesítést az adott címzettnek, és melyikről még nem.
+
+Ha egy kliens meg szeretné tekinteni az üzenet tartalmát, akkor DOWNLOAD\_CONTENT típusú MESSAGE kérést hoz létre, amelynek törzse tartalmazza a letölteni kívánt multimédia üzenet azonosítóját. Amikor a szerver egy ilyen típusú kérést vesz, adatbázisból kinyeri a multimédia üzenet tartalmát, majd a klienssel előzetesen kiépített MSRP kapcsolaton elküldi a kért tartalmat a kliensnek. Sikeres küldés után a multimédia üzenethez tartozó, az adott címzett adatbázis bejegyzésének kézbesítési státuszát ,,elküldve'' állapotra állítja.
+
+Amennyiben a szerver egy klienstől DELETE\_MESSAGE típusú SIP MESSAGE kérés kap, annak törzsében lévő XML-ben megtalálható azonosítójú üzenethez tartozó felhasználói bejegyzés kézbesítési státuszát ,,törölt''-re állítja az adatbázisban.  
+
 
 \subsection{Összefoglalás}
 
