@@ -126,7 +126,7 @@ A felhasználó ezen keresztül éri el az IMS hálózatot, azaz magát az üzen
 
 A felhasználó multimédia üzenetet küldhet más, általa ismert felhasználók csoportjának. Az elküldendő multimédia üzenet többféleképpen állhat a kliens rendelkezésére. Egyik lehetséges opció, hogy az elküldenő üzenethez tartozó multimédia tartalom fájlrendszeren már a felhasználó rendelkezésére áll kép, hang vagy videó fájl formájában. Ebben az esetben a küldő kliens fájlrendszeren való tallózással választhatja ki a multimédia tartalmat. A tartalom létrehozásának egy másik lehetséges módja, hogy a felhasználó a számítógépéhez kapcsolódó audiovizuális eszközökkel (mikrofon és kamera) maga készíti el a multimédia üzenethez a multimédia felvételt. Miután az elküldendő multimédia üzenethez a tartalom a felhasználó rendelkezésére áll, valamilyen módon el kell küldeni a szerver oldalnak. A tartalom kliens-szerver közötti átvitele MSRP protokollal történik.
 
-Az üzenetküldés folyamatát \aref{fig:sending_proc}.~ábrán láthatjuk. A folyamat első lépéseként a küldő kliens és a szerver között fel kell építeni egy MSRP kapcsolatot, amelyen keresztül a multimédia üzenet átvitele történik. Egy MSRP kapcsolat minden esetben egy kliens és a szerver között épül fel, két kliens közvetlenül egymáshoz soha nem csatlakozik. Amikor az MSRP kapcsolat sikeresen felépült, a feladó ezen kapcsolaton keresztül MSRP csomagok\footnote{Az MSRP csomag felépítése \aref{sec:msrp_chunks}.~fejezetben található} formájában továbbítja a multimédia üzenetet a szervernek. A szerver minden MSRP csomag vételét nyugtázza a küldő kliens felé. Miután a teljes üzenet sikeresen megérkezett a szerver oldalra, a a kliens bontja az MSRP kapcsolatot. A folyamat utolsó lépéseként a felhasználó egy SIP MESSAGE típusú üzenet törzsében elküldi a szervernek a címzettek listáját, illetve opcionálisan egyéb, az elküldött multimédia üzenetre jellemző információt. A címzett lista, illetve a kiegészítő információk a MESSAGE kérés törzsében, XML (Extensible Markup Language) formátumban kerülnek átvitelre. Mivel az említett XML rövid, így az belefér egyetlen SIP MESSAGE üzenetbe. A szerver az XML-t tartalmazó üzenet sikeres vétele után a multimédia tartalommal együtt adatbázisban eltárolja azt, majd nyugtázza a vételt a feladó felé.
+Az üzenetküldés folyamatát \aref{fig:sending_proc}.~ábrán láthatjuk. A folyamat első lépéseként a küldő kliens és a szerver között fel kell építeni egy MSRP kapcsolatot, amelyen keresztül a multimédia üzenet átvitele történik. Egy MSRP kapcsolat minden esetben egy kliens és a szerver között épül fel, két kliens közvetlenül egymáshoz soha nem csatlakozik. Amikor az MSRP kapcsolat sikeresen felépült, a feladó ezen kapcsolaton keresztül MSRP csomagok\footnote{Az MSRP csomag felépítése \aref{sec:msrp_chunks}.~fejezetben található} formájában továbbítja a multimédia üzenetet a szervernek. A szerver minden MSRP csomag vételét nyugtázza a küldő kliens felé. Miután a teljes üzenet sikeresen megérkezett a szerver oldalra, kliens a folyamat következő lépéseként egy SIP MESSAGE típusú üzenet törzsében elküldi a szervernek a címzettek listáját, illetve opcionálisan egyéb, az elküldött multimédia üzenetre jellemző információt. A címzett lista, illetve a kiegészítő információk a MESSAGE kérés törzsében, XML (Extensible Markup Language) formátumban kerülnek átvitelre. Mivel az említett XML rövid, így az belefér egyetlen SIP MESSAGE üzenetbe. A szerver az XML-t tartalmazó üzenet sikeres vétele után a multimédia tartalommal együtt adatbázisban eltárolja azt, majd nyugtázza a vételt a feladó felé. A küldés befejezéseként a kliens bontja az MSRP kapcsolatot a szerverrel.
 
 \begin{figure}[htbp]
 \center
@@ -201,19 +201,6 @@ Az adatbázis szerver a küldő felhasználótól az alkalmazás szerveren keres
 \item Az üzenet adott címzetthez tartozó kézbesítési állapota
 \end{itemize}
 
-\subsection{Interfész terv}
-\label{sec:interfesz_terv}
-
-Az egyes modulok közötti interfészek leírása...
-
-Két fő komponensre különül el a rendszer fejlesztése: kliens-
-ill. szerveroldali részre.
-
-\subsubsection{Kliens}
-\label{sec:kliensinterfesz}
-
-\subsubsection{Szerver}
-\label{sec:szerverinterfesz}
 
 \subsection{Adatbázis terv}
 
@@ -396,15 +383,35 @@ A most következő részben a kliens, illetve a szerver oldal működésének me
 \subsubsection{A kliens megvalósítása}
 \label{sec:kliensmegvalositas}
 
-\begin{figure}[htbp]
+A kliens alkalmazás állapotdiagramja \aref{fig:client_statemachine_full}.~ábrán tekinthető meg. A kliens eszköz indítás után azonnal SIP REGISTER üzenetet küld az IMS hálózatban lévő S-CSCF-nek. A CSCF a  regisztrációs üzenetből tudja, hogy a felhasználó éppen milyen címen érhető el. A CSCF úgy van konfigurálva, hogy a regisztrációs üzenetet továbbítsa az üzenetküldő szolgáltatást futtató alkalmazás szervernek. A szolgáltatás az üzenetet arra használja fel, hogy számontartsa az aktuálisan elérhető felhasználókat. Mivel a regisztrációs üzenetnek lejárati ideje van, az idő lejárata előtt a kliens ismételten regisztrációs üzenetet küld. A leírt folyamat periodikusan ismétlődik.
+
+A kliens alkalmazás indítása után SIP MESSAGE kéréseket kaphat a szervertől. A MESSAGE kérés törzse XML formában tartalmaz információkat a felhasználónak küldött új a multimédia üzenetekről. Értesítő MESSAGE kérés két esetben érkezhet a szerver felől:
+
+\begin{enumerate}\itemsep1pt
+\item	Amikor a kliens alkalmazás elindul és az első regisztrációs üzenetet küldi, a szerver adatbázisból lekéri a felhasználónak küldött új multimédia üzenetek adatait, majd értesítő üzenetet küld azokról a felhasználónak. Az említett multimédia üzenetek akkor érkeztek a felhasználónak, amikor az nem volt elérhető az IMS hálózaton.
+\item Amikor az \emph{A} felhasználó  elérhető a hálózaton, és egy másik, \emph{B} felhasználó olyan multimédia üzenetet küld az alkalmazás szervernek, amelynek címzettjei között szerepel az \emph{A} felhasználó. Ebben az esetben a szerver szintén létrehoz a beérkező multimédia üzenet adataiból egy értesítő SIP MESSAGE üzenetet, amit elküld az \emph{A} felhasználónak.
+\end{enumerate} 
+
+\begin{figure}[htb]
 \center
 \resizebox{14cm}{!}{
 \includegraphics{img/client_statemachine_full.eps}}
-\caption{A kliens állapotgépe}
+\caption{A kliens állapotdiagramja}
 \label{fig:client_statemachine_full}
 \end{figure}
 
-hello, hallo 
+Az alkalmazás grafikus felületen fogadja a felhasználó által végrahajtott akciókat. A felhasználó kétféle tevékenységet végezhet. Egyrészt a már elküldött vagy beérkezett vagy multimédia üzeneteket szeretné megtekinteni, másrészt egy új multimédia üzenetet szeretne küldeni a felhasználók egy csoportjának. 
+
+Az elküldött üzenetek megtekintése egyszerűen a kiválasztott üzenet adatainak megjelenítése egy grafikus ablakban, lehetőséget adva a multimédia tartalom lejátszására, megtekintésére. Az elküldött üzeneteknél a kliens oldalon minden adat rendelkezésre áll, beleértve a multimédia üzenet tényleges tartalmát.
+
+A beérkező üzenetek esetében a multimédia tartalom kliens oldalon vagy rendelkezésre áll, vagy nem. Utóbbi eset -- azaz, hogy a tartalom lokálisan nem elérhető -- azt jelenti, hogy a szerver a multimédia üzenetről küldött értesítő MESSAGE kérését a kliens sikeresen feldolgozta, de a multimédia tartalmat még nem töltötte le a szervertől. Ilyenkor a kliensnek a tartalom megtekintéséhez ki kell építenie egy MSRP kapcsolatot a szerver oldallal, a kapcsolaton a multimédia tartalmat letölteni, majd bontani a kapcsolatot. A kliens az MSRP kapcsolat felépítése után a letölteni kívánt tartalom azonosítóját egy MESSAGE kérésben (típusa DOWNLOAD\_CONTENT) küldi el a szervernek. A letöltés befejeződése után megjeleníthető a multimédia üzenet. \Aref{fig:client_statemachine_full}.~ábrán az MSRP kapcsolat felépítésének (zöld állapot), valamint bontásának (piros állapot) folyamata egy összetett állapot, amelyeket a később, \aref{fig:create_and_destroy_msrp_connection}.~ábrán részletesen bemutatok.
+
+A felhasználó törölheti multimédia üzeneteket. Abban az esetben, ha egy multimédia üzenet minden része lokálisan elérhető, úgy egyszerűen törölheti az üzenetet. Amikor a multimédia tartalom nem elérhető, azaz még nem került átvitelre a szerver és a kliens között, úgy egy MESSAGE kérésben (típusa DELETE\_MESSAGE) értesíteni kell a szerver oldalt a lokálisan letörölt üzenetekről. Utóbbi azért szükséges, hogy a szerver ,,törölt'' állapotra állíthassa az üzenethez tartozó felhasználói bejegyzés értesítési státuszát. 
+ 
+Végül a felhasználó multimédia üzenetet küldhet egy kiválasztott csoportnak. Az üzenet tartalma kétféle forrásból származhat. A kliens vagy fájlrendszeren már meglévő multimédia tartalmat választ ki, vagy a számítógéphez csatlakozó audiovizuális eszközök segítségével hozza létre azt. Miután a tartalom rendelkezésre áll, kiválasztja a címzett csoportot, kitölti az üzenet tárgyát, majd elküldi a szervernek a teljes multimédia üzenetet. A küldés folyamata azzal kezdődik, hogy a kliens felépít egy MSRP kapcsolatot a szerverrel. A multimédia tartalmat a felépített kapcsolaton elküldi a szervernek. A tartalom sikeres küldése után az üzenet címzettjeit, tárgyát, egyéb információit egy SIP MESSAGE kérés törzsében, XML formában szintén elküldi a szerver oldalnak. A MESSAGE kérés típusa MESSAGE\_DATA. Miután a MESSAGE kérést is sikeresen elküldte, bontja az MSRP kapcsolatot a szerverrel. A multimédia üzenetküldés folyamata ezzel befejeződött.
+
+\medskip
+Nézzük meg, a kliens hogyan építi fel az MSRP kapcsolatot a szerverrel. Az MSRP kapcsolat felépítésének folyamatát \aref{fig:create_msrp_connection}.~ábrán követhetjük nyomon. A kliens első lépésként létrehoz egy lokális TCP socket-et, amelyen majd az MSRP csomagok fogadása történik. Miután az említett socket egy szabad porton létrejött, a kliens generál egy egyedi MSRP kapcsolat azonosítót. A TCP socket címe és portja, valamint az MSRP azonosító együttesen egyértelműen meghatároz egy MSRP kapcsolatot. A kliens a következő lépésként a TCP socket adataiból, valamint az MSRP azonosítóból létrehoz egy SDP leírót, amit egy SIP INVITE kérés törzsében elküld a szervernek. A szerver az INVITE hatására szintén generál egy SDP leírót, amit egy 200 OK SIP válaszban elküld a kliensnek. A kliens a beérkező válaszban található szerver oldali SDP leíró alapján létrehoz egy, az MSRP csomagok küldését végző TCP kapcsolatot. Utóbbi kapcsolat a szerver oldali fogadó TCP socket-hez fog kapcsolódni. A kapcsolat felépítési folyamat befejezéseként a kliens létrehozza az MSRP kapcsolatot, majd SIP ACK nyugtát küld a szervernek, jelezvén, hogy készen áll az MSRP kapcsolaton való adatátvitelre.
 
 \begin{figure}[htbp]
   \begin{center}
@@ -413,10 +420,10 @@ hello, hallo
     \subfloat[A kapcsolat bontása]{\label{fig:destroy_msrp_connection}\includegraphics[scale=0.47]{img/client_destroy_msrp_connecton.eps}}
   \end{center}
   \caption{Az MSRP kapcsolat felépítése és bontása}
-  \label{fig:edge}
+  \label{fig:create_and_destroy_msrp_connection}
 \end{figure}
 
-Amennyiben a címzett úgy dönt, hogy nem érdekli az adott multimédia üzenet, a tartalom ,,letöltése'' és megtekintése nélkül egyszerűen törölheti azt. Ebben az esetben egy DELETE\_MESSAGE típusú SIP MESSAGE kérésben értesíti a szervert, ahol az üzenet törzsében lévő XML-ben megadja a törölni kívánt multimédia üzenet azonosítóját. 
+Az MSRP kapcsolat bontásának folyamata \aref{fig:destroy_msrp_connection}.~ábrán látható. Miután az MSRP kapcsolaton minden adat sikeresen átment, a kliens SIP BYE üzenetet küld a szervernek, ezzel jelezvén, hogy a felépített MSRP kapcsolat bontható. A szerver 200~OK válasz küldésével nyugtázza a kapcsolat bontását. A kliens a 200-as válasz hatására felszabadítja az MSRP kapcsolathoz használt erőforrásokat.
 
 \subsubsection{A szerver megvalósítása}
 \label{sec:szervermegvalositas}
