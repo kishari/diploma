@@ -20,16 +20,21 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>30</x><y>20</y><w>340</w><h>200</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
-SessionDescription
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>280</w><h>290</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+Group
 --
--host: InetAddress
--port: int
--attributes: Map&lt;String, String&gt;
+-groupName: String
+-groupDisplayName: String
+-buddies: List&lt;Buddy&gt;
 --
-+getHost(): InetAddress
-+setHost(host: InetAddress): void
-+getPort(): int
-+setPort(port: int): void
-+addAttribute(key: String, value: String): void
-+getPathAttribute(): URI</panel_attributes><additional_attributes/></element></umlet_diagram>
++Group(name: String)
++getDisplayName(): String
++setDisplayName(name: String): void
++getName(): String
++setName(name: String): void
++addBuddy(buddy: Buddy): void
++removeBuddy(buddy: Buddy): void
++getBuddiesCount(): int
++getBuddy(contactIndex: int): Buddy
++getBuddies(): List&lt;Buddy&gt;
++compareTo(o: Object): int</panel_attributes><additional_attributes/></element></umlet_diagram>

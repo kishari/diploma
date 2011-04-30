@@ -20,16 +20,15 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>30</x><y>20</y><w>340</w><h>200</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
-SessionDescription
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>320</w><h>190</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+User
 --
--host: InetAddress
--port: int
--attributes: Map&lt;String, String&gt;
+-sipURI: String
+-timer: Timer
+-expireDelay: int
 --
-+getHost(): InetAddress
-+setHost(host: InetAddress): void
-+getPort(): int
-+setPort(port: int): void
-+addAttribute(key: String, value: String): void
-+getPathAttribute(): URI</panel_attributes><additional_attributes/></element></umlet_diagram>
++User(sipURI: String)
++User(sipURI: String, expireDelay: int)
++getSipURI(): String
+-doTimeout(): void
++equals(Object o): boolean</panel_attributes><additional_attributes/></element></umlet_diagram>

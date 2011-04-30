@@ -20,16 +20,19 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>30</x><y>20</y><w>340</w><h>200</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
-SessionDescription
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>380</w><h>260</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+MessagingSipServlet
 --
--host: InetAddress
--port: int
--attributes: Map&lt;String, String&gt;
+-messagingService: MessagingService
+-sipFactory: SipFactory
 --
-+getHost(): InetAddress
-+setHost(host: InetAddress): void
-+getPort(): int
-+setPort(port: int): void
-+addAttribute(key: String, value: String): void
-+getPathAttribute(): URI</panel_attributes><additional_attributes/></element></umlet_diagram>
++init(config: ServletConfig): void
+#doRegister(request: SipServletRequest): void
+#doInvite(request: SipServletRequest): void
+#doAck(request: SipServletRequest) void
+#doBye(request: SipServletRequest): void
+#doMessage(request: SipServletRequest): void
+-getCleanSipUri(sipUri: String): String
+-notifyUserFromNewMessages(user: User): void
+-notifyOnlineRecipientsFromNewMessage(
+                                             info: InfoMessage): void</panel_attributes><additional_attributes/></element></umlet_diagram>
