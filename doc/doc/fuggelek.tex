@@ -4,8 +4,8 @@
 \section{Függelék}
 \label{sec:sip_message_xml_fuggelek}
 
-\noindent
-{\bf SIP MESSAGE üzenet törzsében átvitt XML tartalom sémája}
+\subsection{SIP MESSAGE kérés törzsében átvitt XML tartalom sémája}
+
 \fontsize{10}{10}
 \begin{verbatim}
 <?xml version="1.0" encoding="UTF-8"?>
@@ -104,6 +104,100 @@
 \end{verbatim}
 \fontsize{12}{12} 
 
+\newpage 
+\subsection{Példák a MESSAGE kérés törzsében található XML-ekre}
+
+\subsubsection*{Multimédia üzenet címzettjeit, egyéb adatait tartalmazó üzenet esetén}
+\fontsize{10}{10}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+   <infoMessage>
+      <info_type>MESSAGE_DATA</info_type>
+      <detailList>
+         <detail>
+            <sender>
+               <name>Alice</name>
+               <sip_uri>sip:alice@ericsson.com</sip_uri>
+            </sender>
+            <id>a190c0316393435</id>
+            <content>
+               <mimeType>audio/mpeg</mimeType>
+               <size>85726</size>
+            </content>
+            <subject>Message subject field</subject>
+            <recipientList>
+               <recipient>
+                  <name>Bob</name>
+                  <sip_uri>sip:bob@ericsson.com</sip_uri>
+               </recipient>
+               <recipient>
+                  <name>Coco</name>
+                  <sip_uri>sip:coco@ericsson.com</sip_uri>
+               </recipient>
+            </recipientList>
+         </detail>
+      </detailList>
+   </infoMessage>
+\end{verbatim}
+\fontsize{12}{12} 
+
+\subsubsection*{Értesítő üzenet esetén}
+\fontsize{10}{10}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+   <infoMessage>
+      <info_type>NOTIFY_USER</info_type>
+      <detailList>
+         <detail>
+            <sender>
+               <name>Alice</name>
+               <sip_uri>sip:alice@ericsson.com</sip_uri>
+            </sender>
+            <id>b807dc87433043d</id>
+            <content>
+               <mimeType>audio/mpeg</mimeType>
+               <size>85726</size>
+            </content>
+            <subject>Subject</subject>
+            <sent_at>2011-05-01T18:27:50.000+02:00</sent_at>
+         </detail>
+      </detailList>
+   </infoMessage>
+\end{verbatim}
+\fontsize{12}{12} 
+
+\subsubsection*{Adott multimédia tartalom letöltési igény esetén}
+\fontsize{10}{10}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+   <infoMessage>
+      <info_type>DOWNLOAD_CONTENT</info_type>
+      <detailList>
+         <detail>
+            <id>b807dc87433043d</id>
+         </detail>
+      </detailList>
+   </infoMessage>
+\end{verbatim}
+\fontsize{12}{12} 
+
+\subsubsection*{Multimédia üzenetek megtekintés nélküli törlését jelző kérés esetén}
+\fontsize{10}{10}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+   <infoMessage>
+      <info_type>DELETE_MESSAGE</info_type>
+      <detailList>
+         <detail>
+            <id>b807dc87433043d</id>
+         </detail>
+         <detail>
+            <id>a190c0316393435</id>
+         </detail>
+      </detailList>
+   </infoMessage>
+\end{verbatim}
+\fontsize{12}{12} 
 \newpage 
 
 \section{Függelék}
