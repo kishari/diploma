@@ -32,10 +32,19 @@ Abban az esetben, amikor egy felhasználó új üzeneteket kap, miközben ő mag
 \label{fig:teszt-vtf-ertesites-01}
 \end{figure}
 
+\subsection{Az elérhető címzettek értesítése}
+\label{sec:teszteles_notify}
+
+A szolgáltatás az elérhető felhasználókat azonnal értesíti a nekik címzett új üzenetekről. \Aref{fig:teszt-vtf-ertesites-02}.~ábra azt a folyamatot mutatja, amikor Alice multimédia üzenetet küld egy olyan csoportnak, amelynek Bob is a tagja. Az üzenetküldés idejében Bob elérhető a hálózaton. Az ábrán jól látható, hogy amint a teljes multimédia üzenet megérkezik a szerverhez, a szerver azonnal értesítő üzenetet küld Bobnak az új üzenetről.
+\begin{figure}[htb]
+\center
+\resizebox{14.5cm}{!}{
+\includegraphics{img/send-notify.eps}}
+\caption{A szolgáltatás értesíti Bob-ot az új üzeneteiről}
+\label{fig:teszt-vtf-ertesites-02}
+\end{figure}
+
 \subsection{A multimédia tartalom letöltésének tesztelése}
 \label{sec:teszteles_letoltes}
 
 Bob, miután sikeresen feldolgozta a szervertől kapott értesítő SIP MESSAGE adatait, dönthet úgy, hogy egy adott üzenethez a multimédia tartalmat letölti a szervertől. Az átvitelhez első lépésként fel kell építenie egy MSRP kapcsolatot a szerverrel. Második lépésként Bob egy SIP MESSAGE kérésben jelzi a szervernek, hogy melyik multimédia üzenetek tartalmát szeretné letölteni, majd a kívánt tartalom sikeres átvitele után bontani kell az MSRP kapcsolatot a szerverrel. A tesztelés során a folyamat teljesen megegyezett \aref{fig:teszt-vtf-kuldes-01}.~ábrán felvázolt üzenetküldés folyamatával, csak a 9. üzenetben elküldött XML az üzenet címzettjei, egyéb adatai helyett a letöltési igény adatait tartalmazza.
-
-
-
