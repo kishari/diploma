@@ -44,7 +44,7 @@ A maghálózat feletti szolgáltatási réteg tartalmaz egy vagy több \emph{alk
 
 Az IMS hálózatban jelen van egy vagy több \emph{MRF} (Media Resource Function). Az \emph{MRF} média specifikus funkciókat lát el. Ilyen funkciók például a médiatartalom manipulálása, illetve lejátszása. Az MRF két funkcionális részből áll. A hálózat jelzési síkjában MRF Controller-ből (MRFC), a média síkban MRF Processor-ból (MRFP) áll.  Az MRFC feladata az S-CSCF, illetve az alkalmazás szerver felől jövő jelzések értelmezése, és ennek következtében az MRFP vezérlése. Az MRFC SIP UA-ként viselkedik, H.248-as interfészen keresztül vezérli az MRFP erőforrásait. Az MRFP feladata a média folyamok lejátszása, illetve azok keverése. 
 
-A hálózat továbbá tartalmaz egy vagy több \emph{BGCF-t} (Breakout Gateway Control Function), amely alapvetően SIP szerver, és amely a telefonszám alapú útvonalválasztást végzi. Akkor használjuk, ha egy IMS terminál áramkörkapcsolt hálózatban, mint például PSTN-ben (Public Switched Telephone Network – nyilvános kapcsolt telefonhálózat) vagy PLMN-ben (Public Land Mobile Network, nyilvános földi mobil hálózat) végződő hívást kezdeményez.
+A hálózat továbbá tartalmaz egy vagy több \emph{BGCF-t} (Breakout Gateway Control Function), amely alapvetően SIP szerver, és amely a telefonszám alapú útvonalválasztást végzi. Akkor használjuk, ha egy IMS terminál áramkörkapcsolt hálózatban, mint például PSTN-ben (Public Switched Telephone Network – nyilvános kapcsolt telefonhálózat) vagy PLMN-ben (Public Land Mobile Network - nyilvános földi mobil hálózat) végződő hívást kezdeményez.
 
 Az áramkörkapcsolt hálózatok felé való átjárásért a \emph{PSTN Gateway} felelős, a\-mely három részből áll: egyrészt SGW-ből (Signalling Gateway), MGW-ből (Media Gateway), valamint MGCF-ből áll (Media Gateway Controller Function). Az SGW interfész alacsonyabb rétegbeli protokoll konverziót végez az áramkörkapcsolt hálózat jelzés síkja felé. Az MGW az áramkörkapcsolt hálózat média síkja felé nyújt kapcsolatódási pontot, Real-time Transport Protocol (RTP) felett küld és fogad IMS médiafolyamokat. Az MGCF a központi elem, tulajdonképpen egy állapotgép a PSTN gatewayben, feladata az MGW és SGW vezérlése.
 
@@ -54,5 +54,5 @@ A felhasználóknak egy vagy több publikus felhasználó azonosítójuk (Public
 
 \medskip
 
-Az IMS hálózatról, az egyes funkcionális egységekről bővebb információ \acite{wiley_ims}.~irodalomban található.
+Az IMS hálózatról, az egyes funkcionális egységekről bővebb információ \acite{wiley_ims}~irodalomban található.
 

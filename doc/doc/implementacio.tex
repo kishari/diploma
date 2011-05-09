@@ -401,13 +401,33 @@ Egy új multimédia üzenet létrehozását, illetve küldését a \code{SendMes
 
 \medskip
 
-A kliens alkalmazás grafikus felhasználói felületéről készült képernyőképek \aref{sec:kliens_screenshots}~függelékben tekinthetők meg. 
+A kliens alkalmazás grafikus felhasználói felületéről készült képernyőképek \aref{fig:screenshot_main}., valamint \aref{fig:screenshot3}.~ábrán tekinthetők meg. \Aref{fig:screenshot_main}.~ábrán az alkalmazás induló képernyője látható, ami az egyes csoportokat, valamint a csoportok tagjait jeleníti meg. \Aref{fig:screenshot03_1}.~ábra az új multimédia üzenet küldésének képernyőjét mutatja, \aref{fig:screenshot03_2}.~ábrán pedig a beérkezett, valamint az elküldött multimédia üzeneteket megjelenítő ablak látható.
+
+\begin{figure}[htbp]
+\center
+\resizebox{5cm}{!}{
+\includegraphics{img/screenshot02.eps}}
+\caption{Az induló képernyő}
+\label{fig:screenshot_main}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \subfloat[Új üzenet létrehozása]{\label{fig:screenshot03_1}\includegraphics[scale=0.45]{img/screenshot03.eps}}
+    \hspace{0.1in}
+    \subfloat[Az elküldött és beérkező üzenetek]{\label{fig:screenshot03_2}\includegraphics[scale=0.45]{img/screenshot01.eps}}
+  \end{center}
+  \caption{Új multimédia üzenet létrehozás, illetve a levelesláda megtekintés}
+  \label{fig:screenshot3}
+\end{figure} 
+
+\newpage
+\newpage
 
 \subsection{A szerver oldal megvalósítása}
 
 A most következő részben bemutatom a szerver oldali szolgáltatás megvalósításának fontosabb osztályait, ábrán prezentálva az osztályok felépítését. Természetes itt is csak a fontosabb osztályok tárgyalása következik, a teljes szerver oldali program részletezése túlmutat a dolgozat keretein.
 
-\newpage
 \subsubsection*{A MessagingService osztály}
 \label{sec:server_messagingservice}
 
@@ -429,11 +449,13 @@ A \code{MessagingService} osztály további változóban tárolja az adatbázis 
 
 A \code{MessagingService} osztály implementálja az \code{MSRPListener} interfészt, valamint feliratkozik az MSRP kapcsolatokon bekövetkezett eseményekre, ezáltal az egyes események határása végre tudja hajtani a szükséges lépéseket (Például egy kliens felől érkező multimédia üzenet tartalmának sikeres megérkezése után eltárolja az adatbázisban).
 
+\newpage
+
 \subsubsection*{A MessagingSipServlet osztály}
 \label{sec:server_messagingsipservlet}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-60pt}
+  \vspace{-15pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/server/eps/MessagingSipServlet.eps}
   \end{center}
@@ -450,7 +472,7 @@ A \code{MessagingSipServlet} osztály (\ref{fig:class_server_messagingsipservlet
 \label{sec:server_messagingdao}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-40pt}
+  \vspace{-15pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/server/eps/MessagingDao.eps}
   \end{center}
