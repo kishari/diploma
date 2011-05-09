@@ -4,7 +4,7 @@
 \subsection{A teszteléshez használt eszközök}
 \label{sec:tesztelesi_eszkozok}
 
-A teszteléshez az Ericsson SDS által nyújtott eszközöket használtam. A kliens alkalmazás tesztelését két notebook felhasználásával végeztem, mivel egy operációs rendszeren csak egy felhasználói profillal rendelkező ICP futtatható. A két kliens Alice és Bob felhasználónévvel, illetve a nevekhez illeszkedő SIP URI-val rendelkeznek (például: sip:alice@ericsson.com). A kliens és a szerver közötti kommunikációs folyamatok teszteléséhez, az üzenetek megjelenítéséhez az SDS-ben megtalálható Visual Traffic Flow-t használtam. 
+A teszteléshez az Ericsson SDS által nyújtott eszközöket használtam. A kliens alkalmazás tesztelését két notebook felhasználásával végeztem, mivel egy operációs rendszeren csak egy felhasználói profillal rendelkező ICP futtatható. A két kliens Alice és Bob felhasználónévvel, illetve a nevekhez illeszkedő SIP URI-val rendelkeznek (például: sip:alice@ericsson.com). A kliens és a szerver közötti kommunikációs folyamatok teszteléséhez, az üzenetek megjelenítéséhez az SDS-ben megtalálható Visual Traffic Flow-t~(VTF) használtam. 
 
 \subsection{Az teljes üzenetküldés kommunikációs folyamatának tesztelése}
 \label{sec:teszteles_teljes_kuldes}
@@ -22,7 +22,7 @@ Amikor egy felhasználó multimédia üzenetet küld egy kiválasztott csoportna
 \subsection{A késleltetett üzenetkézbesítés tesztelése}
 \label{sec:teszteles_kesleltetett_kezbesites}
 
-Abban az esetben, amikor egy felhasználó új üzeneteket kap, miközben ő maga nem elérhető a hálózaton, akkor a szolgáltatásnak kötelessége értesítenie a beérkezett új multimédia üzenetekről a felhasználót, amikor az regisztrál a hálózaton. Az előző, \ref{sec:teszteles_teljes_kuldes}.~pontban leírt üzenetküldés során Alice egy olyan felhasználói csoportnak címezte az üzenetet, amelynek Bob is tagja. Amikor Bob regisztrál a hálózaton, a szerver oldalon futó szolgáltatás értesíti őt Alice (és a többi új) üzenetről. A kommunikációs folyamat \aref{fig:teszt-vtf-ertesites-01}.~ábrán követhető nyomon. Az ábrán jól látható, hogy Bob regisztrációs üzenetének vételekor a szerver értesítő SIP MESSAGE kérést küld Bobnak, amely tartalmazza az új multimédia üzenetek adatait.
+Abban az esetben, amikor egy felhasználó új üzeneteket kap, miközben ő maga nem elérhető a hálózaton, akkor a szolgáltatásnak kötelessége értesítenie a beérkezett új multimédia üzenetekről a felhasználót, amikor az regisztrál a hálózaton. Az előző, \ref{sec:teszteles_teljes_kuldes}.~pontban leírt üzenetküldés során Alice egy olyan felhasználói csoportnak címezte az üzenetet, amelynek Bob is tagja. Amikor Bob regisztrál a hálózaton, a szerver oldalon futó szolgáltatás értesíti őt az Alice által küldött (és a többi új) üzenetről. A kommunikációs folyamat \aref{fig:teszt-vtf-ertesites-01}.~ábrán követhető nyomon. Az ábrán jól látható, hogy Bob regisztrációs üzenetének vételekor a szerver értesítő SIP MESSAGE kérést küld Bobnak, amely tartalmazza az új multimédia üzenetek adatait.
 
 \begin{figure}[htb]
 \center
@@ -40,7 +40,7 @@ A szolgáltatás az elérhető felhasználókat azonnal értesíti a nekik címz
 \center
 \resizebox{14.5cm}{!}{
 \includegraphics{img/send-notify.eps}}
-\caption{A szolgáltatás értesíti Bob-ot az új üzeneteiről}
+\caption{A szolgáltatás értesíti Bob-ot az új multimédia üzenetről (a küldés idejében Bob elérhető)}
 \label{fig:teszt-vtf-ertesites-02}
 \end{figure}
 

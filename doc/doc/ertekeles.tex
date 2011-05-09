@@ -1,6 +1,14 @@
 
 
-\section{Értékelés}
-\label{sec:ertekeles}
+\section{Továbbfejlesztési lehetőségek}
+\label{sec:tovabbfejlesztes}
 
-Ide jöhet az, hogy milyen lett a rendszer, mik az erősségei, gyengéi... Vagy nem kell?
+Az elkészített csoportos üzenetküldő szolgáltatás, illetve a hozzá tartozó kliens oldali alkalmazás teljesíti a célkitűzésnek megfelelő funkciókat, ahhoz azonban, hogy valós körülmények között a felhasználók számára minél jobban, hatékonyabban használatóvá váljon, továbbfejlesztési lehetőségeket mutatok be:
+
+\begin{itemize}\itemsep1pt
+\item	A szolgáltatás nem jelenti a multimédia üzenet feladójának a címzetteknek való sikeres kézbesítéseket. A szolgáltatás ezirányú bővítése hasznos lehet a szolgáltatást igénybevevő felhasználóknak.
+\item A kliens alkalmazás a PGM szolgáltatás jelenlét funkcióját nem használja ki. Ennek következtében a felhasználók nincsenek tisztában az egyes csoporttagok aktuális állapotával, ami befolyásolná üzenetküldési szándékukat. A jelenlét funkció kliens oldali bevezetése növelné az alkalmazás használhatóságát.
+\item A kliens alkalmazás jelenleg csak Windows operációs rendszert futtató számítógépen használható. Jelentős értéknövekedést jelentene a kliens program mobiltelefonos környezetekre való portolása, mint például JavaME-t vagy Symbian-t futtató eszközökre.
+\end{itemize} 
+
+Megjegyezném, hogy mivel az MSRP protokoll implementációja számos, az RFC szabványban definiált funkciót nem valósít meg, így az MSRP implementáció megfelelő bővítése is hasznosnak bizonyulhat. Természetesen a teljes MSRP protokoll helyes implementációja rengeteg munkával járna, de mivel jelenleg nem található, Java fejlesztés során jól használható MSRP implementáció, egy nyílt forráskódú, MSRP protokollt megvalósító fejlesztői könyvtár a jövőben számos, a témával foglalkozó Java fejlesztő dolgát nagy mértékben könnyítené meg.

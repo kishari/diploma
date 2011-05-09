@@ -24,16 +24,24 @@ Az SDS kliens oldali fejlesztéshez is nyújt eszközt, amely az IMS Client Fram
 
 Az egyik az IMS Client Platform (ICP), amely Windows vagy Symbian platformra nyújt olyan keretrendszert, amely tartalmazza az alapvető IMS szolgáltatásokat, mint például a SIP session menedzsment, vagy a már \ref{sec:group_messaging}.~fejezetben említett PGM szolgáltatás.
 
-Az ICF keretrendszer másik része az IMS Java Client Utility (IJCU). Az IJCU olyan J2ME-t támogató telefonokhoz szolgáltat API-t, amelyek nem támogatják a SIP protokollt. Az ilyen eszközök előtt az IJCU transparensen elrejti a SIP protokollt, és HTTP üzenetekbe ágyazva küld és fogad SIP csomagokat.
+Az ICF keretrendszer másik része az IMS Java Client Utility (IJCU). Az IJCU olyan J2ME-t támogató telefonokhoz szolgáltat API-t, amelyek nem támogatják a SIP protokollt. Az ilyen eszközök előtt az IJCU  elrejti a SIP protokollt, és HTTP üzenetekbe ágyazva küld és fogad SIP csomagokat.
+
+\newpage 
 
 \subsection{Az MSRP protokoll megvalósítása}
 \label{sec:msrp_implementacio}
 
-Az Interneten nem találtam Java nyelven íródott, az MSRP funkcióit megvalósító, használható fejlesztői könyvtárat, ezért a fejlesztés során szükségesnek tartottam az MSRP alapfunkciókat ellátó osztályok implementálását is. Itt jegyezném meg, hogy az általam létrehozott MSRP implementáció nem valósítja meg \acite{rfc4975}.~irodalomban leírt MSRP RFC szabvály minden funkcióját, csak az MSRP kapcsolaton való üzenetküldéshez szükséges alapfunkciókat. Az általam megvalósított részek követik az MSRP protokoll szabályait\cite{rfc4975}. Ebben a részben a multimédia tartalom hálózaton történő átviteléért felelős MSRP funkciókat megvalósító osztályokat mutatom be.  \Aref{tab:msrp_classes}.~táblázatban az említett osztályokat sorolom fel, kiegészítve a felelősségük, funkciójuk rövid leírásával. Az osztályok részletes leírása a fejezet későbbi szakaszában kerül kifejtésre.
+Az Interneten nem találtam Java nyelven íródott, az MSRP funkcióit megvalósító, használható fejlesztői könyvtárat, ezért a fejlesztés során szükségesnek tartottam az MSRP alapfunkciókat ellátó osztályok implementálását is. Itt jegyezném meg, hogy az általam létrehozott MSRP implementáció nem valósítja meg \acite{rfc4975}~irodalomban leírt MSRP RFC szabvály minden funkcióját, csak az MSRP kapcsolaton való üzenetküldéshez legszükségesebb alapfunkciókat. Nem valósítottam meg a szabványban leírt kézbesítési jelentés modellt. Az MSRP üzenetküldés során kétféle nyugtázási módszer létezik. Az első típusnál minden SEND üzenet mindenképp nyugtázásra kerül, vagy pozitívan vagy negatívan. Utóbbi nyugtázási módszer, az úgynevezett hop-by-hop kézbesítés minden lépésénél kötelezően végrehajtódik, ahol a nyugta az adott hop-on történő átvitel sikerességéről ad státusz információt. A második nyugtázási módszer az üzenet címzettnek való kézbesítés sikerességéről ad információt. A küldő felhasználó MSRP SEND típusú üzenetben megadott speciális fejléc mezőben kérheti a címzettől, hogy az üzenet sikeres vagy sikertelen feldolgozásáról értesítést küldjön. Az ilyen típusú nyugtázás csak a címzettnek való kézbesítésnél történik, nem hop-onként. Az általam megvalósított implementáció csak az egy hop-nyi küldést támogatja, tehát a küldő és a feladó között közvetlen MSRP kapcsolat van.
+
+Az implementációban ugyanazon két MSRP végpont között egyszerre csak egyetlen MSRP kapcsolat építhető ki. Az RFC szabvány természetesen megengedi ugyanazon két végpont között több MSRP kapcsolat felépítését, ahol ugyanazon TCP kapcsolatot használó MSRP kapcsolatok egymás között korrent módon osztják meg az erőforrásokat. Amennyiben a korrektség nem megvalósított, az MSRP csomagok mérete maximum 2048 byte lehet. Az ilyen méretű csomagok küldése nem megszakítható.
+
+Az MSRP-t tárgyaló RFC szabvány több módszert is leír az MSRP csomagok biztonságos átvitelére. A megvalósított implementáció semmilyen formában nem támogatja a biztonságos MSRP kapcsolatok létrehozását, azaz a csomagok titkosított, hitelesített átvitelét. 
+
+Az általam megvalósított részek követik az MSRP protokoll szabályait\cite{rfc4975}. Ebben a részben a multimédia tartalom hálózaton történő átviteléért felelős MSRP funkciókat megvalósító osztályokat mutatom be.  \Aref{tab:msrp_classes}.~táblázatban az említett osztályokat sorolom fel, kiegészítve a felelősségük, funkciójuk rövid leírásával. Az osztályok részletes leírása a fejezet későbbi szakaszában kerül kifejtésre.
 
 \begin{table}[htb]
 \center
-\begin{tabular}{|l | p{9cm} |}
+\begin{tabular}{|l | p{9.5cm} |}
 \hline
 {\bf Az osztály neve} & {\bf Az osztály felelőssége}\\
 \hline
@@ -54,17 +62,17 @@ MSRPEvent & Az MSRP kapcsolatban bekövetkezett esemény\\ \hline
 MSRPListener & Interfész, az MSRP eseményről való értesítő funkciót lát el\\ \hline
 MSRPUtil & Az MSRP üzenet példányok előállítása, üzenet konverziós funkciók\\ \hline
 SessionDescription & Az MSRP kapcsolat SDP leíró információit tartalmazó osztály\\ \hline
-\hline
 \end{tabular}
 \caption{Az MSRP funkciókat megvalósító osztályok}
 \label{tab:msrp_classes}
 \end{table}
 
+\newpage
 \subsubsection*{A Message osztály}
 \label{sec:msrp_message}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-15pt}
+  \vspace{-55pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/Message.eps}
   \end{center}
@@ -108,6 +116,7 @@ Az osztály \aref{sec:msrp_message}.~pontban kifejtett \code{Message} osztály l
 \end{wrapfigure}
 A \code{Response} osztály (\ref{fig:class_response}.~ábra) szintén az \code{Message} osztály leszármazottja, így minden paraméterrel és metódussal rendelkezik, ami a \code{Message} osztályban szerepel. A \code{Message} osztályhoz képest annyiban nyújt többet, hogy felüldefiniálja az osztály \code{toString()} metódusát.
 
+\newpage
 \subsubsection*{A CompleteMSRPMessage osztály}
 \label{sec:msrp_completmsrpemessage}
 
@@ -140,6 +149,7 @@ A \code{CompleteMessage} osztály osztálydiagramja \aref{fig:class_completmsrpe
 \end{wrapfigure}
 Az \code{MSRPStack} osztály (\ref{fig:class_msrp_stack}.~ábra) feladata az MSRP funkciók nyújtása az alkalmazás számára. Az osztály privát változói között szerepel az MSRP kapcsolatokat kiszolgáló TCP kapcsolatokat kezelő osztály (\code{connections}), az aktív MSRP kapcsolatokat tartalmazó map (\code{activeSessions}), valamint az MSRP eseményekre feliratkozott osztályok listája (\code{msrpListeners}). Az \code{activeSessions} map a távoli fél egyedi SIP URI-ját használja, mint kulcs attribútum. Az osztály segítségével egy távoli fél felé létrehozhatunk új MSRP kapcsolatot (\code{createMSRPSession}). Lekérdezhetünk annak lokális TCP kapcsolatnak az adatait, amelyen keresztül olvashatjuk az aktív MSRP kapcsolatonon beérkező üzeneteket (\code{getReceiverConnectionHostAddress}, \code{getReceiverConnectionPort}). Ha egy meglévő MSRP kapcsolaton üzenetet kívánunk küldeni, akkor ezt a \code{sendMessage} publikus metódus meghívásával tehetjük meg. Az MSRP kapcsolatokat a távoli fél SIP URI-jával azonosítjuk. Egy külső osztály az MSRP eseményekre feliratkozni az \code{addMSRPListener} metódussal, míg az eseményekről leiratkozni a \code{removeMSRPListener} metódus meghívásával tud. A védett (\code{protected}) metódusokat csak az MSRP-t megvalósító osztályok használják.
 
+\newpage
 \subsubsection*{A Connections osztály}
 \label{sec:msrp_connections}
 
@@ -160,7 +170,7 @@ A \code{Connections} osztály felépítése \aref{fig:class_connections}.~ábrá
 \label{sec:msrp_receiverconnection}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-15pt}
+  \vspace{-40pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/ReceiverConnection.eps}
   \end{center}
@@ -188,6 +198,7 @@ A osztály felépítése \aref{fig:class_receiverconnection}.~ábrán látható.
 \end{wrapfigure}
 Az osztály az MSRP kapcsolaton (\code{session}), a \code{remoteSipUri} változóban tárolt SIP azonosítójú távoli félnek küldött MSRP csomagok továbbítását végzi. Minden különböző SIP URI-val rendelkező kommunikációs partnerhez tartozik egy \code{SenderConnection} példány, aminek egyedi azonosítására a \code{remoteSipUri} paraméter szolgál. A \code{ReceiverConnection} osztályhoz hasonlóan (\ref{sec:msrp_receiverconnection}.~pont) privát változókban tárolja a kapcsolat állapotát (\code{running}), referenciát az \code{MSRPStack} példányra, valamint a TCP kapcsolatot leíró, illetve vezérlő objektumokat. Az osztály által reprezentált TCP kapcsolaton a kapcsolat sikeres felépítése, valamint elindítása után adatot a \code{send} metódus meghívásával tudunk küldeni. A kapcsolat leállítását a \code{stop} metódus meghívásával idézhetjük elő.
 
+\newpage
 \subsubsection*{A Session osztály}
 \label{sec:msrp_session}
 
@@ -314,25 +325,26 @@ Az \code{MSRPUtil} osztály (\ref{fig:class_util}.~ábra) négy statikus segédf
   \vspace{-10pt}
 \end{wrapfigure}
 
-A \code{SessionDescription} osztály (\ref{fig:class_sdp}.~ábra) az MSRP kapcsolat SDP leíróját reprezentálja. Privát változóban tárolja az MSRP kapcsolat végpontjának IP címét (\code{host}), illetve portszámát (\code{port}). Mindkét paraméterhez lekérdező és beállító metódusok állnak rendelkezésre (code{getXY/setXY}). Privát map változóban tárolja a leíró attribútumait (\code{attributes}). Esetünkben, az MSRP kapcsolat SDP leíró esetén az attribútum map az elfogadott tartalom típusokat (accept-types), valamint a kapcsolatra jellemző URI-t (path) tartalmazza. Utóbbi értékét a \code{getPathAttribute} metódussal kérdezhetjük le.
+A \code{SessionDescription} osztály (\ref{fig:class_sdp}.~ábra) az MSRP kapcsolat SDP leíróját reprezentálja. Privát változóban tárolja az MSRP kapcsolat végpontjának IP címét (\code{host}), illetve portszámát (\code{port}). Mindkét paraméterhez lekérdező és beállító metódusok állnak rendelkezésre (\code{getXY/setXY}). Privát map változóban tárolja a leíró attribútumait (\code{attributes}). Esetünkben, az MSRP kapcsolat SDP leíró esetén az attribútum map az elfogadott tartalom típusokat (accept-types), valamint a kapcsolatra jellemző URI-t (path) tartalmazza. Utóbbi értékét a \code{getPathAttribute} metódussal kérdezhetjük le.
 
 \subsection{A kliens oldal megvalósítása}
 
-A kliens alkalmazás egy grafikus alkalmazás, amely a felhasználói felület mellett tartalmazza a szerverrel való kommunikációért felelős osztályokat. A felület elemeinek megjelenítését, vezérlését, az események, adatok kezelését végző osztályok jelentős száma miatt ebben a részben részletesen csak a főbb funkciókat ellátó osztályokat mutatom be, összpontosítva csoportkezelésért felelős, illetve a szerverrel való kommunikációt végző osztályok bemutatására.
+A kliens alkalmazás egy grafikus alkalmazás, amely a felhasználói felület mellett tartalmazza a szerverrel való kommunikációért felelős osztályokat. A felület elemeinek megjelenítését, vezérlését, az események, adatok kezelését végző osztályok jelentős száma miatt ebben a részben részletesen csak a főbb funkciókat ellátó osztályokat mutatom be. A leírás során elsősorban a PGM szolgáltatás csoportkezelés funkcióját használó osztályokra, valamint a szerverrel való kommunikációban kulcsszerepet játszó osztályok bemutatására összpontosítok.
 
+\newpage
 \subsubsection*{Az ICPController osztály}
 \label{sec:client_icpcontroller}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-15pt}
+  \vspace{-60pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/client/eps/ICPController.eps}
   \end{center}
-  \vspace{-15pt}
+  \vspace{-10pt}
   \captionsetup{font=scriptsize}
   \caption{Az ICPController osztálydiagramja}
    \label{fig:client_icpcontroller}
-  \vspace{-10pt}
+  \vspace{-18pt}
 \end{wrapfigure}
 
 Az \code{ICPController} osztály felépítése \aref{fig:client_icpcontroller}.~ábrán látható. Az osztály feladata az ICP nyújtotta funkciók elérése. Privát változóban tárolja a kommunikációs folyamatok vezérlését végző osztályt (\code{communicationController}), a csoportok menedzselését végző osztályokat (\code{contactListController}, \code{icpGroupListController}), valamint a kommunikációs felek között lévő aktív SIP kapcsolatokat. A SIP kapcsolatokban bekövetkezett eseményekről a \code{SessionListener} osztály értesíti az eseményekre feliratkozott osztályokat.
@@ -345,7 +357,7 @@ Kliens oldalon az alkalmazások számára az ICP előfeldolgozást végez a SIP 
 \label{sec:client_communication_controller}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-15pt}
+  \vspace{-68pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/client/eps/CommunicationController.eps}
   \end{center}
@@ -353,10 +365,10 @@ Kliens oldalon az alkalmazások számára az ICP előfeldolgozást végez a SIP 
   \captionsetup{font=scriptsize}
   \caption{A CommunicationController osztálydiagramja}
    \label{fig:class_client_communication_controller}
-  \vspace{-10pt}
+  \vspace{-18pt}
 \end{wrapfigure}
 
-A \code{CommunicationController} osztály (\ref{fig:class_client_communication_controller}.~ábra) végzi az alkalmazásban szükséges kommunikációs tevékenységeket. Nyílvános metódusokkal támogatja a kommunikációs folyamatokat. A \code{sendInvite} metódus meghívásával egy új MSRP kapcsolat építhető fel egy távoli féllel, míg egy létező MSRP kapcsolaton üzenetet küldeni a \code{sendMessageInMSRPSession} metódus meghívásával lehet. MSRP kapcsolatot bontani a \code{sendBye} függvény meghívásával lehet. SIP MESSAGE üzenetet a \code{sendSIPMessage} metódussal, míg egy felépített SIP kapcsolaton a \code{sendSIPMessageInSIPSession} metódus megfelelő meghívásával lehet. Az osztály segítségével lehetőség nyílik fel/leirakozni az MSRP kapcsolatok eseményeire. További feladatként a beérkező SIP üzenetek feldolgozását is a \code{CommunicationController} osztály végzi. A létrehozott SIP kapcsolatokon bekövetkezett eseményeketről értesül, és az események hatására végrehajtja a szükséges akciókat (például egy SIP kapcsolat sikeres elindulását jelző esemény hatására létrehozza az MSRP kapcsolatot).
+A \code{CommunicationController} osztály (\ref{fig:class_client_communication_controller}.~ábra) végzi az alkalmazásban szükséges kommunikációs tevékenységeket. Publikus metódusokkal támogatja a kommunikációs folyamatokat. A \code{sendInvite} metódus meghívásával egy új MSRP kapcsolat építhető fel egy távoli féllel, míg egy létező MSRP kapcsolaton üzenetet küldeni a \code{sendMessageInMSRPSession} metódus meghívásával lehet. MSRP kapcsolatot bontani a \code{sendBye} függvény meghívásával lehet. SIP MESSAGE üzenetet a \code{sendSIPMessage} metódussal, míg egy felépített SIP kapcsolaton a \code{sendSIPMessageInSIPSession} metódus megfelelő meghívásával lehet. Az osztály segítségével lehetőség nyílik fel/leirakozni az MSRP kapcsolatok eseményeire. További feladatként a beérkező SIP üzenetek feldolgozását is a \code{CommunicationController} osztály végzi. A létrehozott SIP kapcsolatokon bekövetkezett eseményeketről értesül, és az események hatására végrehajtja a szükséges akciókat (például egy SIP kapcsolat sikeres elindulását jelző esemény hatására létrehozza az MSRP kapcsolatot).
 
 \subsubsection*{A ContactListController osztály}
 \label{sec:client_contactlistcontroller}
@@ -387,11 +399,15 @@ Egy multimédia üzenet adatainak kliens oldali perzisztens (merevlemezen tört�
 
 Egy új multimédia üzenet létrehozását, illetve küldését a \code{SendMessageDialog} osztály végzi. A tartalom létrehozását egyéb osztályok felhasználásával végzi. A Java nyelvben megtalálható Java Media Framework (JMF) keretrendszer \cite{jmf} fejlesztői API-val támogatást ad a számítógépben megtalálható hang, illetve videó eszközök kezelésére. A fejlesztés során a multimédia tartalom készítéséhez a JMF nyújtotta fejlesztői API-t használtam. A multimédia tartalom létrehozásához szükséges funkciókat a \code{CaptureDialog} osztály nyújtja. A \code{CaptureDialog} osztályon belül több segédosztály is megtalálható. Hang felvétel készítését az \code{AudioRecorder} osztály végzi, a hangfelvétel wav-ból mp3 formátumba történő konverziójának feladatát az \code{AudioConverter} osztály oldja meg. Kép, illetve videó felvétel a \code{VideoRecorder} osztály felhasználásával készíthető. A \code{SendMessageDialog} osztály az elkészült multimédia üzenet küldése során felhasználja a \code{CommunicationController} osztály nyújtotta funkciókat.
 
+\medskip
+
+A kliens alkalmazás grafikus felhasználói felületéről készült képernyőképek \aref{sec:kliens_screenshots}~függelékben tekinthetők meg. 
 
 \subsection{A szerver oldal megvalósítása}
 
-A most következő részben bemutatom a szerver oldali szolgáltatás megvalósításának fontosabb osztályait, ábrán prezentálva az osztályok felépítését. Természetes itt is csak a fontosabb osztályok tárgyalása következik, a teljes szerver oldali alkalmazás részletezése túlmutat a dolgozat keretein.
+A most következő részben bemutatom a szerver oldali szolgáltatás megvalósításának fontosabb osztályait, ábrán prezentálva az osztályok felépítését. Természetes itt is csak a fontosabb osztályok tárgyalása következik, a teljes szerver oldali program részletezése túlmutat a dolgozat keretein.
 
+\newpage
 \subsubsection*{A MessagingService osztály}
 \label{sec:server_messagingservice}
 
@@ -417,7 +433,7 @@ A \code{MessagingService} osztály implementálja az \code{MSRPListener} interf�
 \label{sec:server_messagingsipservlet}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-15pt}
+  \vspace{-60pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/server/eps/MessagingSipServlet.eps}
   \end{center}
@@ -434,7 +450,7 @@ A \code{MessagingSipServlet} osztály (\ref{fig:class_server_messagingsipservlet
 \label{sec:server_messagingdao}
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-15pt}
+  \vspace{-40pt}
   \begin{center}
     \includegraphics[width=0.43\textwidth]{img/class_diagrams/server/eps/MessagingDao.eps}
   \end{center}

@@ -20,21 +20,25 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>530</w><h>260</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>410</w><h>330</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
 OutgoingMessageProcessor
 --
--outgoingMessageQueue: BlockingQueue&lt;CompleteMSRPMessage&gt;
+-outgoingMessageQueue: 
+                    BlockingQueue&lt;CompleteMSRPMessage&gt;
 -running: boolean
 -transactionManager: TransactionManager
 --
 +OutgoingMessageProcessor(
-        outgoingMessageQueue: BlockingQueue&lt;CompleteMSRPMessage&gt;,
+        outgoingMessageQueue: 
+                    BlockingQueue&lt;CompleteMSRPMessage&gt;,
          transactionManager: TransactionManager)
 +run(): void 
 #start(): void
 #stop(): void
--processOutgoingMessage(fullMessage: CompleteMSRPMessage): void
--splitMessageToChunks(message: CompleteMSRPMessage, 
-                                      chunkSize: int): Map&lt;String, Object&gt;
+-processOutgoingMessage(
+                   fullMessage: CompleteMSRPMessage): void
+-splitMessageToChunks(
+                   message: CompleteMSRPMessage, 
+                   chunkSize: int): Map&lt;String, Object&gt;
 
 </panel_attributes><additional_attributes/></element></umlet_diagram>

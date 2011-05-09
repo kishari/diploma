@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>520</w><h>580</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>10</x><y>0</y><w>410</w><h>660</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
 ContactListController
 --
 -contactList: ContactList
@@ -31,15 +31,18 @@ ContactListController
 -icpGroupListController: ICPGroupListController
 --
 +addBuddy(group: Group, buddy: Buddy): void
-+addBuddy(group: Group, buddy: Buddy, addToIcpGroup: boolean): void
++addBuddy(group: Group, buddy: Buddy, 
+                    addToIcpGroup: boolean): void
 +addGroup(group: Group): void
 +addGroupToGui(group: Group): void
 -fireContactListEvent(event: ContactListEvent): void
 +removeBuddy(contant: Buddy): void
 +removeGroup(group: Group): boolean
 -getGroupForBuddy(contact: Buddy): Group
-+addContactListener(listener: ContactListListener): void
-+removeContactListener(listener: ContactListListener): void
++addContactListener(
+                           listener: ContactListListener): void
++removeContactListener(
+                           listener: ContactListListener): void
 +getSelectedBuddy(): Buddy
 +getSelectedGroup(): Group
 +setContactManager(manager: ContactManager): void
@@ -48,13 +51,15 @@ ContactListController
 +getGroup(name: String): Group
 +getLocalUser(): Buddy
 +setLocalUser(localUser: Buddy): void
-+addSelectionListener(listener: ContactSelectionListener): void
++addSelectionListener(
+                        listener: ContactSelectionListener): void
 +fireSelectionEvent(source: Object): void
 +getContactList(): ContantList
 +updateGroup(group: Group): void
 +updateBuddy(buddy: Buddy): void
 +getGroupDisplayNames(): List&lt;String&gt;
-+setIcpGroupListController(controller: ICPGroupListController): void
++setIcpGroupListController(
+                         controller: ICPGroupListController): void
 
 
 </panel_attributes><additional_attributes/></element></umlet_diagram>
