@@ -66,10 +66,6 @@ public class MessagingClient extends JFrame {
 
 	}
 
-	public Object getData() {
-		return buddyListPanel.getData();
-	}
-
 	public static void showError(String titleKey, Throwable exception) {
 		showError(null, titleKey, exception);
 	}

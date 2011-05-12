@@ -7,7 +7,6 @@ import hu.messaging.msrp.listener.MSRPListener;
 import hu.messaging.msrp.util.MSRPUtil;
 import hu.messaging.util.*;
 
-import hu.messaging.client.Resources;
 import hu.messaging.client.icp.listener.ConnectionStateType;
 import hu.messaging.client.model.*;
 
@@ -44,7 +43,7 @@ public class CommunicationController implements hu.messaging.client.icp.listener
 		localSDPs.put(remoteId, sdp);
 	}
 	
-	public void removeLocalSDP(String remoteId) {
+	private void removeLocalSDP(String remoteId) {
 		localSDPs.remove(remoteId);
 	}
 	
@@ -118,15 +117,6 @@ public class CommunicationController implements hu.messaging.client.icp.listener
 		String sessionId = MSRPUtil.generateRandomString(Constants.sessionIdLength);
 		
 		return SDPUtil.createSDP(localhost, port, sessionId);
-	}
-	
-	public void fetchNewMessageInfos() {
-		ObjectFactory f = new ObjectFactory();
-		InfoMessage m = f.createInfoMessage();
-		m.setInfoType(InfoMessage.pullNewMessageInfos);
-		m.setDetailList(f.createInfoMessageDetailList());
-		
-		this.sendSIPMessage(Resources.serverSipURI, XMLUtils.createStringXMLFromInfoMessage(m));
 	}
 	
 	@Override

@@ -46,10 +46,6 @@ public class MessagingService implements Observer, MSRPListener{
 			Map<String, Map<String, SessionDescription>> sdpContainer) {
 		this.sdpContainer = sdpContainer;
 	}
-
-	public void stopSession(String remoteSipUri) {
-		getMsrpStack().stopSession(remoteSipUri);
-	}
 	
 	public void sendMessages(List<CompleteMessage> messages, String remoteSipUri) {
 		for (CompleteMessage m : messages) {
@@ -65,37 +61,14 @@ public class MessagingService implements Observer, MSRPListener{
 		return msrpStack;
 	}
 
-	private synchronized void removeUserFromOnlineList(User user) {
-		int index = 0;
-		for (User u : this.onlineUsers) {
-			if (user.equals(u)) {
-				u.getTimer().cancel();
-				this.onlineUsers.remove(index);
-				
-				break;
-			}
-			index++;
-		}
-	}
-	
-	private synchronized User findUserInOnlineList(User user) {
-		for (User u : this.onlineUsers) {
-			if (user.equals(u)) {
-				return u;
-			}
-		}
-		return null;
-	}
-	
 	public synchronized boolean addUserToOnlineList(User user) {
 		boolean userIsAddedFirst = false;
-		User u = findUserInOnlineList(user);
-		if(u == null) {
+		if(!(onlineUsers.contains(user))) {
 			this.onlineUsers.add(user);	
 			userIsAddedFirst = true;
 		}
 		else {
-			this.removeUserFromOnlineList(user);
+			this.onlineUsers.remove(user);			
 			this.onlineUsers.add(user);			
 		}
 		
@@ -106,7 +79,7 @@ public class MessagingService implements Observer, MSRPListener{
 		User user = (User)o;
 		System.out.println("User timeOut. Removing from online list: " + user.getSipURI());
 		
-		removeUserFromOnlineList(user);		
+		this.onlineUsers.remove(user);
 	}
 	
 	public void addMSRPListener(MSRPListener listener) {

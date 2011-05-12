@@ -122,7 +122,7 @@ public class MessagingSipServlet extends SipServlet {
 		System.out.println("Server doBye");
 		req.createResponse(200).send();
 		System.out.println(getCleanSipUri(req.getFrom().toString()));
-		this.messagingService.stopSession(getCleanSipUri(req.getFrom().toString()));
+		this.messagingService.getMsrpStack().stopSession(getCleanSipUri(req.getFrom().toString()));
 		this.messagingService.getSdpContainer().remove(getCleanSipUri(req.getFrom().toString()));
 	}
 
@@ -184,8 +184,7 @@ public class MessagingSipServlet extends SipServlet {
 		if (info != null && InfoMessage.pullNewMessageInfos.equals(info.getInfoType().toUpperCase())) {
 			System.out.println("kéne az infó mi?");
 			
-			User user = new User();
-			user.setSipURI(this.getCleanSipUri(req.getFrom().toString()));
+			User user = new User(this.getCleanSipUri(req.getFrom().toString()));
 
 			SipServletRequest r = sipFactory.createRequest(req, false);
 			r.setRequestURI(sipFactory.createURI(user.getSipURI()));

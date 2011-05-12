@@ -52,7 +52,7 @@ public class MessagingDAO {
 		 init();
 	 }
 	 
-	 public void init() {
+	 private void init() {
 		InitialContext ctx = null;
 		try {
 			ctx = new InitialContext();
@@ -121,7 +121,7 @@ public class MessagingDAO {
 	        }
 	    }
 	 
-	 	public Date updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
+	 	public void updateMessage( String messageId, String mimeType, String senderName, String senderSIPUri, String subject) {
 	    	
 	 		Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -143,8 +143,6 @@ public class MessagingDAO {
 	        } finally {
 	        	closeAll(null, pstmt, null, conn);
 	        }
-	        
-	        return new Date(sentAt.getTime());
 	    }
 	 
 	 	public void insertMessage( CompleteMessage message) {
@@ -240,40 +238,6 @@ public class MessagingDAO {
 	        
 	 		return result;
 	 	}
-
-	    public List<byte[]> getMessagesToSipURI( String sipURI ) {
-	    	
-	    	Connection conn = null;
-	        PreparedStatement pstmt = null;
-	        ResultSet rs = null;
-	        
-	        List<byte[]> result = new ArrayList<byte[]>();
-	        	        
-	        try {
-	        	conn = getConnection();
-	            pstmt = conn.prepareStatement(SELECT_CONTENTS_TO_SIPURI);
-	            pstmt.setString(1, sipURI);
-	            rs = pstmt.executeQuery();	        
-	            
-	            while (rs.next()) {            	
-	            	//InputStream is = rs.getBlob(3).getBinaryStream();
-	            	InputStream is = rs.getBlob(1).getBinaryStream();
-	            	
-	            	try {
-						byte[] content = IOUtils.toByteArray(is);
-						result.add(content);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        } finally {
-	        	closeAll(rs, pstmt, null, conn);
-			}
-	        
-	        return result;
-	    }
 	
 	    private void closeAll(ResultSet rs, PreparedStatement pstmt, Statement stmt, Connection conn) {	    	
 	    	if (rs != null) {

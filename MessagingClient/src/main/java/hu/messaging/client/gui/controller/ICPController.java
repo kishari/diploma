@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import hu.messaging.client.gui.data.Buddy;
-import hu.messaging.client.gui.dialog.MessageBoxDialog;
-import hu.messaging.client.gui.dialog.SendMessageDialog;
 import hu.messaging.client.icp.listener.PlatformListener;
 import hu.messaging.client.icp.listener.ProfileListener;
 import hu.messaging.client.icp.listener.ServiceListener;

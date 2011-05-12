@@ -19,29 +19,13 @@ public class User extends Observable{
 	public User(String sipURI, int expireDelay) {
 		System.out.println("new User:" + sipURI + " expires: " + expireDelay);
 		this.sipURI = sipURI;
-		this.expireDelay = 1000 * expireDelay + 10000;
+		this.expireDelay = 1000 * expireDelay;
 		this.timer = new Timer();
 		this.timer.schedule(new TimeOutTask(), this.expireDelay);
-	}
-	
-	public void updateTimer(int expireDelay) {
-		this.expireDelay = 1000 * expireDelay + 10000;
-		System.out.println("User updateTimer");
-		this.timer.cancel();
-		this.timer = new Timer();
-		this.timer.schedule(new TimeOutTask(), this.expireDelay);
-	}
-
-	public Timer getTimer() {
-		return timer;
 	}
 
 	public String getSipURI() {
 		return sipURI;
-	}
-
-	public void setSipURI(String sipURI) {
-		this.sipURI = sipURI;
 	}
 	
 	private void doTimeOut() {
@@ -49,14 +33,6 @@ public class User extends Observable{
 		this.notifyObservers();
 	}
 	
-	public void setExpireDelay(int expireDelay) {
-		this.expireDelay = expireDelay;
-	}
-
-	public int getExpireDelay() {
-		return expireDelay;
-	}
-
 	private class TimeOutTask extends TimerTask {
 		public void run() {
 			doTimeOut();

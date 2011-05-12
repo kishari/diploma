@@ -45,18 +45,8 @@ public class MenuBar implements ContactSelectionListener {
 				dialog.setVisible(true);
 			}
 		});
-
-		JMenuItem itemPull = new JMenuItem(Resources.resources.get("menu.messages.pull"));
-		itemPull.setName(Resources.resources.get("menu.messages.pull"));
-
-		itemPull.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				icpController.getCommunicationController().fetchNewMessageInfos();
-			}
-		});
 		
 		messagesMenu.add(itemBox);
-		messagesMenu.add(itemPull);
 
 		return messagesMenu;
 	}
