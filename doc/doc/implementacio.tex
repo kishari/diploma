@@ -82,7 +82,7 @@ SessionDescription & Az MSRP kapcsolat SDP leíró információit tartalmazó os
    \label{fig:class_message}
   \vspace{-10pt}
 \end{wrapfigure}
-A \code{Message} osztály (\ref{fig:class_message}.~ábra) tartalmazza azokat adatokat, amelyeket minden MSRP csomagban el kell helyezni. Az üzenet típusa -- esetemben kérés (SEND) vagy nyugta (200 OK) -- a \code{method} változóban tárolódik. Mivel az MSRP csomagok átvitele tranzakcióban zajlik (küldés -- nyugtázás), így minden csomagnak egyedi tranzakció azonosítója kell, hogy legyen (\code{transactionId}). Az MSRP üzenetek fejlécében el kell helyezni az MSRP session lokális és távoli azonosítóját is (\code{toPath}, \code{fromPath}). Utóbbi két változó értéke a \code{Session} osztály \code{remoteURI} és \code{localURI} változóinak értéke (lásd. \ref{sec:msrp_session}.~pont) kiegészítve az átviteli protokollal (amely minden esetben TCP). Végül eltárolásra kerül az MSRP csomag végét lezáró karakter (\$, +, vagy  \# karakter). A paraméterek módosítására, illetve lekérdezésére metódusok állnak rendelkezésre.
+A \code{Message} osztály (\ref{fig:class_message}.~ábra) tartalmazza azokat adatokat, amelyeket minden MSRP csomagban el kell helyezni. Az üzenet típusa -- esetemben kérés (SEND) vagy nyugta (200 OK) -- a \code{method} változóban tárolódik. Mivel az MSRP csomagok átvitele tranzakcióban zajlik (küldés -- nyugtázás), így minden csomagnak egyedi tranzakció azonosítója kell, hogy legyen (\code{transactionId}). Az MSRP üzenetek fejlécében el kell helyezni az MSRP session lokális és távoli azonosítóját is (\code{toPath}, \code{fromPath}). Utóbbi két változó értéke a \code{Session} osztály \code{remoteURI} és \code{localURI} változóinak értéke, kiegészítve az átviteli protokollal (amely minden esetben TCP). Végül eltárolásra kerül az MSRP csomag végét lezáró karakter (\$, +, vagy  \# karakter). A paraméterek módosítására, illetve lekérdezésére metódusok állnak rendelkezésre.
 
 \subsubsection*{A Request osztály}
 \label{sec:msrp_request}
@@ -131,7 +131,7 @@ A \code{Response} osztály (\ref{fig:class_response}.~ábra) szintén a \code{Me
    \label{fig:class_completmsrpemessage}
   \vspace{-10pt}
 \end{wrapfigure}
-A \code{CompleteMessage} osztály osztálydiagramja \aref{fig:class_completmsrpemessage}.~ábrán látható. Az osztály tárolja az MSRP kapcsolaton átküldendő üzenet teljes tartalmát (\code{content}), illetve az üzenet egyedi azonosítóját (\code{messageId}). Az MSRP átvitel során ennek az üzenetnek a tartalmából fognak generálódni \aref{sec:msrp_request}.~pontban tárgyalt MSRP kérés üzenetek. A változók értékeinek lekérdezésére, illetve módosítására metódusok állnak rendelkezésre.
+A \code{CompleteMessage} osztály osztálydiagramja \aref{fig:class_completmsrpemessage}.~ábrán látható. Az osztály tárolja az MSRP kapcsolaton átküldendő üzenet teljes tartalmát (\code{content}), illetve az üzenet egyedi azonosítóját (\code{messageId}). Az MSRP átvitel során ennek az üzenetnek a tartalmából fognak generálódni az MSRP kérés üzenetek. A változók értékeinek lekérdezésére, illetve módosítására metódusok állnak rendelkezésre.
 
 \subsubsection*{Az MSRPStack osztály}
 \label{sec:msrp_stack}
@@ -164,7 +164,7 @@ Az \code{MSRPStack} osztály (\ref{fig:class_msrp_stack}.~ábra) feladata az MSR
    \label{fig:class_connections}
   \vspace{-10pt}
 \end{wrapfigure}
-A \code{Connections} osztály felépítése \aref{fig:class_connections}.~ábrán látható. Az osztály feladata az MSRP kapcsolatokat kiszolgáló, a tényleges adatátvitelért felelős TCP kapcsolatok menedzselése. Az osztály metódusaival létrehozhatjuk az MSRP kapcsolatokon beérkező csomagok olvasását megvalósító TCP kapcsolatot (\code{createReceiverConnection}), valamint az MSRP kapcsolatokon küldött adatok átviteléért felelős TCP kapcsolatokat (\code{createSenderConnection}). Mivel az MSRP kapcsolatokon beérkező üzenetek olvasására elegendő egyetlen TCP kapcsolat, így abból csak egy van. Mivel az MSRP csomagok fejléce tartalmazza az MSRP kapcsolat azonosítóját (path attribútum), így a beérkező csomagokról egyértelműen el tudjuk dönteni, hogy azok melyik MSRP kapcsolathoz tartoznak, így a csomagok továbbíthatók a helyes MSRP kapcsolathoz. A távoli félnek küldött MSRP csomagok átvitelét megvalósító TCP kapcsolatokból ellenben többre van szükség, mivel minden távoli félhez külön TCP kapcsolatot kell létrehozni. A küldő kapcsolatokat a \code{senderConnections} mapben tároljuk el. A map kulcsa a távoli fél SIP URI-ja. Az osztály implementálja az \code{Observer} interfészt, ami arra használatos, hogy a TCP kapcsolatok leállításáról értesüljön a \code{Connections} osztály.
+A \code{Connections} osztály felépítése \aref{fig:class_connections}.~ábrán látható. Az osztály feladata az MSRP kapcsolatokat kiszolgáló, a tényleges adatátvitelért felelős TCP kapcsolatok menedzselése. Az osztály metódusaival létrehozhatjuk az MSRP kapcsolatokon beérkező csomagok olvasását megvalósító TCP kapcsolatot (\code{createReceiverConnection}), valamint az MSRP kapcsolatokon küldött adatok átviteléért felelős TCP kapcsolatokat (\code{createSenderConnection}). Mivel az MSRP kapcsolatokon beérkező üzenetek olvasására elegendő egyetlen TCP kapcsolat, így abból csak egy van. Az MSRP csomagok fejléce tartalmazza az MSRP kapcsolat azonosítóját (path attribútum), így a beérkező csomagokról egyértelműen el tudjuk dönteni, hogy azok melyik MSRP kapcsolathoz tartoznak, így a csomagok továbbíthatók a helyes MSRP kapcsolathoz. A távoli félnek küldött MSRP csomagok átvitelét megvalósító TCP kapcsolatokból ellenben többre van szükség, mivel minden távoli félhez külön TCP kapcsolatot kell létrehozni. A küldő kapcsolatokat a \code{senderConnections} mapben tároljuk el. A map kulcsa a távoli fél SIP URI-ja. Az osztály implementálja az \code{Observer} interfészt, ami arra használatos, hogy a TCP kapcsolatok leállításáról értesüljön a \code{Connections} osztály.
 
 \subsubsection*{A ReceiverConnection osztály}
 \label{sec:msrp_receiverconnection}
@@ -180,7 +180,7 @@ A \code{Connections} osztály felépítése \aref{fig:class_connections}.~ábrá
    \label{fig:class_receiverconnection}
   \vspace{-10pt}
 \end{wrapfigure}
-A osztály felépítése \aref{fig:class_receiverconnection}.~ábrán látható. Privát változókban tárolja a kapcsolat állapotát (\code{running}), valamint referenciát a kapcsolatot tartalmazó \code{MSRPStack} objektumra. Tárolja a TCP kapcsolatok leírását (hoszt cím, port), azok menedzselését (\code{serverSocketChannel, selector}) végző objektumokat is. Szintén privát változóban tárolja a TCP kapcsolaton beérkező bájtfolyamból olvasott részadatok átmeneti tárolását végző objektumot (\code{saveBuffers}). Két belső osztályt tartalmaz: a \code{Parser}, illetve a \code{Router} osztályokat. A \code{Parser} osztály feladata, hogy a TCP kapcsolaton beérkező bájtfolyamból MSRP csomagokat állítson elő, amelyeknek a további feldolgozását a \code{Router} osztály végzi. A \code{Router} feladata, hogy az MSRP csomagokat a csomaghoz tartozó MSRP kapcsolathoz eljuttassa. A \code{saveBuffers} mapben tárolja a TCP socketből olvasott bájtfolyam végét, azokat az adatokat, amelyek az utolsónak rekonstruált MSRP csomaghoz már nem tartoznak, viszont egy, az adott TCP socket-ből való későbbi olvasás során a következő MSRP csomag részeként használatosak.
+A osztály felépítése \aref{fig:class_receiverconnection}.~ábrán látható. Privát változókban tárolja a kapcsolat állapotát (\code{running}), valamint referenciát a kapcsolatot tartalmazó \code{MSRPStack} objektumra. Tárolja a TCP kapcsolatok leírását (hoszt cím, port), azok menedzselését (\code{serverSocketChannel, selector}) végző objektumokat is. Szintén privát változóban tárolja a TCP kapcsolaton beérkező bájtfolyamból olvasott részadatok átmeneti tárolását végző objektumot (\code{saveBuffers}). Két belső osztályt tartalmaz: a \code{Parser}, illetve a \code{Router} osztályokat. A \code{Parser} osztály feladata, hogy a TCP kapcsolaton beérkező bájtfolyamból MSRP csomagokat állítson elő, amelyeknek a további feldolgozását a \code{Router} osztály végzi. A \code{Router} feladata, hogy az MSRP csomagokat a megfelelő MSRP kapcsolathoz eljuttassa. A \code{saveBuffers} mapben tárolja a TCP socketből olvasott bájtfolyam végét, azokat az adatokat, amelyek az utolsónak rekonstruált MSRP csomaghoz már nem tartoznak, viszont egy, az adott TCP socket-ből való későbbi olvasás során egy MSRP csomag részeként használatosak.
 
 \subsubsection*{A SenderConnection osztály}
 \label{sec:msrp_senderconnection}
@@ -196,7 +196,7 @@ A osztály felépítése \aref{fig:class_receiverconnection}.~ábrán látható.
    \label{fig:class_senderconnection}
   \vspace{-10pt}
 \end{wrapfigure}
-Az osztály az MSRP kapcsolaton (\code{session}), a \code{remoteSipUri} változóban tárolt SIP azonosítójú távoli félnek küldött MSRP csomagok továbbítását végzi. Minden különböző SIP URI-val rendelkező kommunikációs partnerhez tartozik egy \code{SenderConnection} példány, aminek egyedi azonosítására a \code{remoteSipUri} paraméter szolgál. A \code{ReceiverConnection} osztályhoz hasonlóan (\ref{sec:msrp_receiverconnection}.~pont) privát változókban tárolja a kapcsolat állapotát (\code{running}), referenciát az \code{MSRPStack} példányra, valamint a TCP kapcsolatot leíró, illetve vezérlő objektumokat. Az osztály által reprezentált TCP kapcsolaton a kapcsolat sikeres felépítése, valamint elindítása után adatot a \code{send} metódus meghívásával tudunk küldeni. A kapcsolat leállítását a \code{stop} metódus meghívásával idézhetjük elő.
+Az osztály (\ref{fig:class_senderconnection}.~ábra) az MSRP kapcsolaton (\code{session}), a \code{remoteSipUri} változóban tárolt SIP azonosítójú távoli félnek küldött MSRP csomagok továbbítását végzi. Minden különböző SIP URI-val rendelkező kommunikációs partnerhez tartozik egy \code{SenderConnection} példány, aminek egyedi azonosítására a \code{remoteSipUri} paraméter szolgál. A \code{ReceiverConnection} osztályhoz hasonlóan privát változókban tárolja a kapcsolat állapotát (\code{running}), referenciát az \code{MSRPStack} példányra, valamint a TCP kapcsolatot leíró, illetve vezérlő objektumokat. Az osztály által reprezentált TCP kapcsolaton a kapcsolat sikeres felépítése, valamint elindítása után adatot a \code{send} metódus meghívásával tudunk küldeni. A kapcsolat leállítását a \code{stop} metódus meghívásával idézhetjük elő.
 
 \newpage
 \subsubsection*{A Session osztály}
@@ -260,7 +260,7 @@ Az \code{OutgoingMessageProcessor} osztály osztálydiagramja \aref{fig:class_ou
    \label{fig:class_incomingprocessor}
   \vspace{-10pt}
 \end{wrapfigure}
-Az \code{IncomingMessageProcessor} osztály (\aref{fig:class_incomingprocessor}.~ábra) az MSRP kapcsolaton beérkező üzeneteket dolgozza fel. Az üzeneteket sorból olvassa (\code{incomingMessageQueue}), majd attól függően, hogy az MSRP üzenet kérés, vagy válasz, konvertálás után továbbítja azokat a processzort tartalmazó tranzakció menedzser példánynak. 
+Az \code{IncomingMessageProcessor} osztály (\ref{fig:class_incomingprocessor}.~ábra) az MSRP kapcsolaton beérkező üzeneteket dolgozza fel. Az üzeneteket sorból olvassa (\code{incomingMessageQueue}), majd attól függően, hogy az MSRP üzenet kérés, vagy válasz, konvertálás után továbbítja azokat a processzort tartalmazó tranzakció menedzser példánynak. 
 
 \subsubsection*{Az MSRPEvent osztály}
 \label{sec:msrp_event}
@@ -292,7 +292,7 @@ Az \code{MSRPEvent} osztály reprezentálja az MSRP kapcsolatokban bekövetkezet
    \label{fig:class_listener}
   \vspace{-10pt}
 \end{wrapfigure}
-Az \code{MSRPListener} egy egyszerű interfész (\ref{fig:class_listener}.~ábra), amelynek \code{fireMSRPEvent} függvényének implementálásával az implementáló osztály az MSRP kapcsolatokban bekövetkezett eseményekről értesülhet. Ehhez annyit kell tenni, hogy az implementáló osztályt hozzá kell adni az \code{MSRPStack} osztály \code{msrpListeners} listájához (lásd.:\ref{sec:msrp_stack}.~pont)
+Az \code{MSRPListener} egy egyszerű interfész (\ref{fig:class_listener}.~ábra), amelynek \code{fireMSRPEvent} függvényének implementálásával az implementáló osztály az MSRP kapcsolatokban bekövetkezett eseményekről értesülhet. Ehhez annyit kell tenni, hogy az implementáló osztályt hozzá kell adni az \code{MSRPStack} osztály \code{msrpListeners} listájához.
 
 \subsubsection*{Az MSRPUtil osztály}
 \label{sec:msrp_util}
