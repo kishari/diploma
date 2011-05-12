@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>490</w><h>440</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>400</w><h>510</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
 Session
 --
 -localUri: URI
@@ -29,17 +29,21 @@ Session
 -senderConnection: SenderConnection
 -msrpStack: MSRPStack
 -incomingMessageQueue: BlockingQueue&lt;Message&gt;
--outgoingMessageQueue: BlockingQueue&lt;CompleteMSRPMessage&gt;
+-outgoingMessageQueue: 
+                 BlockingQueue&lt;CompleteMSRPMessage&gt;
 -transactionManager: TransactionManager
 --
 +Session(localUri: URI, remoteUri: URI,
                senderConnection: SenderConnection, 
                msrpStack: MSRPStack)
-#sendMessage(completeMessage: CompleteMessage): void
-#putMessageIntoIncomingMessageQueue(message: Message): void
+#sendMessage(completeMessage: 
+                                           CompleteMessage): void
+#putMessageIntoIncomingMessageQueue(
+                                       message: Message
+                                       ): void
 -putMessageIntoOutgoingMessageQueue(
-                                         message: CompleteMSRPMessage
-                                         ): void
+                                 message: CompleteMSRPMessage
+                                       ): void
 #getLocalUri(): URI
 #getRemoteUri(): URI
 #getId(): String

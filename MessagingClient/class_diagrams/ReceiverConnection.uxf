@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>30</y><w>530</w><h>410</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>30</y><w>370</w><h>430</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
 ReceiverConnection
 --
 -running: boolean
@@ -34,7 +34,8 @@ ReceiverConnection
 -router: Router
 -buffer: ByteBuffer
 --
-+ReceiverConnection(hostAddress: InetAddress, msrpStack: MSRPStack)
++ReceiverConnection(hostAddress: InetAddress, 
+                                    msrpStack: MSRPStack)
 +run(): void
 #start(): void
 #stop(): void

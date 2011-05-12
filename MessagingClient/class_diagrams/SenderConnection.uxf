@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>480</w><h>450</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
+// This text will be stored with each diagram;  use it for notes.</help_text><zoom_level>10</zoom_level><element><type>com.umlet.element.base.Class</type><coordinates><x>20</x><y>20</y><w>380</w><h>480</h></coordinates><panel_attributes>&lt;&lt;Class&gt;&gt;
 SenderConnection
 --
 -running: boolean
@@ -32,8 +32,10 @@ SenderConnection
 -senderChannel: SocketChannel
 -selector: Selector
 --
-+SenderConnection(remoteAddress: InetAddress, remotePort: int,
-                                 remoteSipUri: String, msrpStack: MSRPStack)
++SenderConnection(remoteAddress: InetAddress, 
+                                 remotePort: int,
+                                 remoteSipUri: String, 
+                                 msrpStack: MSRPStack)
 +run(): void
 #start(): void
 #stop(): void
